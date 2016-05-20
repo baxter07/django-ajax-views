@@ -46,7 +46,7 @@ setup(
         ],
     },
     install_requires=[
-        'django>=1.9',
+        'Django>=1.9',
         'django-require',
         'django-guardian',
         'django-crispy-forms',
