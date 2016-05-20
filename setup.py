@@ -15,7 +15,7 @@ version_str = '.'.join(str(n) for n in __version__)
 setup(
     name='django-ajax-views',
     version=version_str,
-    description='Django class based views extension working together with client side require-ajax-views.',
+    description='Django class based views extension working together with js library require-ajax-views.',
     long_description=long_description,
     url='https://github.com/Pyco7/django-ajax-views',
     author='Emanuel Hafner',
@@ -40,7 +40,10 @@ setup(
     keywords='django class based views javascript coffeescript ajax',
     packages=['ajaxviews'],
     package_data={
-        'ajaxviews': ['templates/ajaxviews/*.html'],
+        'ajaxviews': [
+            'templates/ajaxviews/*.html',
+            'static/require-ajax-views/dist/ajaxviews.js',
+        ],
     },
     install_requires=[
         'django>=1.9',
