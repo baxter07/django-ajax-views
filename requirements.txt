@@ -1,0 +1,8 @@
+Django>=1.9
+django-autocomplete-light==2.3.3
+django-crispy-forms
+django-extra-views
+django-guardian
+django-js-reverse
+django-jsonify
+django-require

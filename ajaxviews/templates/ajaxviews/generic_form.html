@@ -1,0 +1,24 @@
+{% extends generic_template|default:'__single_page.html' %}
+
+{% block title %}{{ headline }} | {{ block.super }}{% endblock %}
+
+{% load crispy_forms_tags %}
+
+{% block header %}
+<h2 class="page-header">{% block headline %}{{ headline }}{% endblock %}</h2>
+{% endblock %}
+
+{% block main_content %}
+
+{% if formset %}
+  <form {% if formset.form_action %}action="{{ formset.form_action }}" {% endif %}data-async="" method="POST">
+    {% crispy formset %}
+    {{ formset.render_form_actions }}
+  </form>
+{% else %}
+  {% crispy form %}
+{% endif %}
+
+{% endblock %}
+
+{# form|label_class:"col-lg-2",field_class:"col-lg-8" #}

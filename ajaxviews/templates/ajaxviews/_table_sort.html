@@ -1,0 +1,10 @@
+<div class="table-sort" data-sort="{% if index == sort_index %}{{ sort_order }}{% endif %}">
+  {% if index == sort_index and sort_order == 'asc' %}
+    <span class="glyphicon glyphicon-triangle-bottom" style="margin-top: 6px;"></span>
+  {% elif index == sort_index and sort_order == 'desc' %}
+    <span class="glyphicon glyphicon-triangle-top"></span>
+  {% else %}
+    <span class="glyphicon glyphicon-triangle-top opacity"></span>
+    <span class="glyphicon glyphicon-triangle-bottom opacity"></span>
+  {% endif %}
+</div>

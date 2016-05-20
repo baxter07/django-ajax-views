@@ -8,10 +8,12 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+.idea
+/virtualenv
+/dist/
 env/
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/

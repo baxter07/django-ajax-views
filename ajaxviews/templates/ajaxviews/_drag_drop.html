@@ -1,0 +1,22 @@
+<div class="row drag-and-drop"{% if field_id %} data-field="{{ field_id }}"{% endif %}>
+  <div class="col-md-6">
+    <h4 class="section-header">{{ available_name }}</h4>
+    <ul class="list-group available-list">
+    {% for obj in available_list %}
+      <li class="list-group-item" data-id="{{ obj.pk }}">{{ obj }}</li>
+    {% endfor %}
+    </ul>
+  </div>
+  <div class="drag-separator">
+    <span class="glyphicon glyphicon-forward"></span>
+    <span class="glyphicon glyphicon-backward"></span>
+  </div>
+  <div class="col-md-6">
+    <h4 class="section-header">{{ selected_name }}</h4>
+    <ul class="list-group selected-list">
+    {% for obj in selected_list %}
+      <li class="list-group-item" data-id="{{ obj.pk }}">{{ obj }}</li>
+    {% endfor %}
+    </ul>
+  </div>
+</div>

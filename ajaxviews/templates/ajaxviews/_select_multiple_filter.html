@@ -1,0 +1,25 @@
+<div>
+  <button id="select-all" type="button" class="btn btn-default btn-xs">Select All</button>
+  <button id="deselect-all" type="button" class="btn btn-default btn-xs">Deselect All</button>
+</div>
+
+{% if search_input %}
+<p class="filter-search">
+  <input type="text" class="form-control" placeholder="Type to search">
+</p>
+{% endif %}
+
+<div class="filter-values">
+  {% for value, display in values_list %}
+    <label class="checkbox"{% if search_input and value not in selected_values %} style="display: none;"{% endif %}>
+      <input type="checkbox" value="{{ value }}"
+             name="ajax_filter"{% if not selected_values or value in selected_values %} checked{% endif %}>
+        {{ display }}
+    </label>
+  {% endfor %}
+</div>
+
+<button id="filter_submit" type="button" class="btn btn-primary btn-sm">Apply</button>
+{% if reset_button %}
+<button id="filter_reset" type="button" class="btn btn-default btn-sm">Reset</button>
+{% endif %}

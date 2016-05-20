@@ -1,0 +1,17 @@
+/*
+ * require-ajax-views v1.0
+ * https://github.com/Pyco7/coffeescript-ajax-views
+ * Copyright (c) 2016 Emanuel Hafner
+ * Licensed under the MIT License
+ */
+(function (global, factory) {
+  if (typeof jQuery === 'undefined') {
+    throw new Error('Ajax views requires jQuery.');
+  }
+  define(['jquery'], factory);
+}(this, function($) { 'use strict';
+// if (typeof define === 'function' && define.amd) {
+//   define(['jquery'], factory);
+// } else {
+//   throw new Error('Ajax views need to be loaded using requirejs.');
+// }

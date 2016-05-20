@@ -1,0 +1,12 @@
+<div class="input-group input-daterange">
+  <input type="text" class="form-control" value="{{ selected_min_date|date:"Y-m-d" }}"
+         data-date-start-date="{{ min_date|date:"Y-m-d" }}" data-date-end-date="{{ max_date|date:"Y-m-d" }}">
+  <span class="input-group-addon">to</span>
+  <input type="text" class="form-control" value="{{ selected_max_date|date:"Y-m-d" }}"
+         data-date-start-date="{{ min_date|date:"Y-m-d" }}" data-date-end-date="{{ max_date|date:"Y-m-d" }}">
+</div>
+
+<button id="filter_submit" type="button" class="btn btn-primary btn-sm">Apply</button>
+{% if reset_button %}
+<button id="filter_reset" type="button" class="btn btn-default btn-sm">Reset</button>
+{% endif %}
