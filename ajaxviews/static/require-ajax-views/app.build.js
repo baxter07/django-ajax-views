@@ -2,8 +2,8 @@
 ({
     baseUrl: 'src',
     paths: {
-        'coffee-script': '../../bower_components/coffeescript/extras/coffee-script',
-        'cs': '../../bower_components/require-cs/cs'
+        'coffee-script': '../lib/coffee-script',
+        'cs': '../lib/cs'
     },
     include: [
         'cs!app',

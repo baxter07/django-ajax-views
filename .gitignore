@@ -9,7 +9,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 .idea
-/virtualenv
 /dist/
 env/
 build/
@@ -62,3 +61,7 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Environment
+/virtualenv
+/node_modules

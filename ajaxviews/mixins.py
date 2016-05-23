@@ -18,6 +18,7 @@ class AjaxMixin:
     ajax_view = False
 
     def __init__(self, **kwargs):
+        self.json_cfg = {}
         if not self.ajax_view:
             self.ajax_view = kwargs.pop('ajax_view', False)
         super().__init__(**kwargs)

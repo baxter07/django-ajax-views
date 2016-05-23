@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from ajaxviews import __version__
 from codecs import open
 from os import path
@@ -38,7 +38,8 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     keywords='django class based views javascript coffeescript ajax',
-    packages=['ajaxviews'],
+    packages=find_packages(),
+    # packages=['ajaxviews'],
     package_data={
         'ajaxviews': [
             'templates/ajaxviews/*.html',
