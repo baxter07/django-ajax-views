@@ -39,7 +39,6 @@ setup(
     ],
     keywords='django class based views javascript coffeescript ajax',
     packages=find_packages(),
-    # packages=['ajaxviews'],
     package_data={
         'ajaxviews': [
             'templates/ajaxviews/*.html',

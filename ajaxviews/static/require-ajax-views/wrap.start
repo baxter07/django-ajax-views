@@ -10,8 +10,3 @@
   }
   define(['jquery'], factory);
 }(this, function($) { 'use strict';
-// if (typeof define === 'function' && define.amd) {
-//   define(['jquery'], factory);
-// } else {
-//   throw new Error('Ajax views need to be loaded using requirejs.');
-// }

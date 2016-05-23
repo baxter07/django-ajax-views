@@ -8,16 +8,19 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-.idea
+.pypric
+.idea/
+/virtualenv/
+/node_modules/
 /dist/
+/lib/
+lib64/
 env/
 build/
 develop-eggs/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -61,7 +64,3 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
-
-# Environment
-/virtualenv
-/node_modules
