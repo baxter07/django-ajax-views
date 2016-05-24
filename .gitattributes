@@ -1,4 +1,3 @@
-ajaxviews/static/require-ajax-views/lib/* linguist-vendored
-coffee-script.js linguist-vendored=false
-cs.js linguist-vendored=false
-r.js linguist-vendored=false
+ajaxviews/static/require-ajax-views/lib/coffee-script.js linguist-vendored=false
+ajaxviews/static/require-ajax-views/lib/cs.js linguist-vendored=false
+ajaxviews/static/require-ajax-views/lib/r.js linguist-vendored=false
