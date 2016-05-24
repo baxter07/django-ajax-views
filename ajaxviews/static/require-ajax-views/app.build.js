@@ -2,8 +2,8 @@
 ({
     baseUrl: 'src',
     paths: {
-        'coffee-script': '../lib/coffee-script',
-        'cs': '../lib/cs'
+        'coffee-script': '../extjs/coffee-script',
+        'cs': '../extjs/cs'
     },
     include: [
         'cs!app',
