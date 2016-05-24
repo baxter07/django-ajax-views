@@ -6,3 +6,5 @@ django-guardian
 django-js-reverse
 django-jsonify
 django-require
+python-dateutil
+3to2

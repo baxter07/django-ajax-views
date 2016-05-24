@@ -1,7 +1,7 @@
 ;(function() {
 /*
  * require-ajax-views v1.0
- * https://github.com/Pyco7/coffeescript-ajax-views
+ * https://github.com/Pyco7/django-ajax-views
  * Copyright (c) 2016 Emanuel Hafner
  * Licensed under the MIT License
  */
