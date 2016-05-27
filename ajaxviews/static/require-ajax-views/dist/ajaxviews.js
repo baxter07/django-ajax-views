@@ -292,6 +292,27 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
                 };
               }(this)
             });
+            $(modalId).find('form[data-async]').on('click', '.popover.confirmation a[data-apply=confirmation]', function (_this) {
+              return function (e) {
+                e.preventDefault();
+                return $.get($(e.currentTarget).attr('href'), {}, function (response) {
+                  var key, value, _ref;
+                  if (response.success) {
+                    _this.jsonCache.reload_view = true;
+                    if (response.json_cache != null) {
+                      _ref = response.json_cache;
+                      for (key in _ref) {
+                        value = _ref[key];
+                        _this.jsonCache[key] = value;
+                      }
+                    }
+                    return $(modalId).modal('hide');
+                  } else {
+                    throw 'Object deletion failed!';
+                  }
+                });
+              };
+            }(this));
             return $(modalId).on('hidden.bs.modal', function (_this) {
               return function (e) {
                 var data, formNode, key, subModalId, value, _ref, _ref1;

@@ -42,6 +42,17 @@ define ->
               @manager.updateModal(modalId, response)
               @loadAjaxView()
 
+        $(modalId).find('form[data-async]').on 'click', '.popover.confirmation a[data-apply=confirmation]', (e) =>
+          e.preventDefault()
+          $.get $(e.currentTarget).attr('href'), {}, (response) =>
+            if response.success
+              @jsonCache.reload_view = true
+              if response.json_cache?
+                @jsonCache[key] = value for key, value of response.json_cache
+              $(modalId).modal('hide')
+            else
+              throw 'Object deletion failed!'
+
         $(modalId).on 'hidden.bs.modal', (e) =>
           $(e.currentTarget).remove()
           if @viewCache.modalNr

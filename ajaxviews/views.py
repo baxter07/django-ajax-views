@@ -5,6 +5,7 @@ from dateutil.parser import parse
 from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.forms.models import BaseModelFormSet
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -281,6 +282,8 @@ class GenericDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         response = super().delete(request, *args, **kwargs)
+        if request.is_ajax():
+            return JsonResponse({'success': True})
         messages.success(request, 'Entry successfully deleted!')
         return response
 

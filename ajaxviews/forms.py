@@ -40,7 +40,7 @@ class DefaultFormActions(LayoutObject):
             cancel_button_name = 'Back'
 
         cancel_attr = 'href="{0}"'.format(self.success_url)
-        
+
         if not self.back_button and self.modal_form:
             cancel_button_name = 'Close'
             cancel_attr = 'data-dismiss="modal"'
