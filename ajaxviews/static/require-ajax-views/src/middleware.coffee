@@ -122,7 +122,7 @@ define ->
         @Q('.modal-link:not(a)').on 'mouseup', (e) ->
           window.open($(this).attr('href')) if e.which == 2
 
-        @Q('a.modal-link').click (e) =>
+        @Q('.modal-link').click (e) =>
           e.preventDefault()
           @requestModal($(e.currentTarget).attr('href'))
 

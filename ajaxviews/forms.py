@@ -145,9 +145,7 @@ class GenericModelForm(ModelForm):
                 self.fields['related_obj_ids'].initial = json.dumps(related_obj_ids)
 
         if 'select_field' in kwargs.get('data', {}):
-            print(kwargs)
             self.fields[kwargs['data'].get('select_field')].initial = kwargs['data'].get('select_pk')
-            # self.initial[kwargs['data']['select_field']] = kwargs['data']['select_pk']
 
         if init_helper:
             self.init_helper()

@@ -380,7 +380,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
                 return window.open($(this).attr('href'));
               }
             });
-            this.Q('a.modal-link').click(function (_this) {
+            this.Q('.modal-link').click(function (_this) {
               return function (e) {
                 e.preventDefault();
                 return _this.requestModal($(e.currentTarget).attr('href'));
