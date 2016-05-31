@@ -315,7 +315,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
             }(this));
             return $(modalId).on('hidden.bs.modal', function (_this) {
               return function (e) {
-                var data, formNode, key, subModalId, value, _ref, _ref1;
+                var data, field, fieldNode, formNode, key, pk, subModalId, value, _ref, _ref1, _ref2;
                 $(e.currentTarget).remove();
                 if (_this.viewCache.modalNr) {
                   $('body').addClass('modal-open');
@@ -331,6 +331,13 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
                     subModalId = _this.viewCache.scopeName;
                     formNode = $(subModalId).find('form[data-async]');
                     if ($(formNode).length) {
+                      _ref1 = _this.jsonCache.select_choice;
+                      for (field in _ref1) {
+                        pk = _ref1[field];
+                        fieldNode = $(formNode).find('#id_' + field);
+                        $(fieldNode).append('<option value="' + pk + '"></option>').trigger('chosen:updated');
+                        $(fieldNode).val(pk).trigger('chosen:updated');
+                      }
                       data = $(formNode).formSerialize() + '&form_data=true';
                       return $.get($(formNode).attr('action'), data, function (response) {
                         _this.manager.updateModal(subModalId, response);
@@ -345,9 +352,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
                   }
                 } else {
                   if (_this.jsonCache.reload_view) {
-                    _ref1 = _this.jsonCache;
-                    for (key in _ref1) {
-                      value = _ref1[key];
+                    _ref2 = _this.jsonCache;
+                    for (key in _ref2) {
+                      value = _ref2[key];
                       _this.viewCache.jsonCache[key] = value;
                     }
                     if (_this.jsonCache && _this.manager.cfg.debug) {
@@ -373,7 +380,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
                 return window.open($(this).attr('href'));
               }
             });
-            this.Q('.modal-link').click(function (_this) {
+            this.Q('a.modal-link').click(function (_this) {
               return function (e) {
                 e.preventDefault();
                 return _this.requestModal($(e.currentTarget).attr('href'));

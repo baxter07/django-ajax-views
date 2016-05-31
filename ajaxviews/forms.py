@@ -6,7 +6,7 @@ from django.forms import Form, ModelForm, CharField, HiddenInput
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import FormActions
-from crispy_forms.layout import LayoutObject, Layout, Submit, HTML
+from crispy_forms.layout import LayoutObject, Layout, Submit, HTML, Div
 from crispy_forms.utils import render_crispy_form, TEMPLATE_PACK
 
 from .helpers import classproperty, init_chosen_widget, init_dateinput
@@ -144,12 +144,18 @@ class GenericModelForm(ModelForm):
                 self.fields['related_obj_ids'] = CharField(widget=HiddenInput(), required=False)
                 self.fields['related_obj_ids'].initial = json.dumps(related_obj_ids)
 
+        if 'select_field' in kwargs.get('data', {}):
+            print(kwargs)
+            self.fields[kwargs['data'].get('select_field')].initial = kwargs['data'].get('select_pk')
+            # self.initial[kwargs['data']['select_field']] = kwargs['data']['select_pk']
+
         if init_helper:
             self.init_helper()
 
     def init_helper(self, form_actions=True):
-        if hasattr(self.Meta, 'modal_fields'):
-            self._init_modal_fields()
+        self._init_modal_fields()
+        # if hasattr(self.Meta, 'modal_fields'):
+        #     self._init_modal_fields()
 
         if self.helper_kwargs.pop('init_chosen_widget', True):
             init_chosen_widget(self.fields.items())
@@ -162,19 +168,25 @@ class GenericModelForm(ModelForm):
             self.append_form_actions()
 
     def _init_modal_fields(self):
-        for field_name, url_name in getattr(self.Meta, 'modal_fields').items():
-            try:
-                url = reverse(url_name)
-            except:
-                try:
-                    # TODO document that the id of the current model is used for generic add fields with parameter
-                    url = reverse(url_name, args=(self.instance.pk,))
-                except:
-                    url = None
-            if url:
-                self.fields[field_name].label += """ <a class="modal-link" href="{0}">
-                                                        <img src="{1}" width="15" height="15" alt="{2}"/>
-                                                     </a>""".format(url, static('admin/img/icon_addlink.gif'), 'Add')
+        for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
+            self.fields[field_name].label += """
+                <a class="modal-link pull-right" href="{0}">
+                    <img src="{1}" width="15" height="15" alt="{2}"/>
+                </a>""".format(reverse(url_name), static('admin/img/icon-addlink.svg'), 'Add')
+
+        # for field_name, url_name in getattr(self.Meta, 'modal_fields').items():
+        #     try:
+        #         url = reverse(url_name)
+        #     except:
+        #         try:
+        #             # TODO document that the id of the current model is used for generic add fields with parameter
+        #             url = reverse(url_name, args=(self.instance.pk,))
+        #         except:
+        #             url = None
+        #     if url:
+        #         self.fields[field_name].label += """ <a class="modal-link" href="{0}">
+        #                                                 <img src="{1}" width="15" height="15" alt="{2}"/>
+        #                                              </a>""".format(url, static('admin/img/icon_addlink.gif'), 'Add')
 
     def custom_success_url(self, url):
         self.helper_kwargs['success_url'] = url

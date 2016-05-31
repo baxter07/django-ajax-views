@@ -1,6 +1,6 @@
 define ['cs!manager'], (ViewManager) ->
   class AjaxApp
-    @_cfg = {
+    @_cfg =
       cfgNode: '#config'
       ajaxNode: '#ajax-content'
       modalNode: '.modal-dialog'
@@ -10,7 +10,6 @@ define ['cs!manager'], (ViewManager) ->
       middleware: 'middleware'
       debug: false
       mixins: {}
-    }
 
     @config: (userCfg = {}) ->
       if 'cfgNode' of userCfg

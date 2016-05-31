@@ -65,6 +65,10 @@ define ->
               formNode = $(subModalId).find('form[data-async]')
 
               if $(formNode).length
+                for field, pk of @jsonCache.select_choice
+                  fieldNode = $(formNode).find("#id_#{field}")
+                  $(fieldNode).append("""<option value="#{pk}"></option>""").trigger('chosen:updated')
+                  $(fieldNode).val(pk).trigger('chosen:updated')
                 data = $(formNode).formSerialize() + '&form_data=true'
                 $.get $(formNode).attr('action'), data, (response) =>
                   @manager.updateModal(subModalId, response)
@@ -118,7 +122,7 @@ define ->
         @Q('.modal-link:not(a)').on 'mouseup', (e) ->
           window.open($(this).attr('href')) if e.which == 2
 
-        @Q('.modal-link').click (e) =>
+        @Q('a.modal-link').click (e) =>
           e.preventDefault()
           @requestModal($(e.currentTarget).attr('href'))
 
