@@ -168,7 +168,7 @@ class GenericModelForm(ModelForm):
     def _init_modal_fields(self):
         for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
             self.fields[field_name].label += """
-                <a class="modal-link pull-right" href="{0}">
+                <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
                     <img src="{1}" width="15" height="15" alt="{2}"/>
                 </a>""".format(reverse(url_name), static('admin/img/icon-addlink.svg'), 'Add')
 
