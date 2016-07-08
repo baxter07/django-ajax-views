@@ -25,7 +25,7 @@ class AjaxMixin:
 
     def dispatch(self, request, *args, **kwargs):
         self.json_cfg = kwargs.copy()
-        for key, value in json.loads(request.GET.get('json_cfg', '{}')).items():
+        for key, value in json.loads(request.GET.dict().get('json_cfg', '{}')).items():
             if value or value is False or value == 0:
                 self.json_cfg[key] = value
 

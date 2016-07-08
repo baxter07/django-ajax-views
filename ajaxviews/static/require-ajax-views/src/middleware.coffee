@@ -1,6 +1,9 @@
 define ->
   middleware =
     onPageLoad: ->
+      if '?' in location.href
+        history.replaceState({}, null, location.href.split('?')[0])
+
       if @jsonCfg.preview_stage and @jsonCfg.preview_stage == 2
         preview_data = {}
         preview_data['preview_stage'] = @jsonCfg.preview_stage
