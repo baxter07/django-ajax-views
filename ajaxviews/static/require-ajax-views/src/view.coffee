@@ -22,13 +22,19 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       @onAjaxLoad() if @onAjaxLoad
       @onLoad() if @onLoad
 
-    initRequest: (viewName, urlKwargs, jsonData, callback) ->
+    getRequestData: (urlKwargs, jsonData) ->
       _urlKwargs = if @getUrlKwargs then @getUrlKwargs() else {}
       $.extend(_urlKwargs, urlKwargs)
       delete _urlKwargs[key] for key, value of _urlKwargs when not value?
+
       _jsonData = if @getJsonData then @getJsonData() else {}
       $.extend(_jsonData, jsonData)
       delete _jsonData[key] for key, value of _jsonData when not value?
+
+      return [_urlKwargs, _jsonData]
+
+    initRequest: (viewName, urlKwargs, jsonData, callback) ->
+      [_urlKwargs, _jsonData] = @getRequestData(urlKwargs, jsonData)
 
       console.log('Debug request: ', _urlKwargs, _jsonData) if @manager.cfg.debug
       url = Urls[viewName](_urlKwargs)
@@ -51,15 +57,19 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
           console.log('this should only happen if user session has expired') if @manager.cfg.debug
           location.reload()
 
-    requestView: ({viewName, urlKwargs, jsonData, animate} = {}) ->
+    requestView: ({viewName, urlKwargs, jsonData, pageLoad, animate} = {}) ->
       viewName ?= null
       urlKwargs ?= {}
       jsonData ?= {}
+      pageLoad ?= false
       animate ?= true
 
       $(@manager.cfg.ajaxNode).fadeOut('fast') if animate
       if not viewName
         @initView(urlKwargs: urlKwargs, jsonData: jsonData, animate: animate)
+      else if pageLoad
+        [_urlKwargs, _jsonData] = @getRequestData(urlKwargs, jsonData)
+        location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData)
       else
         # coffee module is required for requested view
         module = @manager.getModuleName(viewName)

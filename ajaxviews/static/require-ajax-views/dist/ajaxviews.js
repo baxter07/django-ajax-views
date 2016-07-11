@@ -459,8 +459,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
             return this.onLoad();
           }
         };
-        View.prototype.initRequest = function (viewName, urlKwargs, jsonData, callback) {
-          var key, url, value, _jsonData, _urlKwargs;
+        View.prototype.getRequestData = function (urlKwargs, jsonData) {
+          var key, value, _jsonData, _urlKwargs;
           _urlKwargs = this.getUrlKwargs ? this.getUrlKwargs() : {};
           $.extend(_urlKwargs, urlKwargs);
           for (key in _urlKwargs) {
@@ -477,6 +477,14 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
               delete _jsonData[key];
             }
           }
+          return [
+            _urlKwargs,
+            _jsonData
+          ];
+        };
+        View.prototype.initRequest = function (viewName, urlKwargs, jsonData, callback) {
+          var url, _jsonData, _ref, _urlKwargs;
+          _ref = this.getRequestData(urlKwargs, jsonData), _urlKwargs = _ref[0], _jsonData = _ref[1];
           if (this.manager.cfg.debug) {
             console.log('Debug request: ', _urlKwargs, _jsonData);
           }
@@ -518,8 +526,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           }(this));
         };
         View.prototype.requestView = function (_arg) {
-          var animate, jsonData, module, urlKwargs, viewName, _ref;
-          _ref = _arg != null ? _arg : {}, viewName = _ref.viewName, urlKwargs = _ref.urlKwargs, jsonData = _ref.jsonData, animate = _ref.animate;
+          var animate, jsonData, module, pageLoad, urlKwargs, viewName, _jsonData, _ref, _ref1, _urlKwargs;
+          _ref = _arg != null ? _arg : {}, viewName = _ref.viewName, urlKwargs = _ref.urlKwargs, jsonData = _ref.jsonData, pageLoad = _ref.pageLoad, animate = _ref.animate;
           if (viewName == null) {
             viewName = null;
           }
@@ -528,6 +536,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           }
           if (jsonData == null) {
             jsonData = {};
+          }
+          if (pageLoad == null) {
+            pageLoad = false;
           }
           if (animate == null) {
             animate = true;
@@ -541,6 +552,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
               jsonData: jsonData,
               animate: animate
             });
+          } else if (pageLoad) {
+            _ref1 = this.getRequestData(urlKwargs, jsonData), _urlKwargs = _ref1[0], _jsonData = _ref1[1];
+            return location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData);
           } else {
             module = this.manager.getModuleName(viewName);
             return require([this.manager.cfg.modulePrefix + module], function (_this) {
