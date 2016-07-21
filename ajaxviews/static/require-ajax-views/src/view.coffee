@@ -35,10 +35,12 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
 
     initRequest: (viewName, urlKwargs, jsonData, callback) ->
       [_urlKwargs, _jsonData] = @getRequestData(urlKwargs, jsonData)
-
       console.log('Debug request: ', _urlKwargs, _jsonData) if @manager.cfg.debug
+
       url = Urls[viewName](_urlKwargs)
+      url += location.hash if '#' in location.hash
       history.replaceState({}, null, url)
+
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)
 

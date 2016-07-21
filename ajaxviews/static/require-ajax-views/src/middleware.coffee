@@ -84,6 +84,7 @@ define ->
             if @jsonCache.reload_view
               @viewCache.jsonCache[key] = value for key, value of @jsonCache
               console.log('jsonCache ->', @jsonCache) if @jsonCache and @manager.cfg.debug
+
               if @jsonCache.ajax_load
                 @viewCache.onAjaxLoad() if @viewCache.onAjaxLoad
               else
