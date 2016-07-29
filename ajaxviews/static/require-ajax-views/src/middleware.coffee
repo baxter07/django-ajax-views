@@ -34,6 +34,8 @@ define ->
 
         @Q('form[data-async]').ajaxForm
 #          data: ajaxData
+          beforeSubmit: (arr, $form, options) =>
+            @onBeforeFormSubmit(arr, $form, options) if @onBeforeFormSubmit
           success: (response) =>
             if response.success
               @jsonCache.reload_view = true

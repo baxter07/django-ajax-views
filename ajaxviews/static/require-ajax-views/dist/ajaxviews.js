@@ -281,6 +281,13 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           if (this.scopeName && this.scopeName.indexOf('#modal_nr') >= 0) {
             modalId = this.scopeName;
             this.Q('form[data-async]').ajaxForm({
+              beforeSubmit: function (_this) {
+                return function (arr, $form, options) {
+                  if (_this.onBeforeFormSubmit) {
+                    return _this.onBeforeFormSubmit(arr, $form, options);
+                  }
+                };
+              }(this),
               success: function (_this) {
                 return function (response) {
                   var key, value, _ref;
