@@ -43,7 +43,7 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
           url += location.hash
         else
           url = location.hash
-      history.replaceState({}, null, url)
+      history.replaceState({}, null, url) if url
 
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)

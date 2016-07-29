@@ -281,6 +281,13 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           if (this.scopeName && this.scopeName.indexOf('#modal_nr') >= 0) {
             modalId = this.scopeName;
             this.Q('form[data-async]').ajaxForm({
+              beforeSerialize: function (_this) {
+                return function ($form, options) {
+                  if (_this.onBeforeFormSerialize) {
+                    return _this.onBeforeFormSerialize($form, options);
+                  }
+                };
+              }(this),
               beforeSubmit: function (_this) {
                 return function (arr, $form, options) {
                   if (_this.onBeforeFormSubmit) {
@@ -510,7 +517,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
               url = location.hash;
             }
           }
-          history.replaceState({}, null, url);
+          if (url) {
+            history.replaceState({}, null, url);
+          }
           return $.get(url, { 'json_cfg': JSON.stringify(_jsonData) }, function (response) {
             return callback(response);
           });

@@ -34,6 +34,8 @@ define ->
 
         @Q('form[data-async]').ajaxForm
 #          data: ajaxData
+          beforeSerialize: ($form, options) =>
+            @onBeforeFormSerialize($form, options) if @onBeforeFormSerialize
           beforeSubmit: (arr, $form, options) =>
             @onBeforeFormSubmit(arr, $form, options) if @onBeforeFormSubmit
           success: (response) =>
