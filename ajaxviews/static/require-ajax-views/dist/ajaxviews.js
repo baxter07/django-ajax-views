@@ -504,7 +504,11 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           }
           url = Urls[viewName](_urlKwargs);
           if (__indexOf.call(location.hash, '#') >= 0) {
-            url += location.hash;
+            if (url) {
+              url += location.hash;
+            } else {
+              url = location.hash;
+            }
           }
           history.replaceState({}, null, url);
           return $.get(url, { 'json_cfg': JSON.stringify(_jsonData) }, function (response) {

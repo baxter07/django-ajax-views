@@ -38,7 +38,11 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       console.log('Debug request: ', _urlKwargs, _jsonData) if @manager.cfg.debug
 
       url = Urls[viewName](_urlKwargs)
-      url += location.hash if '#' in location.hash
+      if '#' in location.hash
+        if url
+          url += location.hash
+        else
+          url = location.hash
       history.replaceState({}, null, url)
 
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
