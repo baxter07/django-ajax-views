@@ -10,7 +10,7 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       @['__' + name] = method for name, method of appMiddleware
       @['_' + name] = method for name, method of @manager.userMiddleware
 
-    loadAjaxView: ->
+    _loadAjaxView: ->
       if @initMiddleware
         @__onAjaxLoad()
         @__onLoad()
@@ -22,7 +22,7 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       @onAjaxLoad() if @onAjaxLoad
       @onLoad() if @onLoad
 
-    getRequestData: (urlKwargs, jsonData) ->
+    _getRequestData: (urlKwargs, jsonData) ->
       _urlKwargs = if @getUrlKwargs then @getUrlKwargs() else {}
       $.extend(_urlKwargs, urlKwargs)
       delete _urlKwargs[key] for key, value of _urlKwargs when not value?
@@ -33,8 +33,8 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
 
       return [_urlKwargs, _jsonData]
 
-    initRequest: (viewName, urlKwargs, jsonData, callback) ->
-      [_urlKwargs, _jsonData] = @getRequestData(urlKwargs, jsonData)
+    _initRequest: (viewName, urlKwargs, jsonData, callback) ->
+      [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
       console.log('Debug request: ', _urlKwargs, _jsonData) if @manager.cfg.debug
 
       url = Urls[viewName](_urlKwargs)
@@ -48,17 +48,17 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)
 
-    initView: ({viewName, urlKwargs, jsonData, animate} = {}) ->
+    _initView: ({viewName, urlKwargs, jsonData, animate} = {}) ->
       viewName ?= @jsonCfg.view_name
       urlKwargs ?= {}
       jsonData ?= {}
       animate ?= true
-      @initRequest viewName, urlKwargs, jsonData, (response) =>
+      @_initRequest viewName, urlKwargs, jsonData, (response) =>
         @jsonCfg = @manager.getJsonCfg(response)
         if @jsonCfg.ajax_load
           @manager.updateView(response, animate)
           @manager.debugInfo(@jsonCfg)
-          @loadAjaxView()
+          @_loadAjaxView()
         else
           console.log('this should only happen if user session has expired') if @manager.cfg.debug
           location.reload()
@@ -72,9 +72,9 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
 
       $(@manager.cfg.ajaxNode).fadeOut('fast') if animate
       if not viewName
-        @initView(urlKwargs: urlKwargs, jsonData: jsonData, animate: animate)
+        @_initView(urlKwargs: urlKwargs, jsonData: jsonData, animate: animate)
       else if pageLoad
-        [_urlKwargs, _jsonData] = @getRequestData(urlKwargs, jsonData)
+        [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
         location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData)
       else
         # coffee module is required for requested view
@@ -82,14 +82,14 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
         require [@manager.cfg.modulePrefix + module], (View) =>
           Q = (selector) -> $(@manager.cfg.ajaxNode).find(selector)
           view = new View(Q, @manager.cfg.ajaxNode)
-          view.initView(viewName: viewName, urlKwargs: urlKwargs, jsonData: jsonData, animate: animate)
+          view._initView(viewName: viewName, urlKwargs: urlKwargs, jsonData: jsonData, animate: animate)
 
     requestSnippet: ({urlKwargs, jsonData, callback} = {}) ->
       urlKwargs ?= {}
       jsonData ?= {}
       callback ?= null
 
-      @initRequest @jsonCfg.view_name, urlKwargs, jsonData, (response) =>
+      @_initRequest @jsonCfg.view_name, urlKwargs, jsonData, (response) =>
         callback(response) if callback
 
     requestModal: (href, jsonData = null) ->
@@ -109,7 +109,7 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
           view.viewCache = @
           view.modalNr = @modalNr + 1 or 1
           view.jsonCfg = jsonCfg
-          view.loadAjaxView()
+          view._loadAjaxView()
 
     initModalLinks: (scope) ->
       $(scope).find('.modal-link').click (e) =>

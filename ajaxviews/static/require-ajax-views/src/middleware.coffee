@@ -12,7 +12,7 @@ define ->
           preview_data['preview_model_form'] = $(preview_model_form).formSerialize()
 
         $('form[data-async]').ajaxForm
-          data: preview_data,
+          data: preview_data
           success: (response) =>
             if response.redirect?
               location.href = response.redirect
@@ -47,7 +47,7 @@ define ->
             else
               @jsonCfg = @manager.getJsonCfg(response)
               @manager.updateModal(modalId, response)
-              @loadAjaxView()
+              @_loadAjaxView()
 
         $(modalId).find('form[data-async]').on 'click', '.popover.confirmation a[data-apply=confirmation]', (e) =>
           e.preventDefault()
@@ -79,11 +79,11 @@ define ->
                 data = $(formNode).formSerialize() + '&form_data=true'
                 $.get $(formNode).attr('action'), data, (response) =>
                   @manager.updateModal(subModalId, response)
-                  @viewCache.loadAjaxView()
+                  @viewCache._loadAjaxView()
               else
                 $.get @viewCache.jsonCfg.full_url, {}, (response) =>
                   @manager.updateModal(subModalId, response)
-                  @viewCache.loadAjaxView()
+                  @viewCache._loadAjaxView()
           else
             if @jsonCache.reload_view
               @viewCache.jsonCache[key] = value for key, value of @jsonCache
@@ -92,7 +92,7 @@ define ->
               if @jsonCache.ajax_load
                 @viewCache.onAjaxLoad() if @viewCache.onAjaxLoad
               else
-                @viewCache.initView()
+                @viewCache._initView()
 
 #        @Q('.preview-back').click (e) =>
 #          e.preventDefault()
