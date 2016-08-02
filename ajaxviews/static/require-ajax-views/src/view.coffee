@@ -43,14 +43,13 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
         else if @jsonCfg.full_url
           url = @jsonCfg.full_url
       else
-        url = Urls[viewName](_urlKwargs)
-      if '#' in location.hash
-        if url
-          url += location.hash
-        else
-          url = location.hash
-
-      history.replaceState({}, null, url) if url and not @modalNr
+        url = Urls[viewName or @jsonCfg.view_name](_urlKwargs)
+        if '#' in location.hash
+          if url
+            url += location.hash
+          else
+            url = location.hash
+        history.replaceState({}, null, url) if url and not @modalNr
 
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)
@@ -96,7 +95,7 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       jsonData ?= {}
       callback ?= null
 
-      @_initRequest @jsonCfg.view_name, urlKwargs, jsonData, (response) =>
+      @_initRequest null, urlKwargs, jsonData, (response) =>
         callback(response) if callback
 
     requestModal: (href, jsonData = null) ->

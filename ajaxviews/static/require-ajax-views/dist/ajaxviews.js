@@ -516,17 +516,17 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
               url = this.jsonCfg.full_url;
             }
           } else {
-            url = Urls[viewName](_urlKwargs);
-          }
-          if (__indexOf.call(location.hash, '#') >= 0) {
-            if (url) {
-              url += location.hash;
-            } else {
-              url = location.hash;
+            url = Urls[viewName || this.jsonCfg.view_name](_urlKwargs);
+            if (__indexOf.call(location.hash, '#') >= 0) {
+              if (url) {
+                url += location.hash;
+              } else {
+                url = location.hash;
+              }
             }
-          }
-          if (url && !this.modalNr) {
-            history.replaceState({}, null, url);
+            if (url && !this.modalNr) {
+              history.replaceState({}, null, url);
+            }
           }
           return $.get(url, { 'json_cfg': JSON.stringify(_jsonData) }, function (response) {
             return callback(response);
@@ -624,7 +624,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           if (callback == null) {
             callback = null;
           }
-          return this._initRequest(this.jsonCfg.view_name, urlKwargs, jsonData, function (_this) {
+          return this._initRequest(null, urlKwargs, jsonData, function (_this) {
             return function (response) {
               if (callback) {
                 return callback(response);
