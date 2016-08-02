@@ -37,13 +37,20 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
       console.log('Debug request: ', _urlKwargs, _jsonData) if @manager.cfg.debug
 
-      url = Urls[viewName](_urlKwargs)
+      if @modalNr
+        if @Q('form[data-async]').length
+          url = @Q('form[data-async]').attr('action')
+        else if @jsonCfg.full_url
+          url = @jsonCfg.full_url
+      else
+        url = Urls[viewName](_urlKwargs)
       if '#' in location.hash
         if url
           url += location.hash
         else
           url = location.hash
-      history.replaceState({}, null, url) if url
+
+      history.replaceState({}, null, url) if url and not @modalNr
 
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)

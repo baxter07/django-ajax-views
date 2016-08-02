@@ -245,8 +245,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
       var middleware;
       return middleware = {
         onPageLoad: function () {
-          var preview_data, preview_model_form;
-          if (__indexOf.call(location.href, '?') >= 0) {
+          var preview_data, preview_model_form, _ref;
+          if (__indexOf.call(location.href, '?') >= 0 && (_ref = !'?next=', __indexOf.call(location.href, _ref) >= 0)) {
             history.replaceState({}, null, location.href.split('?')[0]);
           }
           if (this.jsonCfg.preview_stage && this.jsonCfg.preview_stage === 2) {
@@ -509,7 +509,15 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           if (this.manager.cfg.debug) {
             console.log('Debug request: ', _urlKwargs, _jsonData);
           }
-          url = Urls[viewName](_urlKwargs);
+          if (this.modalNr) {
+            if (this.Q('form[data-async]').length) {
+              url = this.Q('form[data-async]').attr('action');
+            } else if (this.jsonCfg.full_url) {
+              url = this.jsonCfg.full_url;
+            }
+          } else {
+            url = Urls[viewName](_urlKwargs);
+          }
           if (__indexOf.call(location.hash, '#') >= 0) {
             if (url) {
               url += location.hash;
@@ -517,7 +525,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
               url = location.hash;
             }
           }
-          if (url) {
+          if (url && !this.modalNr) {
             history.replaceState({}, null, url);
           }
           return $.get(url, { 'json_cfg': JSON.stringify(_jsonData) }, function (response) {

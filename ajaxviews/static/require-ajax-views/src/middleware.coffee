@@ -1,7 +1,7 @@
 define ->
   middleware =
     onPageLoad: ->
-      if '?' in location.href
+      if '?' in location.href and not '?next=' in location.href
         history.replaceState({}, null, location.href.split('?')[0])
 
       if @jsonCfg.preview_stage and @jsonCfg.preview_stage == 2
