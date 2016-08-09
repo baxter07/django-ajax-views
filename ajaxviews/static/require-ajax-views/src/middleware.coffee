@@ -1,9 +1,6 @@
 define ->
   middleware =
     onPageLoad: ->
-      if '?' in location.href and not '?next=' in location.href
-        history.replaceState({}, null, location.href.split('?')[0])
-
       if @jsonCfg.preview_stage and @jsonCfg.preview_stage == 2
         preview_data = {}
         preview_data['preview_stage'] = @jsonCfg.preview_stage
@@ -92,7 +89,7 @@ define ->
               if @jsonCache.ajax_load
                 @viewCache.onAjaxLoad() if @viewCache.onAjaxLoad
               else
-                @viewCache._initView()
+                @viewCache._initView(null, null, null, null)
 
 #        @Q('.preview-back').click (e) =>
 #          e.preventDefault()
@@ -126,6 +123,9 @@ define ->
 #                @manager.initView(scope: modalId)
 
     onLoad: ->
+      if '?' in location.href and '?next=' not in location.href
+        history.replaceState({}, null, location.href.split('?')[0])
+
       if @Q('.modal-link').length
         @Q('.modal-link:not(a)').on 'mouseup', (e) ->
           window.open($(this).attr('href')) if e.which == 2

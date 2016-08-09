@@ -10,6 +10,7 @@ define ['cs!manager'], (ViewManager) ->
       middleware: 'middleware'
       debug: false
       mixins: {}
+      progressBarAnimationSpeed: 300
 
     @config: (userCfg = {}) ->
       if 'cfgNode' of userCfg
@@ -35,6 +36,9 @@ define ['cs!manager'], (ViewManager) ->
 
       if 'middleware' of userCfg
         @_cfg.middleware = userCfg.middleware
+
+      if 'progressBarAnimationSpeed' of userCfg
+        @_cfg.progressBarAnimationSpeed = userCfg.progressBarAnimationSpeed
 
       if 'debug' of userCfg
         @_cfg.debug = userCfg.debug

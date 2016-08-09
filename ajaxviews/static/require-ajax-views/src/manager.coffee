@@ -60,3 +60,19 @@ define ->
 
       updateModal: (modalId, scope) ->
         $(modalId).find(@cfg.modalNode).replaceWith($(scope).find(@cfg.modalNode))
+
+      animateProgressBar: ->
+        animationSpeed = @cfg.progressBarAnimationSpeed
+        animateProgress = ->
+          $(@).stop()
+          $(@).width(0)
+          if $(@).data('stop-animate')
+            $(@).data('stop-animate', false)
+          else
+            $(@).animate({width: '100%'}, animationSpeed, 'swing', animateProgress)
+        $('#ajax-progress-bar').slideDown('fast')
+        $('#ajax-progress-bar .progress-bar').each animateProgress
+
+      stopProgressBar: ->
+        $('#ajax-progress-bar .progress-bar').data('stop-animate', true)
+        $('#ajax-progress-bar').slideUp('fast')

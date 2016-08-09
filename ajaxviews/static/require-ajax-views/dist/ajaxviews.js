@@ -124,6 +124,25 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           Manager.prototype.updateModal = function (modalId, scope) {
             return $(modalId).find(this.cfg.modalNode).replaceWith($(scope).find(this.cfg.modalNode));
           };
+          Manager.prototype.animateProgressBar = function () {
+            var animateProgress, animationSpeed;
+            animationSpeed = this.cfg.progressBarAnimationSpeed;
+            animateProgress = function () {
+              $(this).stop();
+              $(this).width(0);
+              if ($(this).data('stop-animate')) {
+                return $(this).data('stop-animate', false);
+              } else {
+                return $(this).animate({ width: '100%' }, animationSpeed, 'swing', animateProgress);
+              }
+            };
+            $('#ajax-progress-bar').slideDown('fast');
+            return $('#ajax-progress-bar .progress-bar').each(animateProgress);
+          };
+          Manager.prototype.stopProgressBar = function () {
+            $('#ajax-progress-bar .progress-bar').data('stop-animate', true);
+            return $('#ajax-progress-bar').slideUp('fast');
+          };
           return Manager;
         }();
         return ViewManager;
@@ -146,7 +165,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           modulePrefix: '',
           middleware: 'middleware',
           debug: false,
-          mixins: {}
+          mixins: {},
+          progressBarAnimationSpeed: 300
         };
         AjaxApp.config = function (userCfg) {
           if (userCfg == null) {
@@ -175,6 +195,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           }
           if ('middleware' in userCfg) {
             this._cfg.middleware = userCfg.middleware;
+          }
+          if ('progressBarAnimationSpeed' in userCfg) {
+            this._cfg.progressBarAnimationSpeed = userCfg.progressBarAnimationSpeed;
           }
           if ('debug' in userCfg) {
             return this._cfg.debug = userCfg.debug;
@@ -245,10 +268,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
       var middleware;
       return middleware = {
         onPageLoad: function () {
-          var preview_data, preview_model_form, _ref;
-          if (__indexOf.call(location.href, '?') >= 0 && (_ref = !'?next=', __indexOf.call(location.href, _ref) >= 0)) {
-            history.replaceState({}, null, location.href.split('?')[0]);
-          }
+          var preview_data, preview_model_form;
           if (this.jsonCfg.preview_stage && this.jsonCfg.preview_stage === 2) {
             preview_data = {};
             preview_data['preview_stage'] = this.jsonCfg.preview_stage;
@@ -389,7 +409,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
                         return _this.viewCache.onAjaxLoad();
                       }
                     } else {
-                      return _this.viewCache._initView();
+                      return _this.viewCache._initView(null, null, null, null);
                     }
                   }
                 }
@@ -398,6 +418,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           }
         },
         onLoad: function () {
+          if (__indexOf.call(location.href, '?') >= 0 && __indexOf.call(location.href, '?next=') < 0) {
+            history.replaceState({}, null, location.href.split('?')[0]);
+          }
           if (this.Q('.modal-link').length) {
             this.Q('.modal-link:not(a)').on('mouseup', function (e) {
               if (e.which === 2) {
@@ -480,9 +503,16 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
             return this.onLoad();
           }
         };
-        View.prototype._getRequestData = function (urlKwargs, jsonData) {
+        View.prototype._getRequestData = function (urlKwargs, jsonData, viewContext) {
           var key, value, _jsonData, _urlKwargs;
-          _urlKwargs = this.getUrlKwargs ? this.getUrlKwargs() : {};
+          if (viewContext == null) {
+            viewContext = null;
+          }
+          if (this.requestContext != null) {
+            _urlKwargs = this.requestContext.getUrlKwargs ? this.requestContext.getUrlKwargs() : {};
+          } else {
+            _urlKwargs = this.getUrlKwargs ? this.getUrlKwargs() : {};
+          }
           $.extend(_urlKwargs, urlKwargs);
           for (key in _urlKwargs) {
             value = _urlKwargs[key];
@@ -490,7 +520,11 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
               delete _urlKwargs[key];
             }
           }
-          _jsonData = this.getJsonData ? this.getJsonData() : {};
+          if (this.requestContext != null) {
+            _jsonData = this.requestContext.getJsonData ? this.requestContext.getJsonData() : {};
+          } else {
+            _jsonData = this.getJsonData ? this.getJsonData() : {};
+          }
           $.extend(_jsonData, jsonData);
           for (key in _jsonData) {
             value = _jsonData[key];
@@ -532,9 +566,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
             return callback(response);
           });
         };
-        View.prototype._initView = function (_arg) {
-          var animate, jsonData, urlKwargs, viewName, _ref;
-          _ref = _arg != null ? _arg : {}, viewName = _ref.viewName, urlKwargs = _ref.urlKwargs, jsonData = _ref.jsonData, animate = _ref.animate;
+        View.prototype._initView = function (viewName, urlKwargs, jsonData, animate) {
           if (viewName == null) {
             viewName = this.jsonCfg.view_name;
           }
@@ -553,7 +585,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
               if (_this.jsonCfg.ajax_load) {
                 _this.manager.updateView(response, animate);
                 _this.manager.debugInfo(_this.jsonCfg);
-                return _this._loadAjaxView();
+                _this._loadAjaxView();
+                return _this.manager.stopProgressBar();
               } else {
                 if (_this.manager.cfg.debug) {
                   console.log('this should only happen if user session has expired');
@@ -581,15 +614,12 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
           if (animate == null) {
             animate = true;
           }
+          this.manager.animateProgressBar();
           if (animate) {
             $(this.manager.cfg.ajaxNode).fadeOut('fast');
           }
           if (!viewName) {
-            return this._initView({
-              urlKwargs: urlKwargs,
-              jsonData: jsonData,
-              animate: animate
-            });
+            return this._initView(null, urlKwargs, jsonData, animate);
           } else if (pageLoad) {
             _ref1 = this._getRequestData(urlKwargs, jsonData), _urlKwargs = _ref1[0], _jsonData = _ref1[1];
             return location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData);
@@ -602,12 +632,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_view, cs_plugins_filterview;
                   return $(this.manager.cfg.ajaxNode).find(selector);
                 };
                 view = new View(Q, _this.manager.cfg.ajaxNode);
-                return view._initView({
-                  viewName: viewName,
-                  urlKwargs: urlKwargs,
-                  jsonData: jsonData,
-                  animate: animate
-                });
+                view.requestContext = _this;
+                view._initView(viewName, urlKwargs, jsonData, animate);
+                return delete view.requestContext;
               };
             }(this));
           }

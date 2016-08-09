@@ -22,12 +22,18 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       @onAjaxLoad() if @onAjaxLoad
       @onLoad() if @onLoad
 
-    _getRequestData: (urlKwargs, jsonData) ->
-      _urlKwargs = if @getUrlKwargs then @getUrlKwargs() else {}
+    _getRequestData: (urlKwargs, jsonData, viewContext = null) ->
+      if @requestContext?
+        _urlKwargs = if @requestContext.getUrlKwargs then @requestContext.getUrlKwargs() else {}
+      else
+        _urlKwargs = if @getUrlKwargs then @getUrlKwargs() else {}
       $.extend(_urlKwargs, urlKwargs)
       delete _urlKwargs[key] for key, value of _urlKwargs when not value?
 
-      _jsonData = if @getJsonData then @getJsonData() else {}
+      if @requestContext?
+        _jsonData = if @requestContext.getJsonData then @requestContext.getJsonData() else {}
+      else
+        _jsonData = if @getJsonData then @getJsonData() else {}
       $.extend(_jsonData, jsonData)
       delete _jsonData[key] for key, value of _jsonData when not value?
 
@@ -54,7 +60,7 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)
 
-    _initView: ({viewName, urlKwargs, jsonData, animate} = {}) ->
+    _initView: (viewName, urlKwargs, jsonData, animate) ->
       viewName ?= @jsonCfg.view_name
       urlKwargs ?= {}
       jsonData ?= {}
@@ -65,6 +71,7 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
           @manager.updateView(response, animate)
           @manager.debugInfo(@jsonCfg)
           @_loadAjaxView()
+          @manager.stopProgressBar()
         else
           console.log('this should only happen if user session has expired') if @manager.cfg.debug
           location.reload()
@@ -76,9 +83,10 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       pageLoad ?= false
       animate ?= true
 
+      @manager.animateProgressBar()
       $(@manager.cfg.ajaxNode).fadeOut('fast') if animate
       if not viewName
-        @_initView(urlKwargs: urlKwargs, jsonData: jsonData, animate: animate)
+        @_initView(null, urlKwargs, jsonData, animate)
       else if pageLoad
         [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
         location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData)
@@ -88,7 +96,9 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
         require [@manager.cfg.modulePrefix + module], (View) =>
           Q = (selector) -> $(@manager.cfg.ajaxNode).find(selector)
           view = new View(Q, @manager.cfg.ajaxNode)
-          view._initView(viewName: viewName, urlKwargs: urlKwargs, jsonData: jsonData, animate: animate)
+          view.requestContext = @
+          view._initView(viewName, urlKwargs, jsonData, animate)
+          delete view.requestContext
 
     requestSnippet: ({urlKwargs, jsonData, callback} = {}) ->
       urlKwargs ?= {}
