@@ -13,34 +13,17 @@ define ['cs!manager'], (ViewManager) ->
       progressBarAnimationSpeed: 300
 
     @config: (userCfg = {}) ->
-      if 'cfgNode' of userCfg
-        @_cfg.cfgNode = userCfg.cfgNode
-
-      if 'ajaxNode' of userCfg
-        @_cfg.ajaxNode = userCfg.ajaxNode
-
-      if 'modalNode' of userCfg
-        @_cfg.modalNode = userCfg.modalNode
-
-      if 'viewPath' of userCfg
-        @_cfg.viewPath = userCfg.viewPath + '/'
-
-      if 'mixinPath' of userCfg
-        @_cfg.mixinPath = userCfg.mixinPath + '/'
-
-      if 'mixins' of userCfg
-        @_cfg.mixins = userCfg.mixins
-
-      if 'modulePrefix' of userCfg
-        @_cfg.modulePrefix = userCfg.modulePrefix
-
-      if 'middleware' of userCfg
-        @_cfg.middleware = userCfg.middleware
-
-      if 'progressBarAnimationSpeed' of userCfg
-        @_cfg.progressBarAnimationSpeed = userCfg.progressBarAnimationSpeed
-
-      if 'debug' of userCfg
+      @_cfg.cfgNode = userCfg.cfgNode if userCfg.cfgNode
+      @_cfg.ajaxNode = userCfg.ajaxNode if userCfg.ajaxNode
+      @_cfg.modalNode = userCfg.modalNode if userCfg.modalNode?
+      @_cfg.viewPath = userCfg.viewPath + '/' if userCfg.viewPath?
+      @_cfg.mixinPath = userCfg.mixinPath + '/' if userCfg.mixinPath?
+      @_cfg.mixins = userCfg.mixins if userCfg.mixins?
+      @_cfg.modulePrefix = userCfg.modulePrefix if userCfg.modulePrefix?
+      @_cfg.middleware = userCfg.middleware if userCfg.middleware?
+      @_cfg.defaults = userCfg.defaults if userCfg.defaults?
+      @_cfg.progressBarAnimationSpeed = userCfg.progressBarAnimationSpeed if userCfg.progressBarAnimationSpeed?
+      if userCfg.debug?
         @_cfg.debug = userCfg.debug
       else if typeof require is "function" and typeof require.specified is "function"
         @_cfg.debug = true

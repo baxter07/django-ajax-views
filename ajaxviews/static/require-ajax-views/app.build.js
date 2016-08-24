@@ -7,9 +7,6 @@
     },
     include: [
         'cs!app',
-        'cs!manager',
-        'cs!middleware',
-        'cs!view',
         'cs!plugins/filterview'
     ],
     exclude: ['coffee-script'],

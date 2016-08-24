@@ -32,9 +32,9 @@ define ->
         @Q('form[data-async]').ajaxForm
 #          data: ajaxData
           beforeSerialize: ($form, options) =>
-            @onBeforeFormSerialize($form, options) if @onBeforeFormSerialize
+            @onBeforeFormSerialize($form, options) if @onBeforeFormSerialize?
           beforeSubmit: (arr, $form, options) =>
-            @onBeforeFormSubmit(arr, $form, options) if @onBeforeFormSubmit
+            @onBeforeFormSubmit(arr, $form, options) if @onBeforeFormSubmit?
           success: (response) =>
             if response.success
               @jsonCache.reload_view = true
@@ -71,7 +71,7 @@ define ->
               if $(formNode).length
                 for field, pk of @jsonCache.select_choice
                   fieldNode = $(formNode).find("#id_#{field}")
-                  $(fieldNode).append("""<option value="#{pk}"></option>""").trigger('chosen:updated')
+                  $(fieldNode).append("""<option value="#{pk}"></option>""")  # .trigger('chosen:updated')
                   $(fieldNode).val(pk).trigger('chosen:updated')
                 data = $(formNode).formSerialize() + '&form_data=true'
                 $.get $(formNode).attr('action'), data, (response) =>

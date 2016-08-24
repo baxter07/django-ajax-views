@@ -1,4 +1,4 @@
-define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
+define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddleware, dateutil) ->
   class View
     constructor: (@Q, @scopeName) ->
       @manager = ViewManager.get()
@@ -7,6 +7,8 @@ define ['cs!manager', 'cs!middleware'], (ViewManager, appMiddleware) ->
       @jsonCache = {}
       @jsonCfg = {}
       @modalNr = null
+      dateutil._defaults = @manager.cfg.defaults or {}
+      @dateutil = dateutil
       @['__' + name] = method for name, method of appMiddleware
       @['_' + name] = method for name, method of @manager.userMiddleware
 

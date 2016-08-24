@@ -11,10 +11,11 @@ define ->
         throw 'View manager can not be initialized without config.' if not @cfg
 
       getJsonCfg: (response = null) ->
+        # Use JSON.parse instead of $.parseJSON for jQuery v3 compatibility
         if response
-          $.parseJSON($(response).find(@cfg.cfgNode).html())
+          JSON.parse($(response).find(@cfg.cfgNode).html())
         else
-          $.parseJSON($(@cfg.cfgNode).html())
+          JSON.parse($(@cfg.cfgNode).html())
 
       getViewTypeMethod: (viewType) ->
         switch
