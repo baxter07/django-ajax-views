@@ -1,4 +1,4 @@
-define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddleware, dateutil) ->
+define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware, utils) ->
   class View
     constructor: (@Q, @scopeName) ->
       @manager = ViewManager.get()
@@ -7,8 +7,8 @@ define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddlewa
       @jsonCache = {}
       @jsonCfg = {}
       @modalNr = null
-      dateutil._defaults = @manager.cfg.defaults or {}
-      @dateutil = dateutil
+      @utils = {}
+      @utils[name] = method.bind(@) for name, method of utils
       @['__' + name] = method for name, method of appMiddleware
       @['_' + name] = method for name, method of @manager.userMiddleware
 
@@ -20,22 +20,22 @@ define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddlewa
         @_onLoad() if @_onLoad
         if @jsonCfg.init_view_type
           method = @manager.getViewTypeMethod(@jsonCfg.init_view_type)
-          @[method]() if @[method]
+          @[method]() if @[method]?
       @onAjaxLoad() if @onAjaxLoad
       @onLoad() if @onLoad
 
-    _getRequestData: (urlKwargs, jsonData, viewContext = null) ->
+    _getRequestData: (urlKwargs, jsonData) ->
       if @requestContext?
-        _urlKwargs = if @requestContext.getUrlKwargs then @requestContext.getUrlKwargs() else {}
+        _urlKwargs = if @requestContext.getUrlKwargs? then @requestContext.getUrlKwargs() else {}
       else
-        _urlKwargs = if @getUrlKwargs then @getUrlKwargs() else {}
+        _urlKwargs = if @getUrlKwargs? then @getUrlKwargs() else {}
       $.extend(_urlKwargs, urlKwargs)
       delete _urlKwargs[key] for key, value of _urlKwargs when not value?
 
       if @requestContext?
-        _jsonData = if @requestContext.getJsonData then @requestContext.getJsonData() else {}
+        _jsonData = if @requestContext.getJsonData? then @requestContext.getJsonData() else {}
       else
-        _jsonData = if @getJsonData then @getJsonData() else {}
+        _jsonData = if @getJsonData? then @getJsonData() else {}
       $.extend(_jsonData, jsonData)
       delete _jsonData[key] for key, value of _jsonData when not value?
 
@@ -73,7 +73,7 @@ define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddlewa
           @manager.updateView(response, animate)
           @manager.debugInfo(@jsonCfg)
           @_loadAjaxView()
-          @manager.stopProgressBar()
+          @utils.stopProgressBar()
         else
           console.log('this should only happen if user session has expired') if @manager.cfg.debug
           location.reload()
@@ -85,8 +85,8 @@ define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddlewa
       pageLoad ?= false
       animate ?= true
 
-      @manager.animateProgressBar()
-      $(@manager.cfg.ajaxNode).fadeOut('fast') if animate
+      @utils.animateProgressBar()
+      $(@manager.cfg.html.ajaxNode).fadeOut('fast') if animate
       if not viewName
         @_initView(null, urlKwargs, jsonData, animate)
       else if pageLoad
@@ -95,9 +95,9 @@ define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddlewa
       else
         # coffee module is required for requested view
         module = @manager.getModuleName(viewName)
-        require [@manager.cfg.modulePrefix + module], (View) =>
-          Q = (selector) -> $(@manager.cfg.ajaxNode).find(selector)
-          view = new View(Q, @manager.cfg.ajaxNode)
+        require [@manager.cfg.modules.prefix + module], (View) =>
+          Q = (selector) -> $(@manager.cfg.html.ajaxNode).find(selector)
+          view = new View(Q, @manager.cfg.html.ajaxNode)
           view.requestContext = @
           view._initView(viewName, urlKwargs, jsonData, animate)
           delete view.requestContext
@@ -128,8 +128,3 @@ define ['cs!manager', 'cs!middleware', 'cs!dateutil'], (ViewManager, appMiddlewa
           view.modalNr = @modalNr + 1 or 1
           view.jsonCfg = jsonCfg
           view._loadAjaxView()
-
-    initModalLinks: (scope) ->
-      $(scope).find('.modal-link').click (e) =>
-        e.preventDefault()
-        @requestModal($(e.currentTarget).attr('href'))

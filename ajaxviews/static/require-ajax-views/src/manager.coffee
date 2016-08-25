@@ -13,9 +13,9 @@ define ->
       getJsonCfg: (response = null) ->
         # Use JSON.parse instead of $.parseJSON for jQuery v3 compatibility
         if response
-          JSON.parse($(response).find(@cfg.cfgNode).html())
+          JSON.parse($(response).find(@cfg.html.cfgNode).html())
         else
-          JSON.parse($(@cfg.cfgNode).html())
+          JSON.parse($(@cfg.html.cfgNode).html())
 
       getViewTypeMethod: (viewType) ->
         switch
@@ -27,8 +27,8 @@ define ->
       getModuleName: (viewName) ->
         for mixin, views of @cfg.mixins
           if viewName in views
-            return @cfg.mixinPath + mixin
-        return @cfg.viewPath + viewName
+            return @cfg.modules.mixinPath + mixin
+        return @cfg.modules.viewPath + viewName
 
       requireModule: (jsonCfg, callback) ->
         @debugInfo(jsonCfg)
@@ -41,7 +41,7 @@ define ->
           errorFunc = (error) =>
             console.log("Debug: no module #{moduleName} defined") if @cfg.debug
 
-          require [@cfg.modulePrefix + moduleName], viewFunc, errorFunc
+          require [@cfg.modules.prefix + moduleName], viewFunc, errorFunc
         else
           callback(require('cs!view'))
 
@@ -54,26 +54,8 @@ define ->
           console.log('Debug response:', jsonCfg)
 
       updateView: (scope, animate=true) ->
-        if animate
-          $(@cfg.ajaxNode).html($(scope).find(@cfg.ajaxNode).html()).fadeIn('fast')
-        else
-          $(@cfg.ajaxNode).html($(scope).find(@cfg.ajaxNode).html())
+        node = $(@cfg.html.ajaxNode).html($(scope).find(@cfg.html.ajaxNode).html())
+        node.fadeIn('fast') if animate
 
       updateModal: (modalId, scope) ->
-        $(modalId).find(@cfg.modalNode).replaceWith($(scope).find(@cfg.modalNode))
-
-      animateProgressBar: ->
-        animationSpeed = @cfg.progressBarAnimationSpeed
-        animateProgress = ->
-          $(@).stop()
-          $(@).width(0)
-          if $(@).data('stop-animate')
-            $(@).data('stop-animate', false)
-          else
-            $(@).animate({width: '100%'}, animationSpeed, 'swing', animateProgress)
-        $('#ajax-progress-bar').slideDown('fast')
-        $('#ajax-progress-bar .progress-bar').each animateProgress
-
-      stopProgressBar: ->
-        $('#ajax-progress-bar .progress-bar').data('stop-animate', true)
-        $('#ajax-progress-bar').slideUp('fast')
+        $(modalId).find(@cfg.html.modalNode).replaceWith($(scope).find(@cfg.html.modalNode))

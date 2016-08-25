@@ -5,7 +5,7 @@
  * Copyright (c) 2016 Emanuel Hafner
  * Licensed under the MIT License
  */
-var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filterview;
+var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterview;
 (function (global, factory) {
   if (typeof jQuery === 'undefined') {
     throw new Error('Ajax views requires jQuery.');
@@ -50,9 +50,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
               response = null;
             }
             if (response) {
-              return JSON.parse($(response).find(this.cfg.cfgNode).html());
+              return JSON.parse($(response).find(this.cfg.html.cfgNode).html());
             } else {
-              return JSON.parse($(this.cfg.cfgNode).html());
+              return JSON.parse($(this.cfg.html.cfgNode).html());
             }
           };
           Manager.prototype.getViewTypeMethod = function (viewType) {
@@ -73,10 +73,10 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             for (mixin in _ref) {
               views = _ref[mixin];
               if (__indexOf.call(views, viewName) >= 0) {
-                return this.cfg.mixinPath + mixin;
+                return this.cfg.modules.mixinPath + mixin;
               }
             }
-            return this.cfg.viewPath + viewName;
+            return this.cfg.modules.viewPath + viewName;
           };
           Manager.prototype.requireModule = function (jsonCfg, callback) {
             var errorFunc, moduleName, viewFunc;
@@ -93,7 +93,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
                   }
                 };
               }(this);
-              return require([this.cfg.modulePrefix + moduleName], viewFunc, errorFunc);
+              return require([this.cfg.modules.prefix + moduleName], viewFunc, errorFunc);
             } else {
               return callback(cs_view);
             }
@@ -112,36 +112,17 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             }
           };
           Manager.prototype.updateView = function (scope, animate) {
+            var node;
             if (animate == null) {
               animate = true;
             }
+            node = $(this.cfg.html.ajaxNode).html($(scope).find(this.cfg.html.ajaxNode).html());
             if (animate) {
-              return $(this.cfg.ajaxNode).html($(scope).find(this.cfg.ajaxNode).html()).fadeIn('fast');
-            } else {
-              return $(this.cfg.ajaxNode).html($(scope).find(this.cfg.ajaxNode).html());
+              return node.fadeIn('fast');
             }
           };
           Manager.prototype.updateModal = function (modalId, scope) {
-            return $(modalId).find(this.cfg.modalNode).replaceWith($(scope).find(this.cfg.modalNode));
-          };
-          Manager.prototype.animateProgressBar = function () {
-            var animateProgress, animationSpeed;
-            animationSpeed = this.cfg.progressBarAnimationSpeed;
-            animateProgress = function () {
-              $(this).stop();
-              $(this).width(0);
-              if ($(this).data('stop-animate')) {
-                return $(this).data('stop-animate', false);
-              } else {
-                return $(this).animate({ width: '100%' }, animationSpeed, 'swing', animateProgress);
-              }
-            };
-            $('#ajax-progress-bar').slideDown('fast');
-            return $('#ajax-progress-bar .progress-bar').each(animateProgress);
-          };
-          Manager.prototype.stopProgressBar = function () {
-            $('#ajax-progress-bar .progress-bar').data('stop-animate', true);
-            return $('#ajax-progress-bar').slideUp('fast');
+            return $(modalId).find(this.cfg.html.modalNode).replaceWith($(scope).find(this.cfg.html.modalNode));
           };
           return Manager;
         }();
@@ -157,50 +138,36 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
         function AjaxApp() {
         }
         AjaxApp._cfg = {
-          cfgNode: '#config',
-          ajaxNode: '#ajax-content',
-          modalNode: '.modal-dialog',
-          viewPath: 'views/',
-          mixinPath: 'mixins/',
-          modulePrefix: '',
-          middleware: 'middleware',
-          debug: false,
+          html: {
+            cfgNode: '#config',
+            ajaxNode: '#ajax-content',
+            modalNode: '.modal-dialog'
+          },
+          modules: {
+            prefix: '',
+            viewPath: 'views/',
+            mixinPath: 'mixins/',
+            middleware: ''
+          },
           mixins: {},
-          progressBarAnimationSpeed: 300
+          debug: false,
+          defaults: { progressBar: { animationSpeed: 300 } }
         };
         AjaxApp.config = function (userCfg) {
           if (userCfg == null) {
             userCfg = {};
           }
-          if (userCfg.cfgNode) {
-            this._cfg.cfgNode = userCfg.cfgNode;
+          if (userCfg.html != null) {
+            $.extend(this._cfg.html, userCfg.html);
           }
-          if (userCfg.ajaxNode) {
-            this._cfg.ajaxNode = userCfg.ajaxNode;
+          if (userCfg.modules != null) {
+            $.extend(this._cfg.modules, userCfg.modules);
           }
-          if (userCfg.modalNode != null) {
-            this._cfg.modalNode = userCfg.modalNode;
-          }
-          if (userCfg.viewPath != null) {
-            this._cfg.viewPath = userCfg.viewPath + '/';
-          }
-          if (userCfg.mixinPath != null) {
-            this._cfg.mixinPath = userCfg.mixinPath + '/';
+          if (userCfg.defaults != null) {
+            $.extend(this._cfg.defaults, userCfg.defaults);
           }
           if (userCfg.mixins != null) {
             this._cfg.mixins = userCfg.mixins;
-          }
-          if (userCfg.modulePrefix != null) {
-            this._cfg.modulePrefix = userCfg.modulePrefix;
-          }
-          if (userCfg.middleware != null) {
-            this._cfg.middleware = userCfg.middleware;
-          }
-          if (userCfg.defaults != null) {
-            this._cfg.defaults = userCfg.defaults;
-          }
-          if (userCfg.progressBarAnimationSpeed != null) {
-            this._cfg.progressBarAnimationSpeed = userCfg.progressBarAnimationSpeed;
           }
           if (userCfg.debug != null) {
             return this._cfg.debug = userCfg.debug;
@@ -223,30 +190,30 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
               if (view.initMiddleware) {
                 view.__onPageLoad();
                 view.__onLoad();
-                if (view._onPageLoad) {
+                if (view._onPageLoad != null) {
                   view._onPageLoad();
                 }
-                if (view._onLoad) {
+                if (view._onLoad != null) {
                   view._onLoad();
                 }
                 if (jsonCfg.init_view_type) {
                   method = manager.getViewTypeMethod(jsonCfg.init_view_type);
-                  if (view[method]) {
+                  if (view[method] != null) {
                     view[method]();
                   }
                 }
               }
-              if (view.onPageLoad) {
+              if (view.onPageLoad != null) {
                 view.onPageLoad();
               }
-              if (view.onLoad) {
+              if (view.onLoad != null) {
                 return view.onLoad();
               }
             });
           };
-          if (this._cfg.middleware) {
+          if (this._cfg.modules.middleware) {
             /* amdclean */
-            return require([this._cfg.modulePrefix + this._cfg.middleware], function (middleware) {
+            return require([this._cfg.modules.prefix + this._cfg.modules.middleware], function (middleware) {
               manager.userMiddleware = middleware;
               return loadView();
             });
@@ -451,12 +418,20 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
   }.call(this));
   // Generated by CoffeeScript 1.7.1
   (function () {
-    cs_dateutil = function () {
-      var dateutil;
-      return dateutil = {
+    cs_utils = function () {
+      var utils;
+      return utils = {
+        initModalLinks: function (scope) {
+          return $(scope).find('.modal-link').click(function (_this) {
+            return function (e) {
+              e.preventDefault();
+              return _this.requestModal($(e.currentTarget).attr('href'));
+            };
+          }(this));
+        },
         initDateInput: function (element, opts) {
           var dateinput, _i, _len, _opts, _ref, _results;
-          _opts = this._defaults.bootstrapDateOptions != null ? this._defaults.bootstrapDateOptions : {};
+          _opts = this.manager.cfg.defaults.dateWidget || {};
           $.extend(_opts, opts);
           _ref = $(element).toArray();
           _results = [];
@@ -471,6 +446,25 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             _results.push($(dateinput).datepicker(_opts));
           }
           return _results;
+        },
+        animateProgressBar: function () {
+          var animateProgress, animationSpeed;
+          animationSpeed = this.manager.cfg.defaults.progressBar.animationSpeed;
+          animateProgress = function () {
+            $(this).stop();
+            $(this).width(0);
+            if ($(this).data('stop-animate')) {
+              return $(this).data('stop-animate', false);
+            } else {
+              return $(this).animate({ width: '100%' }, animationSpeed, 'swing', animateProgress);
+            }
+          };
+          $('#ajax-progress-bar').slideDown('fast');
+          return $('#ajax-progress-bar .progress-bar').each(animateProgress);
+        },
+        stopProgressBar: function () {
+          $('#ajax-progress-bar .progress-bar').data('stop-animate', true);
+          return $('#ajax-progress-bar').slideUp('fast');
         }
       };
     }();
@@ -484,7 +478,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
       }
       return -1;
     };
-    cs_view = function (ViewManager, appMiddleware, dateutil) {
+    cs_view = function (ViewManager, appMiddleware, utils) {
       var View;
       return View = function () {
         function View(Q, scopeName) {
@@ -497,8 +491,11 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
           this.jsonCache = {};
           this.jsonCfg = {};
           this.modalNr = null;
-          dateutil._defaults = this.manager.cfg.defaults || {};
-          this.dateutil = dateutil;
+          this.utils = {};
+          for (name in utils) {
+            method = utils[name];
+            this.utils[name] = method.bind(this);
+          }
           for (name in appMiddleware) {
             method = appMiddleware[name];
             this['__' + name] = method;
@@ -522,7 +519,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             }
             if (this.jsonCfg.init_view_type) {
               method = this.manager.getViewTypeMethod(this.jsonCfg.init_view_type);
-              if (this[method]) {
+              if (this[method] != null) {
                 this[method]();
               }
             }
@@ -534,15 +531,12 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             return this.onLoad();
           }
         };
-        View.prototype._getRequestData = function (urlKwargs, jsonData, viewContext) {
+        View.prototype._getRequestData = function (urlKwargs, jsonData) {
           var key, value, _jsonData, _urlKwargs;
-          if (viewContext == null) {
-            viewContext = null;
-          }
           if (this.requestContext != null) {
-            _urlKwargs = this.requestContext.getUrlKwargs ? this.requestContext.getUrlKwargs() : {};
+            _urlKwargs = this.requestContext.getUrlKwargs != null ? this.requestContext.getUrlKwargs() : {};
           } else {
-            _urlKwargs = this.getUrlKwargs ? this.getUrlKwargs() : {};
+            _urlKwargs = this.getUrlKwargs != null ? this.getUrlKwargs() : {};
           }
           $.extend(_urlKwargs, urlKwargs);
           for (key in _urlKwargs) {
@@ -552,9 +546,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             }
           }
           if (this.requestContext != null) {
-            _jsonData = this.requestContext.getJsonData ? this.requestContext.getJsonData() : {};
+            _jsonData = this.requestContext.getJsonData != null ? this.requestContext.getJsonData() : {};
           } else {
-            _jsonData = this.getJsonData ? this.getJsonData() : {};
+            _jsonData = this.getJsonData != null ? this.getJsonData() : {};
           }
           $.extend(_jsonData, jsonData);
           for (key in _jsonData) {
@@ -617,7 +611,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
                 _this.manager.updateView(response, animate);
                 _this.manager.debugInfo(_this.jsonCfg);
                 _this._loadAjaxView();
-                return _this.manager.stopProgressBar();
+                return _this.utils.stopProgressBar();
               } else {
                 if (_this.manager.cfg.debug) {
                   console.log('this should only happen if user session has expired');
@@ -645,9 +639,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
           if (animate == null) {
             animate = true;
           }
-          this.manager.animateProgressBar();
+          this.utils.animateProgressBar();
           if (animate) {
-            $(this.manager.cfg.ajaxNode).fadeOut('fast');
+            $(this.manager.cfg.html.ajaxNode).fadeOut('fast');
           }
           if (!viewName) {
             return this._initView(null, urlKwargs, jsonData, animate);
@@ -656,13 +650,13 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             return location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData);
           } else {
             module = this.manager.getModuleName(viewName);
-            return require([this.manager.cfg.modulePrefix + module], function (_this) {
+            return require([this.manager.cfg.modules.prefix + module], function (_this) {
               return function (View) {
                 var Q, view;
                 Q = function (selector) {
-                  return $(this.manager.cfg.ajaxNode).find(selector);
+                  return $(this.manager.cfg.html.ajaxNode).find(selector);
                 };
-                view = new View(Q, _this.manager.cfg.ajaxNode);
+                view = new View(Q, _this.manager.cfg.html.ajaxNode);
                 view.requestContext = _this;
                 view._initView(viewName, urlKwargs, jsonData, animate);
                 return delete view.requestContext;
@@ -722,17 +716,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_dateutil, cs_view, cs_plugins_filt
             };
           }(this));
         };
-        View.prototype.initModalLinks = function (scope) {
-          return $(scope).find('.modal-link').click(function (_this) {
-            return function (e) {
-              e.preventDefault();
-              return _this.requestModal($(e.currentTarget).attr('href'));
-            };
-          }(this));
-        };
         return View;
       }();
-    }(cs_manager, cs_middleware, cs_dateutil);
+    }(cs_manager, cs_middleware, cs_utils);
   }.call(this));
   // Generated by CoffeeScript 1.7.1
   (function () {
