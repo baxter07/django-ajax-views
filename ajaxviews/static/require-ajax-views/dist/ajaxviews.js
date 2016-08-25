@@ -431,6 +431,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
         },
         initDateInput: function (element, opts) {
           var dateinput, _i, _len, _opts, _ref, _results;
+          if (opts == null) {
+            opts = {};
+          }
           _opts = this.manager.cfg.defaults.dateWidget || {};
           $.extend(_opts, opts);
           _ref = $(element).toArray();
@@ -451,8 +454,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           var animateProgress, animationSpeed;
           animationSpeed = this.manager.cfg.defaults.progressBar.animationSpeed;
           animateProgress = function () {
-            $(this).stop();
-            $(this).width(0);
+            $(this).stop().width(0);
             if ($(this).data('stop-animate')) {
               return $(this).data('stop-animate', false);
             } else {
@@ -511,10 +513,10 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           if (this.initMiddleware) {
             this.__onAjaxLoad();
             this.__onLoad();
-            if (this._onAjaxLoad) {
+            if (this._onAjaxLoad != null) {
               this._onAjaxLoad();
             }
-            if (this._onLoad) {
+            if (this._onLoad != null) {
               this._onLoad();
             }
             if (this.jsonCfg.init_view_type) {

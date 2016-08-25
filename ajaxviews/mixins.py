@@ -56,7 +56,7 @@ class CsrfExemptMixin:
         return super().dispatch(*args, **kwargs)
 
 
-class EditMixin(SuccessMessageMixin):
+class FormMixin(SuccessMessageMixin):
     def __init__(self, **kwargs):
         if 'form_class' in kwargs and 'model' not in kwargs and hasattr(kwargs['form_class'].Meta, 'model'):
             kwargs['model'] = getattr(kwargs['form_class'].Meta, 'model')
@@ -114,10 +114,7 @@ class EditMixin(SuccessMessageMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if hasattr(self, 'get_form_class'):
-            if hasattr(self.get_form_class().Meta, 'form_size'):
-                context['page_size'] = getattr(self.get_form_class().Meta, 'form_size')
-            else:
-                context['page_size'] = 'sm'
+            context['page_size'] = getattr(self.get_form_class().Meta, 'form_size', 'sm')
         if hasattr(self, 'json_cfg') and 'init_view_type' not in self.json_cfg:
             self.json_cfg['init_view_type'] = 'formView'
         return context

@@ -16,8 +16,8 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       if @initMiddleware
         @__onAjaxLoad()
         @__onLoad()
-        @_onAjaxLoad() if @_onAjaxLoad
-        @_onLoad() if @_onLoad
+        @_onAjaxLoad() if @_onAjaxLoad?
+        @_onLoad() if @_onLoad?
         if @jsonCfg.init_view_type
           method = @manager.getViewTypeMethod(@jsonCfg.init_view_type)
           @[method]() if @[method]?

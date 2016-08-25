@@ -16,7 +16,7 @@ from django.shortcuts import render_to_response
 
 from extra_views import ModelFormSetView
 
-from .mixins import CsrfExemptMixin, AjaxMixin, EditMixin, ModalMixin, ModalFormMixin, PreviewMixin
+from .mixins import CsrfExemptMixin, AjaxMixin, FormMixin, ModalMixin, ModalFormMixin, PreviewMixin
 from .helpers import get_objects_for_model, assign_obj_perm, remove_obj_perm, construct_autocomplete_searchform
 
 
@@ -178,7 +178,7 @@ class GenericDetailView(LoginRequiredMixin, ModalMixin, AjaxMixin, DetailView):
         return context
 
 
-class CreateViewMixin(EditMixin, AjaxMixin):
+class CreateViewMixin(FormMixin, AjaxMixin):
     template_name = 'ajaxviews/generic_form.html'
 
     def __init__(self, **kwargs):
@@ -230,7 +230,7 @@ class PreviewCreateView(CsrfExemptMixin, LoginRequiredMixin, ModalFormMixin, Pre
         return kwargs
 
 
-class UpdateViewMixin(EditMixin, AjaxMixin):
+class UpdateViewMixin(FormMixin, AjaxMixin):
     template_name = 'ajaxviews/generic_form.html'
 
     def get_form_kwargs(self):
