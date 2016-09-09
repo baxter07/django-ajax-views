@@ -1,0 +1,62 @@
+//########## VARIABLES ##########
+
+unless $media-width-lg is defined
+  $media-width-lg = 1200px
+
+unless $media-width-md is defined
+  $media-width-md = 992px
+
+unless $container-margin is defined
+  $container-margin = 2em
+
+unless $modal-margin is defined
+  $modal-margin = 2em
+
+unless $sidebar-offset-list is defined
+  $sidebar-offset-list = ('xs' 150px) ('sm' 200px) ('md' 250px) ('lg' 300px) ('xl' 400px)
+
+unless $view-size-list-margin is defined
+  $view-size-list = ('xs' 300px) ('sm' 400px) ('md' 500px) ('lg' 600px) ('xl' 800px) ('xxl' 1000px) ('xxxl' 1200px)
+
+//########## PAGE SIZE ##########
+
+.container-full
+  @extend .container
+  +above($media-width-lg)
+    width auto
+    margin-left $container-margin
+    margin-right $container-margin
+
+for sidebar_size in $sidebar-offset-list
+  .container-full-sidebar-offset-{sidebar_size}
+    @extend .container
+    +above($media-width-lg)
+      width auto
+      margin-left $container-margin
+      margin-right $container-margin
+
+for size in $view-size-list
+  .container-{size}
+    @extend .container
+    // +above($media-width-md)
+    +above(size[1])
+      width size[1]
+  for sidebar_size in $sidebar-offset-list
+    .container-{size}-sidebar-offset-{sidebar_size}
+      @extend .container
+      +above(size[1] + sidebar_size[1])
+        width size[1] + sidebar_size[1]
+    .sidebar-offset-{sidebar_size}
+      +above($media-width-md)
+        margin-left sidebar_size[1]
+
+//########## MODAL SIZE ##########
+
+.modal .modal-dialog.modal-size-full
+  width auto
+  margin-left $modal-margin
+  margin-right $modal-margin
+
+for size in $view-size-list
+  .modal .modal-dialog.modal-size-{size}
+    width size[1]

@@ -21,8 +21,8 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
         if @jsonCfg.init_view_type
           method = @manager.getViewTypeMethod(@jsonCfg.init_view_type)
           @[method]() if @[method]?
-      @onAjaxLoad() if @onAjaxLoad
-      @onLoad() if @onLoad
+      @onAjaxLoad() if @onAjaxLoad?
+      @onLoad() if @onLoad?
 
     _getRequestData: (urlKwargs, jsonData) ->
       if @requestContext?
