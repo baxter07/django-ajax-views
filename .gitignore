@@ -17,6 +17,7 @@ __pycache__/
 lib64/
 env/
 build/
+_build/
 develop-eggs/
 downloads/
 eggs/

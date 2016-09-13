@@ -1,5 +1,7 @@
 @ECHO OFF
 
+set SPHINXBUILD=..\..\virtualenv_docs\Scripts\sphinx-build.exe
+
 REM Command file for Sphinx documentation
 
 if "%SPHINXBUILD%" == "" (
@@ -170,7 +172,7 @@ if "%1" == "latex" (
 if "%1" == "latexpdf" (
 	%SPHINXBUILD% -b latex %ALLSPHINXOPTS% %BUILDDIR%/latex
 	cd %BUILDDIR%/latex
-	make all-pdf
+	C:\LocalData\bin\make.exe all-pdf
 	cd %~dp0
 	echo.
 	echo.Build finished; the PDF files are in %BUILDDIR%/latex.
@@ -277,5 +279,13 @@ if "%1" == "dummy" (
 	echo.Build finished. Dummy builder generates no files.
 	goto end
 )
+
+if  "%1" == "pdf" (
+    %SPHINXBUILD% -b pdf %ALLSPHINXOPTS% %BUILDDIR%/pdf
+    echo.
+    echo.Build finished. The PDF files are in %BUILDDIR%/pdf
+    goto end
+)
+
 
 :end
