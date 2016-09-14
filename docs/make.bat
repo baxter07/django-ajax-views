@@ -31,6 +31,7 @@ if "%1" == "help" (
 	echo.  epub       to make an epub
 	echo.  epub3      to make an epub3
 	echo.  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter
+	echo.  latexpdf   to make PDF files
 	echo.  text       to make text files
 	echo.  man        to make manual pages
 	echo.  texinfo    to make Texinfo files
