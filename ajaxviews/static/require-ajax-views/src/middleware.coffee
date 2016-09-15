@@ -123,7 +123,7 @@ define ->
 #                @manager.initView(scope: modalId)
 
     onLoad: ->
-      if '?' in location.href and '?next=' not in location.href
+      if location.search and location.search.indexOf('next=') < 0
         history.replaceState({}, null, location.href.split('?')[0])
 
       if @Q('.modal-link').length

@@ -52,12 +52,12 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
           url = @jsonCfg.full_url
       else
         url = Urls[viewName or @jsonCfg.view_name](_urlKwargs)
-        if '#' in location.hash
+        if location.hash
           if url
             url += location.hash
           else
             url = location.hash
-        history.replaceState({}, null, url) if url and not @modalNr
+        history.replaceState({}, null, url) if url
 
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)
