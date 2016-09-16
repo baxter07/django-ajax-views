@@ -1,5 +1,3 @@
-django-ajax-views
-=================
 
 .. image:: https://img.shields.io/pypi/v/django-ajax-views.svg
     :target: https://pypi.python.org/pypi/django-ajax-views
@@ -20,4 +18,4 @@ django-ajax-views
     .. image:: https://img.shields.io/pypi/dm/django-ajax-views.svg?maxAge=2592000
         :target: https://pypi.python.org/pypi/django-ajax-views
 
-Django class based views extension working together with js library require-ajax-views.
+.. include:: docs/index.rst
