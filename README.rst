@@ -27,7 +27,7 @@ This library is an extension of Django's class-based views and works together wi
 **require-ajax-views**. Some basic knowledge of RequireJS and Django's class-based views would be desirable
 before continuing with this guide.
 
-.. image:: docs/_static/server_browser.svg
+.. image:: https://docs.google.com/drawings/d/1TUAFE-3R7uK7m5PRbaPIpC-VuPU-VEYyGLuJIBaBd_M/pub?w=407&h=303
     :alt: server browser relations
     :width: 380
     :align: right
@@ -53,21 +53,14 @@ to simply inherit from :code:`ajaxviews.View` class. You can still use javascrip
     });
 
 
-    # my_view.coffee
-    define ['ajaxviews'], (ajaxviews) ->
-      class MyView extends ajaxviews.View
-        onLoad: ->
-          # access class instance with '@'
-
-
-    // my_view.ts
-    define(['ajaxviews'], function(ajaxviews) {
-      class MyView extends ajaxviews.View {
-        onLoad() {
-          // access class instance with 'this'
-        }
-      }
-    }
+    # my_view.coffee                               // my_view.ts
+    define ['ajaxviews'], (ajaxviews) ->           define(['ajaxviews'], function(ajaxviews) {
+      class MyView extends ajaxviews.View            class MyView extends ajaxviews.View {
+        onLoad: ->                                     onLoad() {
+          # access class instance with '@'               // access class instance with 'this'
+                                                       }
+                                                     }
+                                                   }
 
 For this to work you need to set up RequireJS and place the JS files inside the :code:`views` directory which is
 located in JS root. In :code:`main.js` require :code:`ajaxviews` and initialize the app. The :code:`ajaxviews.App`
@@ -97,8 +90,7 @@ passing the *URL name* the view class is mapped to, to the client side app.::
         from .views import MyAjaxView
 
         urlpatterns = [
-            url(r'^my/view/$', MyAjaxView.as_view(),
-                name='my_view'),
+            url(r'^my/view/$', MyAjaxView.as_view(), name='my_view'),
         ]
 
 
