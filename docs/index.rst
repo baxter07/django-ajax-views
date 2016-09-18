@@ -116,7 +116,6 @@ passing the *URL name* the view class is mapped to, to the client side app.
        :caption: urls.py
        :name: urls conf
 
-        # urls.py
         from django.conf.urls import url
         from .views import MyAjaxView
 
@@ -129,7 +128,6 @@ passing the *URL name* the view class is mapped to, to the client side app.
        :caption: views.py
        :name: view classes
 
-        # views.py
         from django.views.generic import View
         from ajaxviews.mixins import AjaxMixin
 

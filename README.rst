@@ -27,7 +27,7 @@ This library is an extension of Django's class-based views and works together wi
 **require-ajax-views**. Some basic knowledge of RequireJS and Django's class-based views would be desirable
 before continuing with this guide.
 
-.. image:: _static/server_browser.svg
+.. image:: docs/_static/server_browser.svg
     :alt: server browser relations
     :width: 380
     :align: right
@@ -41,13 +41,9 @@ Client Side
 
 Since javascript doesn't support class definitions and inheritance I recommend using coffeescript or typescript
 to simply inherit from :code:`ajaxviews.View` class. You can still use javascript though by using the built in
-:code:`extendjs` function to mimic class inheritance.
+:code:`extendjs` function to mimic class inheritance.::
 
-.. code-block:: javascript
-   :caption: my_view.js
-   :name: javascript class
-   :linenos:
-
+    // my_view.js
     define(['ajaxviews'], function(ajaxviews) {
       var MyView = ajaxviews.extendjs(ajaxviews.View);
       MyView.prototype.onLoad = function () {
@@ -56,38 +52,28 @@ to simply inherit from :code:`ajaxviews.View` class. You can still use javascrip
       return MyView;
     });
 
-.. container:: flex-grid
 
-    .. code-block:: coffeescript
-       :caption: my_view.coffee
-       :name: coffeescript class
+    # my_view.coffee
+    define ['ajaxviews'], (ajaxviews) ->
+      class MyView extends ajaxviews.View
+        onLoad: ->
+          # access class instance with '@'
 
-        define ['ajaxviews'], (ajaxviews) ->
-          class MyView extends ajaxviews.View
-            onLoad: ->
-              # access class instance with '@'
 
-    .. code-block:: typescript
-       :caption: my_view.ts
-       :name: typescript class
-
-        define(['ajaxviews'], function(ajaxviews) {
-          class MyView extends ajaxviews.View {
-            onLoad() {
-              // access class instance with 'this'
-            }
-          }
+    // my_view.ts
+    define(['ajaxviews'], function(ajaxviews) {
+      class MyView extends ajaxviews.View {
+        onLoad() {
+          // access class instance with 'this'
         }
+      }
+    }
 
 For this to work you need to set up RequireJS and place the JS files inside the :code:`views` directory which is
 located in JS root. In :code:`main.js` require :code:`ajaxviews` and initialize the app. The :code:`ajaxviews.App`
-will execute the class that's placed inside the file with the same name as the *URL name* from django's *URL conf*.
+will execute the class that's placed inside the file with the same name as the *URL name* from django's *URL conf*.::
 
-.. code-block:: javascript
-   :caption: main.js
-   :name: main js file
-   :linenos:
-
+    // main.js
     // setup require config here
 
     require(['ajaxviews'], function(ajaxviews) {
@@ -104,13 +90,7 @@ Server Side
 -----------
 
 The server side :code:`ajaxviews` app provides views and mixins your views can inherit from. They take care of
-passing the *URL name* the view class is mapped to, to the client side app.
-
-.. container:: flex-grid
-
-    .. code-block:: python
-       :caption: urls.py
-       :name: urls conf
+passing the *URL name* the view class is mapped to, to the client side app.::
 
         # urls.py
         from django.conf.urls import url
@@ -121,9 +101,6 @@ passing the *URL name* the view class is mapped to, to the client side app.
                 name='my_view'),
         ]
 
-    .. code-block:: python
-       :caption: views.py
-       :name: view classes
 
         # views.py
         from django.views.generic import View
