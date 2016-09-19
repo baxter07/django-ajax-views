@@ -15,7 +15,7 @@ version_str = '.'.join(str(n) for n in __version__)
 setup(
     name='django-ajax-views',
     version=version_str,
-    description='Django class based views extension working together with js library require-ajax-views.',
+    description='Django class-based views extension working together with JS library require-ajax-views.',
     long_description=long_description,
     url='https://github.com/Pyco7/django-ajax-views',
     author='Emanuel Hafner',
