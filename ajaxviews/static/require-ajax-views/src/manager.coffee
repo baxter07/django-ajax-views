@@ -8,10 +8,10 @@ define ->
     class Manager
       constructor: (@cfg) ->
         @userMiddleware = {}
-        throw 'View manager can not be initialized without config.' if not @cfg
+        if not @cfg
+          throw 'View manager can not be initialized without config.'
 
       getJsonCfg: (response = null) ->
-        # Use JSON.parse instead of $.parseJSON for jQuery v3 compatibility
         if response
           JSON.parse($(response).find(@cfg.html.cfgNode).html())
         else

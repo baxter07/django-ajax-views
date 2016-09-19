@@ -445,21 +445,25 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
         },
         animateProgressBar: function () {
           var animateProgress, animationSpeed;
-          animationSpeed = this.manager.cfg.defaults.progressBar.animationSpeed;
-          animateProgress = function () {
-            $(this).stop().width(0);
-            if ($(this).data('stop-animate')) {
-              return $(this).data('stop-animate', false);
-            } else {
-              return $(this).animate({ width: '100%' }, animationSpeed, 'swing', animateProgress);
-            }
-          };
-          $('#ajax-progress-bar').slideDown('fast');
-          return $('#ajax-progress-bar .progress-bar').each(animateProgress);
+          if ($('#ajax-progress-bar').length) {
+            animationSpeed = this.manager.cfg.defaults.progressBar.animationSpeed;
+            animateProgress = function () {
+              $(this).stop().width(0);
+              if ($(this).data('stop-animate')) {
+                return $(this).data('stop-animate', false);
+              } else {
+                return $(this).animate({ width: '100%' }, animationSpeed, 'swing', animateProgress);
+              }
+            };
+            $('#ajax-progress-bar').slideDown('fast');
+            return $('#ajax-progress-bar .progress-bar').each(animateProgress);
+          }
         },
         stopProgressBar: function () {
-          $('#ajax-progress-bar .progress-bar').data('stop-animate', true);
-          return $('#ajax-progress-bar').slideUp('fast');
+          if ($('#ajax-progress-bar').length) {
+            $('#ajax-progress-bar .progress-bar').data('stop-animate', true);
+            return $('#ajax-progress-bar').slideUp('fast');
+          }
         }
       };
     }();
@@ -521,8 +525,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
         };
         View.prototype._getRequestData = function (urlKwargs, jsonData) {
           var key, value, _jsonData, _urlKwargs;
-          if (this.requestContext != null) {
-            _urlKwargs = this.requestContext.getUrlKwargs != null ? this.requestContext.getUrlKwargs() : {};
+          if (this.__requestContext != null) {
+            _urlKwargs = this.__requestContext.getUrlKwargs != null ? this.__requestContext.getUrlKwargs() : {};
           } else {
             _urlKwargs = this.getUrlKwargs != null ? this.getUrlKwargs() : {};
           }
@@ -533,8 +537,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
               delete _urlKwargs[key];
             }
           }
-          if (this.requestContext != null) {
-            _jsonData = this.requestContext.getJsonData != null ? this.requestContext.getJsonData() : {};
+          if (this.__requestContext != null) {
+            _jsonData = this.__requestContext.getJsonData != null ? this.__requestContext.getJsonData() : {};
           } else {
             _jsonData = this.getJsonData != null ? this.getJsonData() : {};
           }
@@ -556,11 +560,14 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           if (this.manager.cfg.debug) {
             console.log('Debug request: ', _urlKwargs, _jsonData);
           }
+          url = null;
           if (this.modalNr) {
             if (this.Q('form[data-async]').length) {
               url = this.Q('form[data-async]').attr('action');
-            } else if (this.jsonCfg.full_url) {
+            } else if (this.jsonCfg.full_url != null) {
               url = this.jsonCfg.full_url;
+            } else {
+              throw 'Modal view has no form action and no full_url specified.';
             }
           } else {
             url = Urls[viewName || this.jsonCfg.view_name](_urlKwargs);
@@ -574,6 +581,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
             if (url) {
               history.replaceState({}, null, url);
             }
+          }
+          if (url == null) {
+            url = location.href;
           }
           return $.get(url, { 'json_cfg': JSON.stringify(_jsonData) }, function (response) {
             return callback(response);
@@ -645,9 +655,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
                   return $(this.manager.cfg.html.ajaxNode).find(selector);
                 };
                 view = new View(Q, _this.manager.cfg.html.ajaxNode);
-                view.requestContext = _this;
+                view.__requestContext = _this;
                 view._initView(viewName, urlKwargs, jsonData, animate);
-                return delete view.requestContext;
+                return delete view.__requestContext;
               };
             }(this));
           }
@@ -661,14 +671,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           if (jsonData == null) {
             jsonData = {};
           }
-          if (callback == null) {
-            callback = null;
-          }
           return this._initRequest(null, urlKwargs, jsonData, function (_this) {
             return function (response) {
-              if (callback) {
-                return callback(response);
-              }
+              return callback(response);
             };
           }(this));
         };

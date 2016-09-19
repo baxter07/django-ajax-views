@@ -25,15 +25,15 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       @onLoad() if @onLoad?
 
     _getRequestData: (urlKwargs, jsonData) ->
-      if @requestContext?
-        _urlKwargs = if @requestContext.getUrlKwargs? then @requestContext.getUrlKwargs() else {}
+      if @__requestContext?
+        _urlKwargs = if @__requestContext.getUrlKwargs? then @__requestContext.getUrlKwargs() else {}
       else
         _urlKwargs = if @getUrlKwargs? then @getUrlKwargs() else {}
       $.extend(_urlKwargs, urlKwargs)
       delete _urlKwargs[key] for key, value of _urlKwargs when not value?
 
-      if @requestContext?
-        _jsonData = if @requestContext.getJsonData? then @requestContext.getJsonData() else {}
+      if @__requestContext?
+        _jsonData = if @__requestContext.getJsonData? then @__requestContext.getJsonData() else {}
       else
         _jsonData = if @getJsonData? then @getJsonData() else {}
       $.extend(_jsonData, jsonData)
@@ -45,11 +45,14 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
       console.log('Debug request: ', _urlKwargs, _jsonData) if @manager.cfg.debug
 
+      url = null
       if @modalNr
         if @Q('form[data-async]').length
           url = @Q('form[data-async]').attr('action')
-        else if @jsonCfg.full_url
+        else if @jsonCfg.full_url?
           url = @jsonCfg.full_url
+        else
+          throw 'Modal view has no form action and no full_url specified.'
       else
         url = Urls[viewName or @jsonCfg.view_name](_urlKwargs)
         if location.hash
@@ -59,6 +62,7 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
             url = location.hash
         history.replaceState({}, null, url) if url
 
+      url ?= location.href
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
         callback(response)
 
@@ -93,22 +97,20 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
         [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
         location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData)
       else
-        # coffee module is required for requested view
         module = @manager.getModuleName(viewName)
         require [@manager.cfg.modules.prefix + module], (View) =>
           Q = (selector) -> $(@manager.cfg.html.ajaxNode).find(selector)
           view = new View(Q, @manager.cfg.html.ajaxNode)
-          view.requestContext = @
+          view.__requestContext = @
           view._initView(viewName, urlKwargs, jsonData, animate)
-          delete view.requestContext
+          delete view.__requestContext
 
     requestSnippet: ({urlKwargs, jsonData, callback} = {}) ->
       urlKwargs ?= {}
       jsonData ?= {}
-      callback ?= null
 
       @_initRequest null, urlKwargs, jsonData, (response) =>
-        callback(response) if callback
+        callback(response)
 
     requestModal: (href, jsonData = null) ->
       console.log('Debug request: ', href, jsonData) if @manager.cfg.debug
