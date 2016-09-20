@@ -76,9 +76,9 @@ to simply inherit from :code:`ajaxviews.View` class. You can still use javascrip
    }
 
 For this to work you need to set up RequireJS and place the JS files inside the :code:`views` directory which is
-located in JS root. In :code:`main.js` require :code:`ajaxviews` and initialize the app.
-The :code:`ajaxviews.App` will execute the class that's placed inside the file with the same
-name as the **URL name** from Django's *URL conf*.
+located in JS root. In :code:`main.js` require the :code:`ajaxviews` module and initialize the app.
+The :code:`ajaxviews.App` will execute the **view class** whose file name equals the **URL name** from
+Django's *URL conf*.
 
 .. code-block:: javascript
    :caption: main.js
@@ -127,10 +127,10 @@ The server side :code:`ajaxviews` app provides views and mixins your views can i
             ajax_view = True
 
 The :code:`AjaxMixin` takes care of passing the **URL name** the view class is mapped to, to the client side app.
-Add :code:`ajax_view = True` to the class if you have created a corresponding JS file. If :code:`ajax_view = False`
-or not specified the client side **middleware** will always be executed.
+Add :code:`ajax_view = True` to the class if you have created a corresponding JS file. If not you can omit the
+:code:`ajax_view` property or set it to :code:`False`. The client side **middleware** will always be executed.
 
-The **JSON config script** defines the communication channel for sites requested via url. It should be included in
+The **JSON config script** is the communication channel for sites requested via URL. It should be included in
 the base html template from wich all other templates inherit from.
 
 .. code-block:: html
@@ -148,7 +148,7 @@ the base html template from wich all other templates inherit from.
 
 Templates that inherit from your base template need to extend from :code:`generic_template` so the view can be
 updated automatically on ajax requests without submitting the overhead of your base html. The :code:`#ajax-content`
-is the scope that's being replaced.
+is the scope that's replaced when calling :code:`requestView`.
 
 .. raw:: html
 

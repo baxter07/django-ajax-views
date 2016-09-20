@@ -21,13 +21,13 @@ Dependencies
 - django-extra-views
 - django-js-reverse
 - django-jsonify
-- django-guardian
-- django-autocomplete-light==2.3.3
+- django-guardian (optional)
+- django-autocomplete-light==2.3.3 (optional)
 
 Django settings
 ===============
 
-Add :code:`ajaxviews` and dependencies to your :code:`INSTALLED_APP`
+Add :code:`ajaxviews` and dependencies to your :code:`INSTALLED_APPS` setting:
 
 .. code-block:: python
 
@@ -46,6 +46,9 @@ Add :code:`ajaxviews` and dependencies to your :code:`INSTALLED_APP`
 Options
 -------
 
+django-ajax-views
+^^^^^^^^^^^^^^^^^
+
 - :code:`DEFAULT_PAGINATE_BY`
 
     Default: :code:`30`
@@ -57,6 +60,9 @@ Options
     Default: :code:`10`
 
     Number of results by which a search input field should be displayed for filter views.
+
+django-require
+^^^^^^^^^^^^^^
 
 - :code:`JS_REVERSE_OUTPUT_PATH`
 
