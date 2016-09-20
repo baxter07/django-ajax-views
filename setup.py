@@ -40,7 +40,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    keywords='django class based views javascript coffeescript ajax',
+    keywords='django class-based views javascript coffeescript typescript ajax requirejs',
     packages=find_packages(),
     package_data={
         'ajaxviews': [

@@ -329,7 +329,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'django-ajax-views', 'django-ajax-views Documentation',
-     author, 'django-ajax-views', 'Django views working together with JS views.',
+     author, 'django-ajax-views', 'Django class-based views working together with require-ajax-views.',
      'Miscellaneous'),
 ]
 

@@ -1,7 +1,7 @@
 
-========
+********
 Overview
-========
+********
 
 .. image:: _static/server_browser.svg
     :alt: server browser relations
@@ -13,7 +13,7 @@ with each other. This is done by creating a JS file with the same name as the **
 corresponding Django **view class**. RequireJS loads that file and it's class is executed automatically on request.
 
 Client Side
------------
+===========
 
 Since javascript doesn't support class definitions and inheritance I recommend using coffeescript or typescript
 to simply inherit from :code:`ajaxviews.View` class. You can still use javascript though by using the built in
@@ -98,7 +98,7 @@ name as the **URL name** from Django's *URL conf*.
     });
 
 Server Side
------------
+===========
 
 The server side :code:`ajaxviews` app provides views and mixins your views can inherit from.
 
@@ -130,16 +130,26 @@ The :code:`AjaxMixin` takes care of passing the **URL name** the view class is m
 Add :code:`ajax_view = True` to the class if you have created a corresponding JS file. If :code:`ajax_view = False`
 or not specified the client side **middleware** will always be executed.
 
-Make sure to include in your base html template the json config script as follows. This is needed so the server
-app can communicate with the client app.
+The **JSON config script** defines the communication channel for sites requested via url. It should be included in
+the base html template from wich all other templates inherit from.
 
 .. code-block:: html
 
     <script id="config" type="application/json">{{ json_cfg|jsonify }}</script>
 
-Also the templates that inherit from your base template need to extend from :code:`generic_template` so the
-view can be updated automatically on ajax requests. Use the default tag for none ajax requests.
-
 .. code-block:: html
 
     {% extends generic_template|default:'base.html' %}
+
+.. image:: _static/template_inheritance.svg
+    :alt: Template inheritance
+    :width: 450
+    :align: right
+
+Templates that inherit from your base template need to extend from :code:`generic_template` so the view can be
+updated automatically on ajax requests without submitting the overhead of your base html. The :code:`#ajax-content`
+is the scope that's being replaced.
+
+.. raw:: html
+
+    <div class="clear"></div>
