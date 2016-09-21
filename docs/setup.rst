@@ -27,13 +27,13 @@ Dependencies
 `django-require`_
     Used to simplify setup of RequireJS
 `django-jsonify`_
-    Provides templatetag to stringify JSON config in base HTML
+    Templatetag to stringify JSON objects
 `django-js-reverse`_
-    Djangos URL reverse in javascript
+    Django's URL reverse in javascript
 `django-crispy-forms`_
     Integrating bootstrap into Django forms
 `django-guardian`_ (optional)
-    Object level permission checking
+    Object level permission handling
 `django-extra-views`_ (optional)
     Formsets for class-based views
 `django-autocomplete-light`_ == 2.3.3 (optional)
@@ -131,6 +131,20 @@ django-crispy-forms
 Configure RequireJS
 ===================
 
+In JS root directory create a ``main.js`` file which is loaded by RequireJS. The module loading is handled by
+`django-require`_'s templatetag ``require_module``. Place the following at the bottom of your base HTML template.
+
+.. code-block:: django
+   :caption: base.html
+   :name: base html template
+
+    {% load require %}
+    {% require_module 'main' %}
+
+In ``main.js`` define the paths to the javascript libraries and require these together with ``cs!app`` to
+make them available throughout the whole application. I recommend setting up `NodeJS`_ and
+`Bower`_ to manage all javascript dependencies.
+
 .. code-block:: javascript
    :caption: main.js
    :name: requirejs main file
@@ -140,28 +154,53 @@ Configure RequireJS
 
       require.config({
         paths: {
-          'cs': '/path/to/require-cs/cs',
+          'cs':            '/path/to/require-cs/cs',
           'coffee-script': '/path/to/coffeescript/extras/coffee-script',
-          ajaxviews: '/path/to/require-ajax-views/dist/ajaxviews',
-          domReady: '/path/to/domReady/domReady',
-          jquery: '/path/to/jquery/dist/jquery',
-          bootstrap: '/path/to/bootstrap/dist/js/bootstrap.min',
-          urlreverse: '/path/to/django_js_reverse/reverse'
+          'ajaxviews':     '/path/to/require-ajax-views/dist/ajaxviews',
+          'domReady':      '/path/to/domReady/domReady',
+          'jquery':        '/path/to/jquery/dist/jquery',
+          'urlreverse':    '/path/to/django_js_reverse/reverse',
+          'bootstrap':     '/path/to/bootstrap/dist/js/bootstrap.min'
         }
       });
 
-      require(['domReady!', 'ajaxviews'], function (ajaxviews) {
-        var App = ajaxviews.App;
-
-        App.config({
-          middleware: 'middleware'
-        });
-
-        App.init();
+      require(['domReady!'], function () {
+        require([
+          'jquery',
+          'urlreverse',
+          'bootstrap',
+          'cs!app'
+        ]);
       });
 
     })();
 
+..
+    // 'chosen',
+    // 'datepicker',
+    // 'confirmation',
+    // 'autocomplete',
+    // 'autocompletewidget',
+
+Using the prefix ``cs!`` tells RequireJS to load a coffeescript file. The following initializes the
+``ajaxviews.App`` and configures it to load all views and the middleware as coffeescript modules.
+To execute a user defined ``middleware`` on every request specify the file name without extension
+in the config.
+
+.. code-block:: coffeescript
+   :caption: app.coffee
+   :name: client application
+   :linenos:
+
+    define ['ajaxviews'], (ajaxviews) ->
+      App = ajaxviews.App
+
+      App.config
+        module:
+          prefix: 'cs!'
+        middleware: 'middleware'
+
+      App.init()
 
 .. _Django: https://github.com/django/django
 
@@ -178,3 +217,7 @@ Configure RequireJS
 .. _django-extra-views: https://github.com/AndrewIngram/django-extra-views
 
 .. _django-autocomplete-light: https://github.com/yourlabs/django-autocomplete-light
+
+.. _NodeJS: https://nodejs.org
+
+.. _Bower: https://bower.io

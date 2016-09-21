@@ -15,6 +15,11 @@ from .forms import DefaultFormHelper
 
 
 class AjaxMixin:
+    """Used in all views to communicate data with client app.
+
+        Args:
+            json_cfg (dict): received from request and passed on in response.
+    """
     ajax_view = False
 
     def __init__(self, **kwargs):

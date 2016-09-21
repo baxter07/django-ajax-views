@@ -1,7 +1,7 @@
 
-********
-Overview
-********
+*******
+Concept
+*******
 
 .. image:: _static/server_browser.svg
     :alt: server browser relations
@@ -15,9 +15,9 @@ corresponding Django **view class**. `RequireJS`_ loads that file and it's class
 Client Side
 ===========
 
-Since javascript doesn't support class definitions and inheritance I recommend using coffeescript or typescript
-to simply inherit from ``ajaxviews.View`` class. You can still use javascript though by using the built in
-``extendjs`` function to mimic class inheritance.
+Since javascript doesn't support class definitions and inheritance I recommend using `coffeescript`_ or
+`typescript`_ to simply inherit from ``ajaxviews.View`` class. You can still use javascript though by
+using the built in ``extendjs`` function to mimic class inheritance.
 
 .. code-block:: javascript
    :caption: my_view.js
@@ -75,7 +75,7 @@ to simply inherit from ``ajaxviews.View`` class. You can still use javascript th
      // executed on ajax load (update view)
    }
 
-For this to work you need to set up RequireJS and place the JS files inside the ``views`` directory which is
+For this to work you need to `set up RequireJS`_ and place the JS files inside the ``views`` directory which is
 located in JS root. In ``main.js`` require the ``ajaxviews`` module and initialize the app.
 The ``ajaxviews.App`` will execute the **view class** whose file name equals the **URL name** from
 Django's *URL conf*.
@@ -85,7 +85,7 @@ Django's *URL conf*.
    :name: main js file
    :linenos:
 
-    // setup require config here
+    // setup require config
 
     require(['ajaxviews'], function(ajaxviews) {
       var App = ajaxviews.App;
@@ -135,9 +135,10 @@ the base html template from wich all other templates inherit from.
 
 .. code-block:: html
 
+    {% load jsonify %}
     <script id="config" type="application/json">{{ json_cfg|jsonify }}</script>
 
-.. code-block:: html
+.. code-block:: django
 
     {% extends generic_template|default:'base.html' %}
 
@@ -157,3 +158,9 @@ scope that's replaced when the view is updated.
 .. _`URL name`: https://docs.djangoproject.com/en/dev/topics/http/urls/#naming-url-patterns
 
 .. _RequireJS: http://requirejs.org
+
+.. _coffeescript: http://coffeescript.org
+
+.. _typescript: https://www.typescriptlang.org
+
+.. _set up RequireJS: setup.html#configure-requirejs
