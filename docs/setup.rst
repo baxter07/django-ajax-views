@@ -22,14 +22,23 @@ Dependencies
 
         $ pip install -r /path/to/django-ajax-views/requirements.txt
 
-- `Django`_ >= 1.9
-- `django-require`_
-- `django-jsonify`_
-- `django-js-reverse`_
-- `django-crispy-forms`_
-- `django-guardian`_ (optional)
-- `django-extra-views`_ (optional)
-- `django-autocomplete-light`_ == 2.3.3 (optional)
+`Django`_ >= 1.9
+    MVC Web Framework
+`django-require`_
+    Used to simplify setup of RequireJS
+`django-jsonify`_
+    Provides templatetag to stringify JSON config in base HTML
+`django-js-reverse`_
+    Djangos URL reverse in javascript
+`django-crispy-forms`_
+    Integrating bootstrap into Django forms
+`django-guardian`_ (optional)
+    Object level permission checking
+`django-extra-views`_ (optional)
+    Formsets for class-based views
+`django-autocomplete-light`_ == 2.3.3 (optional)
+    Support for autocompletion
+
 
 Django settings
 ===============

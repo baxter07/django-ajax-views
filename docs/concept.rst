@@ -9,8 +9,8 @@ Overview
     :align: right
 
 The idea is to create an interface between server side and client side classes that know how to communicate
-with each other. This is done by creating a JS file with the same name as the **URL name** that is mapped to the
-corresponding Django **view class**. RequireJS loads that file and it's class is executed automatically on request.
+with each other. This is done by creating a JS file with the same name as the `URL name`_ that is mapped to the
+corresponding Django **view class**. `RequireJS`_ loads that file and it's class is executed automatically on request.
 
 Client Side
 ===========
@@ -146,10 +146,14 @@ the base html template from wich all other templates inherit from.
     :width: 450
     :align: right
 
-Extend from ``generic_template`` and set the default to your base template if you want to be able to update the
-view by calling ``requestView`` from the client side **view class**. The ``#ajax-content`` is the scope that's
-replaced when the view is updated.
+Extend templates from ``generic_template`` to be able to update the view via AJAX by calling ``requestView`` .
+Set the default tag to the base template that's used for requests via URL. The ``#ajax-content`` is the
+scope that's replaced when the view is updated.
 
 .. raw:: html
 
     <div class="clear"></div>
+
+.. _`URL name`: https://docs.djangoproject.com/en/dev/topics/http/urls/#naming-url-patterns
+
+.. _RequireJS: http://requirejs.org

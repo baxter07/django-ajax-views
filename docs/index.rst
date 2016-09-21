@@ -5,16 +5,16 @@
 django-ajax-views
 #################
 
-This library is an extension of Django's class-based views and works together with javascript library
+This app is an extension of Django's `class-based views`_ and works together with javascript library
 **require-ajax-views**.
 
 It's main purpose is to encapsulate server/client communication to enable updating of views with a simple
-function call in javascript. URL kwargs and optional parameters for incoming requests are handled as one
-data set and returned as such in each response. This regulates displaying of complex views where filter
-parameters are partially passed through URL when using Django's clean URL design and as hidden parameters.
-Modal views and generic forms are also supported.
+function call in javascript. `URL kwargs`_ and optional parameters for incoming requests are handled as one
+data set and returned as such in each response. This simplifies building complex views where filter
+parameters are partially passed through URL by using Django's `clean URL design`_ and as hidden parameters.
+Bootstrap modal views and generic forms are also supported.
 
-Some basic knowledge of Django's class-based views and RequireJS would be desirable to follow this guide.
+Some basic knowledge of Django's `class-based views`_ and `RequireJS`_ would be desirable to use this app.
 
 Contents:
 
@@ -46,3 +46,11 @@ Contents:
     http://rest-sphinx-memo.readthedocs.io/en/latest/ReST.html
     http://build-me-the-docs-please.readthedocs.io/en/latest/index.html
     http://gisellezeno.com/tutorials/sphinx-for-python-documentation.html
+
+.. _class-based views: https://docs.djangoproject.com/en/dev/topics/class-based-views/
+
+.. _RequireJS: http://requirejs.org
+
+.. _URL kwargs: https://docs.djangoproject.com/en/dev/topics/http/urls/#named-groups
+
+.. _clean URL design: https://docs.djangoproject.com/en/dev/topics/http/urls/
