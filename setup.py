@@ -51,15 +51,16 @@ setup(
     install_requires=[
         'Django>=1.9',
         'django-require',
-        'django-guardian',
-        'django-crispy-forms',
-        'django-extra-views',
-        'django-js-reverse',
         'django-jsonify',
-        'django-autocomplete-light==2.3.3',
+        'django-js-reverse',
+        'django-crispy-forms',
     ],
-    # extras_require={
-    #     'dev': ['django-require'],
-    #     'test': ['coverage'],
-    # },
+    extras_require={
+        # 'test': ['coverage'],
+        'optional': [
+            'django-guardian',
+            'django-extra-views',
+            'django-autocomplete-light==2.3.3',
+        ],
+    },
 )

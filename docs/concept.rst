@@ -16,8 +16,8 @@ Client Side
 ===========
 
 Since javascript doesn't support class definitions and inheritance I recommend using coffeescript or typescript
-to simply inherit from :code:`ajaxviews.View` class. You can still use javascript though by using the built in
-:code:`extendjs` function to mimic class inheritance.
+to simply inherit from ``ajaxviews.View`` class. You can still use javascript though by using the built in
+``extendjs`` function to mimic class inheritance.
 
 .. code-block:: javascript
    :caption: my_view.js
@@ -75,9 +75,9 @@ to simply inherit from :code:`ajaxviews.View` class. You can still use javascrip
      // executed on ajax load (update view)
    }
 
-For this to work you need to set up RequireJS and place the JS files inside the :code:`views` directory which is
-located in JS root. In :code:`main.js` require the :code:`ajaxviews` module and initialize the app.
-The :code:`ajaxviews.App` will execute the **view class** whose file name equals the **URL name** from
+For this to work you need to set up RequireJS and place the JS files inside the ``views`` directory which is
+located in JS root. In ``main.js`` require the ``ajaxviews`` module and initialize the app.
+The ``ajaxviews.App`` will execute the **view class** whose file name equals the **URL name** from
 Django's *URL conf*.
 
 .. code-block:: javascript
@@ -100,7 +100,7 @@ Django's *URL conf*.
 Server Side
 ===========
 
-The server side :code:`ajaxviews` app provides views and mixins your views can inherit from.
+The server side ``ajaxviews`` app provides views and mixins your views can inherit from.
 
 .. container:: flex-grid
 
@@ -126,9 +126,9 @@ The server side :code:`ajaxviews` app provides views and mixins your views can i
         class MyAjaxView(AjaxMixin, View):
             ajax_view = True
 
-The :code:`AjaxMixin` takes care of passing the **URL name** the view class is mapped to, to the client side app.
-Add :code:`ajax_view = True` to the class if you have created a corresponding JS file. If not you can omit the
-:code:`ajax_view` property or set it to :code:`False`. The client side **middleware** will always be executed.
+The ``AjaxMixin`` takes care of passing the **URL name** the view class is mapped to, to the client side app.
+Add ``ajax_view = True`` to the class if you have created a corresponding JS file. If not you can omit the
+``ajax_view`` property or set it to ``False``. The client side **middleware** will always be executed.
 
 The **JSON config script** is the communication channel for sites requested via URL. It should be included in
 the base html template from wich all other templates inherit from.
@@ -146,9 +146,9 @@ the base html template from wich all other templates inherit from.
     :width: 450
     :align: right
 
-Templates that inherit from your base template need to extend from :code:`generic_template` so the view can be
-updated automatically on ajax requests without submitting the overhead of your base html. The :code:`#ajax-content`
-is the scope that's replaced when calling :code:`requestView`.
+Extend from ``generic_template`` and set the default to your base template if you want to be able to update the
+view by calling ``requestView`` from the client side **view class**. The ``#ajax-content`` is the scope that's
+replaced when the view is updated.
 
 .. raw:: html
 
