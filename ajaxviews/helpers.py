@@ -1,7 +1,11 @@
-import autocomplete_light.shortcuts as al
+try:
+    import autocomplete_light.shortcuts as al
+    from guardian.shortcuts import assign_perm, remove_perm, get_perms_for_model, get_objects_for_user
+except ImportError:
+    pass
+
 from django.forms import Form, Select, SelectMultiple, DateInput, DateTimeInput
 
-from guardian.shortcuts import assign_perm, remove_perm, get_perms_for_model, get_objects_for_user
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import FieldWithButtons, StrictButton
 

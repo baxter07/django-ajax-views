@@ -3,18 +3,17 @@ import datetime
 from dateutil.parser import parse
 
 from django.contrib.auth.models import Group
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.forms.models import BaseModelFormSet
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
+
+from django.shortcuts import render_to_response
+from django.db.models import Min, Max
 from django.contrib import messages
 from django.conf import settings
-from django.db.models import Min, Max
-from django.shortcuts import render_to_response
-
-from extra_views import ModelFormSetView
 
 from .mixins import CsrfExemptMixin, AjaxMixin, FormMixin, ModalMixin, ModalFormMixin, PreviewMixin
 from .helpers import get_objects_for_model, assign_obj_perm, remove_obj_perm, construct_autocomplete_searchform
@@ -40,8 +39,13 @@ class ModelFormSet(BaseModelFormSet):
 def get_form_kwargs(self):
     return {}
 
-ModelFormSetView.get_form_kwargs = types.MethodType(get_form_kwargs, ModelFormSetView)
-ModelFormSetView.formset_class = ModelFormSet
+try:
+    from extra_views import ModelFormSetView
+except ImportError:
+    ModelFormSetView = type('', (), {})
+else:
+    ModelFormSetView.get_form_kwargs = types.MethodType(get_form_kwargs, ModelFormSetView)
+    ModelFormSetView.formset_class = ModelFormSet
 
 
 class AjaxListView(LoginRequiredMixin, AjaxMixin, ListView):

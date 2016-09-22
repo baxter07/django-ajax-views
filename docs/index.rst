@@ -23,6 +23,8 @@ Contents:
 
    concept
    setup
+.. modules/server_api
+   modules/client_api
 
 ..
     Release candidates

@@ -1,5 +1,7 @@
 __version__ = (0, 0, 2)
 
+default_app_config = 'ajaxviews.apps.AjaxViewsConfig'
+
 # an_example_pypi_project.__init__
 # """A pypi demonstration vehicle.
 #

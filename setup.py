@@ -54,6 +54,7 @@ setup(
         'django-jsonify',
         'django-js-reverse',
         'django-crispy-forms',
+        'python-dateutil',
     ],
     extras_require={
         # 'test': ['coverage'],
@@ -62,5 +63,9 @@ setup(
             'django-extra-views',
             'django-autocomplete-light==2.3.3',
         ],
+        'docs': [
+            'Sphinx',
+            'sphinx-rtd-theme',
+        ]
     },
 )
