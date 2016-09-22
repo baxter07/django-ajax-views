@@ -49,7 +49,16 @@ else:
 
 
 class AjaxListView(LoginRequiredMixin, AjaxMixin, ListView):
+    """
+    The ListView can be updated by calling `requestView` from client side view class.
+
+    :param int paginate_by: number of results in list by which to paginate.
+    :param int filter_search_input_by: number of results in list view filters by which to display a search input.
+    """
     def __init__(self, *args, **kwargs):
+        """
+        Extend `super.__init__()` to init the base class.
+        """
         super().__init__(*args, **kwargs)
         if not self.paginate_by and hasattr(settings, 'DEFAULT_PAGINATE_BY'):
             self.paginate_by = settings.DEFAULT_PAGINATE_BY
@@ -57,6 +66,11 @@ class AjaxListView(LoginRequiredMixin, AjaxMixin, ListView):
             self.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
 
     def get(self, request, *args, **kwargs):
+        """
+        GET request
+        :param args: positional url arguments
+        :param kwargs: keyword url arguments
+        """
         if self.json_cfg.get('filter_index', -1) >= 0:
             filter_field = self.filter_fields[int(self.json_cfg['filter_index'])]
             if isinstance(filter_field, str):
