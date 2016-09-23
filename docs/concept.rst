@@ -132,15 +132,16 @@ Add ``ajax_view = True`` to the class if you have created a corresponding JS fil
 
 .. The client side **middleware** will always be executed.
 
-The ``AjaxMiddleware``
+.. Ajaxable Template
 
-The **JSON config script** is the communication channel for sites requested via URL. It should be included in
-the base html template from wich all other templates inherit from.
+The **JSON config script** is the communication channel for sites requested via URL. It's included in the base
+html template by the AjaxMiddleware_.
+
+.. It should be included in the base html template from wich all other templates inherit from.
 
 .. code-block:: html
 
-    {% load jsonify %}
-    <script id="config" type="application/json">{{ json_cfg|jsonify }}</script>
+    <script id="config" type="application/json">{{ json_cfg }}</script>
 
 .. code-block:: django
 
@@ -168,3 +169,5 @@ scope that's replaced when the view is updated.
 .. _typescript: https://www.typescriptlang.org
 
 .. _set up RequireJS: setup.html#configure-requirejs
+
+.. _AjaxMiddleware: setup.html#django-settings

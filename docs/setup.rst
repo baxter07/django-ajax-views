@@ -42,7 +42,6 @@ Add ``ajaxviews`` and dependencies to your ``INSTALLED_APPS``:
 
     INSTALLED_APPS = [
         # ...
-        # required
         'ajaxviews',
         'require',
         'django_js_reverse',
@@ -52,7 +51,7 @@ Add ``ajaxviews`` and dependencies to your ``INSTALLED_APPS``:
         'autocomplete_light',
     ]
 
-To append the **JSON config script** and the **require call** in your HTML body tag, add the middleware class
+To append the **JSON config script** and the **require main script** in your HTML body tag, add the middleware class
 to your settings.
 
 .. code-block:: python
@@ -211,6 +210,10 @@ in the config.
         middleware: 'middleware'
 
       App.init()
+
+.. example build profile for requirejs
+   ___________________________________
+
 
 .. _Django: https://github.com/django/django
 

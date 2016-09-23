@@ -1,5 +1,6 @@
 import json
 
+from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from django.template.loader import get_template
@@ -10,16 +11,17 @@ from .conf import settings
 
 class AjaxMiddleware:
     def process_response(self, request, response):
-        if not request.is_ajax():
+        if not request.is_ajax() and not isinstance(response, HttpResponseRedirect):
             _content = force_text(response.content, encoding=response.charset)
-            if '</body>' not in _content:
-                raise Exception('No body tag found in html response.')
+            if '</body>' not in _content:  # TODO HttpResponse _content.find('</body>') > 1
+                return response
 
-            template = get_template('ajaxviews/_middleware.html')
             json_cfg = mark_safe(json.dumps(
-                    response.context_data.get('json_cfg', {}),
-                    cls=DjangoJSONEncoder
+                response.context_data.get('json_cfg', {}) if hasattr(response, 'context_data') else {},
+                cls=DjangoJSONEncoder
             ))
+
+            template = get_template('ajaxviews/__middleware.html')
             html = template.render({
                 'json_cfg': json_cfg,
                 'main_name': settings.REQUIRE_MAIN_NAME,

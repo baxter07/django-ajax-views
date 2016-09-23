@@ -9,6 +9,9 @@ Server API
 .. automodule:: ajaxviews.mixins
     :members:
 
+.. automodule:: ajaxviews.middleware
+    :members:
+
 .. automodule:: ajaxviews.queries
     :members:
 
