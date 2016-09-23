@@ -21,11 +21,9 @@ Dependencies
     MVC Web Framework
 `django-require`_
     Used to simplify setup of RequireJS
-`django-jsonify`_
-    Templatetag to stringify JSON objects
 `django-js-reverse`_
     Django's URL reverse in javascript
-`django-crispy-forms`_
+`django-crispy-forms`_ (TODO make optional)
     Integrating bootstrap into Django forms
 `django-guardian`_ (optional)
     Object level permission handling
@@ -43,15 +41,25 @@ Add ``ajaxviews`` and dependencies to your ``INSTALLED_APPS``:
 .. code-block:: python
 
     INSTALLED_APPS = [
+        # ...
         # required
         'ajaxviews',
         'require',
-        'jsonify',
         'django_js_reverse',
         'crispy_forms',
         # optional
         'guardian',
         'autocomplete_light',
+    ]
+
+To append the **JSON config script** and the **require call** in your HTML body tag, add the middleware class
+to your settings.
+
+.. code-block:: python
+
+    MIDDLEWARE_CLASSES = [
+        # ...
+        'ajaxviews.middleware.AjaxMiddleware',
     ]
 
 django-ajax-views
@@ -74,6 +82,12 @@ django-ajax-views
     Default: ``{messages.ERROR: 'error'}``
 
     Set to ``danger`` for compatibility with bootstrap error tags.
+
+- ``REQUIRE_MAIN_NAME``
+
+    Default: ``main``
+
+    Name of main js file.
 
 django-crispy-forms
 -------------------

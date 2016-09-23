@@ -128,7 +128,11 @@ The server side ``ajaxviews`` app provides views and mixins your views can inher
 
 The ``AjaxMixin`` takes care of passing the **URL name** the view class is mapped to, to the client side app.
 Add ``ajax_view = True`` to the class if you have created a corresponding JS file. If not you can omit the
-``ajax_view`` property or set it to ``False``. The client side **middleware** will always be executed.
+``ajax_view`` property or set it to ``False``.
+
+.. The client side **middleware** will always be executed.
+
+The ``AjaxMiddleware``
 
 The **JSON config script** is the communication channel for sites requested via URL. It should be included in
 the base html template from wich all other templates inherit from.

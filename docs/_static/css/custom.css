@@ -5,6 +5,9 @@
 .clear {
     clear: both;
 }
-/*a.external.reference:hover {
-    text-decoration: underline;
-}*/
+@media only screen and (max-width: 1025px) {
+    .flex-grid {
+        display: block;
+        justify-content: initial;
+    }
+}
