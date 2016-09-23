@@ -36,6 +36,8 @@ setup(
         # 'Programming Language :: Python :: 3.3',
         # 'Programming Language :: Python :: 3.4',
         # 'Programming Language :: Python :: 3.5',
+        # 'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: JavaScript',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules',
@@ -46,6 +48,7 @@ setup(
         'ajaxviews': [
             'templates/ajaxviews/*.html',
             'static/require-ajax-views/dist/ajaxviews.js',
+            'static/require-ajax-views/src/style.styl',
         ],
     },
     install_requires=[
@@ -66,6 +69,6 @@ setup(
         'docs': [
             'Sphinx',
             'sphinx-rtd-theme',
-        ]
+        ],
     },
 )
