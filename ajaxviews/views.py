@@ -3,7 +3,6 @@ import datetime
 from dateutil.parser import parse
 
 from django.contrib.auth.models import Group
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -48,7 +47,7 @@ else:
     ModelFormSetView.formset_class = ModelFormSet
 
 
-class AjaxListView(LoginRequiredMixin, AjaxMixin, ListView):
+class AjaxListView(AjaxMixin, ListView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.paginate_by and hasattr(settings, 'DEFAULT_PAGINATE_BY'):
@@ -150,7 +149,7 @@ class AjaxListView(LoginRequiredMixin, AjaxMixin, ListView):
         return context
 
 
-class GenericDetailView(LoginRequiredMixin, ModalMixin, AjaxMixin, DetailView):
+class GenericDetailView(ModalMixin, AjaxMixin, DetailView):
     deleted_obj_lookup = True
 
     def get_queryset(self):
@@ -208,11 +207,11 @@ class CreateViewMixin(FormMixin, AjaxMixin):
         return context
 
 
-class GenericCreateView(CsrfExemptMixin, LoginRequiredMixin, ModalFormMixin, CreateViewMixin, CreateView):
+class GenericCreateView(CsrfExemptMixin, ModalFormMixin, CreateViewMixin, CreateView):
     pass
 
 
-class FormSetCreateView(CsrfExemptMixin, LoginRequiredMixin, CreateViewMixin, ModelFormSetView):
+class FormSetCreateView(CsrfExemptMixin, CreateViewMixin, ModelFormSetView):
     def formset_valid(self, formset):
         response = super().formset_valid(formset)
         if hasattr(self.form_class.Meta, 'assign_perm') and getattr(self.form_class.Meta, 'assign_perm'):
@@ -222,7 +221,7 @@ class FormSetCreateView(CsrfExemptMixin, LoginRequiredMixin, CreateViewMixin, Mo
         return response
 
 
-class PreviewCreateView(CsrfExemptMixin, LoginRequiredMixin, ModalFormMixin, PreviewMixin, CreateViewMixin, CreateView):
+class PreviewCreateView(CsrfExemptMixin, ModalFormMixin, PreviewMixin, CreateViewMixin, CreateView):
     preview_template_name = 'ajaxviews/generic_form.html'
 
     def get_form_kwargs(self):
@@ -259,19 +258,19 @@ class UpdateViewMixin(FormMixin, AjaxMixin):
         return context
 
 
-class GenericUpdateView(CsrfExemptMixin, LoginRequiredMixin, ModalFormMixin, UpdateViewMixin, UpdateView):
+class GenericUpdateView(CsrfExemptMixin, ModalFormMixin, UpdateViewMixin, UpdateView):
     pass
 
 
-class FormSetUpdateView(CsrfExemptMixin, LoginRequiredMixin, UpdateViewMixin, ModelFormSetView):
+class FormSetUpdateView(CsrfExemptMixin, UpdateViewMixin, ModelFormSetView):
     pass
 
 
-class PreviewUpdateView(CsrfExemptMixin, LoginRequiredMixin, ModalFormMixin, PreviewMixin, UpdateViewMixin, UpdateView):
+class PreviewUpdateView(CsrfExemptMixin, ModalFormMixin, PreviewMixin, UpdateViewMixin, UpdateView):
     preview_template_name = 'ajaxviews/generic_form.html'
 
 
-class GenericDeleteView(LoginRequiredMixin, DeleteView):
+class GenericDeleteView(DeleteView):
     def get(self, request, *args, **kwargs):
         if request.GET.get('delete_file', False):
             instance = self.get_object()
@@ -302,7 +301,7 @@ class GenericDeleteView(LoginRequiredMixin, DeleteView):
             return super().get_success_url()
 
 
-class PreviewDeleteView(LoginRequiredMixin, PreviewMixin, DeleteView):
+class PreviewDeleteView(PreviewMixin, DeleteView):
     pass
 
 

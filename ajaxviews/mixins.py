@@ -328,7 +328,7 @@ class PreviewMixin:
         return super().form_valid(form)
 
 
-# class ObjectPermMixin():
+# class ObjectPermMixin:
 #     def dispatch(self, request, *args, **kwargs):
 #         permission = None
 #         for perm in get_perms_for_model(self.model):

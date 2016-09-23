@@ -42,8 +42,8 @@ define ->
                 @jsonCache[key] = value for key, value of response.json_cache
               $(modalId).modal('hide')
             else
-              @jsonCfg = @manager.getJsonCfg(response)
-              @manager.updateModal(modalId, response)
+              @jsonCfg = @_manager.getJsonCfg(response)
+              @_manager.updateModal(modalId, response)
               @_loadAjaxView()
 
         $(modalId).find('form[data-async]').on 'click', '.popover.confirmation a[data-apply=confirmation]', (e) =>
@@ -64,7 +64,7 @@ define ->
 
             if @jsonCache.reload_view
               @viewCache.jsonCache[key] = value for key, value of @jsonCache
-              console.log('jsonCache ->', @jsonCache) if @jsonCache and @manager.cfg.debug
+              console.log('jsonCache ->', @jsonCache) if @jsonCache and @_manager.cfg.debug
               subModalId = @viewCache.scopeName
               formNode = $(subModalId).find('form[data-async]')
 
@@ -75,16 +75,16 @@ define ->
                   $(fieldNode).val(pk).trigger('chosen:updated')
                 data = $(formNode).formSerialize() + '&form_data=true'
                 $.get $(formNode).attr('action'), data, (response) =>
-                  @manager.updateModal(subModalId, response)
+                  @_manager.updateModal(subModalId, response)
                   @viewCache._loadAjaxView()
               else
                 $.get @viewCache.jsonCfg.full_url, {}, (response) =>
-                  @manager.updateModal(subModalId, response)
+                  @_manager.updateModal(subModalId, response)
                   @viewCache._loadAjaxView()
           else
             if @jsonCache.reload_view
               @viewCache.jsonCache[key] = value for key, value of @jsonCache
-              console.log('jsonCache ->', @jsonCache) if @jsonCache and @manager.cfg.debug
+              console.log('jsonCache ->', @jsonCache) if @jsonCache and @_manager.cfg.debug
 
               if @jsonCache.ajax_load
                 @viewCache.onAjaxLoad() if @viewCache.onAjaxLoad
@@ -100,17 +100,17 @@ define ->
 #            'preview_model_form': $(@jsonCfg.preview_model_form).formSerialize()
 #          }
 #          $.get $(modalId).find('form[data-async]').attr('action'), ajaxData, (response) =>
-#            @manager.updateCfg(response)
-#            @manager.updateModal(modalId, response)
-#            @manager.initView(scope: modalId)
+#            @_manager.updateCfg(response)
+#            @_manager.updateModal(modalId, response)
+#            @_manager.initView(scope: modalId)
 #
 #        @Q('.modal-reload').click (e) =>
 #          e.preventDefault()
 #          $.get $(e.currentTarget).attr('href'), {'modal_id': modalId}, (response) =>
-#            @manager.initModalCfg(modalId.replace('#', '#reload'), response)
-#            @manager.updateModal(modalId, response)
+#            @_manager.initModalCfg(modalId.replace('#', '#reload'), response)
+#            @_manager.updateModal(modalId, response)
 #            $(modalId).find('form[data-async]').append('<input type="hidden" name="modal_reload" value="true" />')
-#            @manager.initView(scope: modalId)
+#            @_manager.initView(scope: modalId)
 #
 #            # $(modal_id).find('[data-dismiss="modal"]').click (e) =>
 #            $(modalId).find('.cancel-btn').click (e) =>
@@ -118,9 +118,9 @@ define ->
 #              e.stopPropagation()
 #              url = $(modalId).find('form[data-async]').attr('action').replace('edit', 'detail')
 #              $.get url, {'modal_reload': true}, (response) =>
-#                @manager.removeModalCfg(modalId.replace('#', '#reload'))
-#                @manager.updateModal(modalId, response)
-#                @manager.initView(scope: modalId)
+#                @_manager.removeModalCfg(modalId.replace('#', '#reload'))
+#                @_manager.updateModal(modalId, response)
+#                @_manager.initView(scope: modalId)
 
     onLoad: ->
       if location.search and location.search.indexOf('next=') < 0

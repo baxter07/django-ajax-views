@@ -6,7 +6,7 @@ define ->
         @requestModal($(e.currentTarget).attr('href'))
 
     initDateInput: (element, opts={}) ->
-      _opts = @manager.cfg.defaults.dateWidget or {}
+      _opts = @_manager.cfg.defaults.dateWidget or {}
       $.extend(_opts, opts)
       for dateinput in $(element).toArray()
         _opts.defaultViewDate = $(dateinput).val() or '' if not _opts.defaultViewDate
@@ -15,7 +15,7 @@ define ->
 
     animateProgressBar: ->
       if $('#ajax-progress-bar').length
-        animationSpeed = @manager.cfg.defaults.progressBar.animationSpeed
+        animationSpeed = @_manager.cfg.defaults.progressBar.animationSpeed
         animateProgress = ->
           $(@).stop().width(0)
           if $(@).data('stop-animate')

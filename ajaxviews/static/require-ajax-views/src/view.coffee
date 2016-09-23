@@ -1,7 +1,7 @@
 define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware, utils) ->
   class View
     constructor: (@Q, @scopeName) ->
-      @manager = ViewManager.get()
+      @_manager = ViewManager.get()
       @initMiddleware = true
       @viewCache = null
       @jsonCache = {}
@@ -10,7 +10,7 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       @utils = {}
       @utils[name] = method.bind(@) for name, method of utils
       @['__' + name] = method for name, method of appMiddleware
-      @['_' + name] = method for name, method of @manager.userMiddleware
+      @['_' + name] = method for name, method of @_manager.userMiddleware
 
     _loadAjaxView: ->
       if @initMiddleware
@@ -19,7 +19,7 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
         @_onAjaxLoad() if @_onAjaxLoad?
         @_onLoad() if @_onLoad?
         if @jsonCfg.init_view_type
-          method = @manager.getViewTypeMethod(@jsonCfg.init_view_type)
+          method = @_manager.getViewTypeMethod(@jsonCfg.init_view_type)
           @[method]() if @[method]?
       @onAjaxLoad() if @onAjaxLoad?
       @onLoad() if @onLoad?
@@ -43,7 +43,7 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
 
     _initRequest: (viewName, urlKwargs, jsonData, callback) ->
       [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
-      console.log('Debug request: ', _urlKwargs, _jsonData) if @manager.cfg.debug
+      console.log('Debug request: ', _urlKwargs, _jsonData) if @_manager.cfg.debug
 
       url = null
       if @modalNr
@@ -72,14 +72,14 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       jsonData ?= {}
       animate ?= true
       @_initRequest viewName, urlKwargs, jsonData, (response) =>
-        @jsonCfg = @manager.getJsonCfg(response)
+        @jsonCfg = @_manager.getJsonCfg(response)
         if @jsonCfg.ajax_load
-          @manager.updateView(response, animate)
-          @manager.debugInfo(@jsonCfg)
+          @_manager.updateView(response, animate)
+          @_manager.debugInfo(@jsonCfg)
           @_loadAjaxView()
           @utils.stopProgressBar()
         else
-          console.log('this should only happen if user session has expired') if @manager.cfg.debug
+          console.log('this should only happen if user session has expired') if @_manager.cfg.debug
           location.reload()
 
     requestView: ({viewName, urlKwargs, jsonData, pageLoad, animate} = {}) ->
@@ -90,17 +90,17 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       animate ?= true
 
       @utils.animateProgressBar()
-      $(@manager.cfg.html.ajaxNode).fadeOut('fast') if animate
+      $(@_manager.cfg.html.ajaxNode).fadeOut('fast') if animate
       if not viewName
         @_initView(null, urlKwargs, jsonData, animate)
       else if pageLoad
         [_urlKwargs, _jsonData] = @_getRequestData(urlKwargs, jsonData)
         location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData)
       else
-        module = @manager.getModuleName(viewName)
-        require [@manager.cfg.modules.prefix + module], (View) =>
-          Q = (selector) -> $(@manager.cfg.html.ajaxNode).find(selector)
-          view = new View(Q, @manager.cfg.html.ajaxNode)
+        module = @_manager.getModuleName(viewName)
+        require [@_manager.cfg.modules.prefix + module], (View) =>
+          Q = (selector) -> $(@_manager.cfg.html.ajaxNode).find(selector)
+          view = new View(Q, @_manager.cfg.html.ajaxNode)
           view.__requestContext = @
           view._initView(viewName, urlKwargs, jsonData, animate)
           delete view.__requestContext
@@ -113,7 +113,7 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
         callback(response)
 
     requestModal: (href, jsonData = null) ->
-      console.log('Debug request: ', href, jsonData) if @manager.cfg.debug
+      console.log('Debug request: ', href, jsonData) if @_manager.cfg.debug
       data = {
         'modal_id': '#modal_nr' + parseInt(@modalNr + 1) or '#modal_nr1'
         'json_cfg': JSON.stringify(jsonData) if jsonData
@@ -121,9 +121,9 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       $.get href, data, (response) =>
         $('body').append($(response).find('.modal')[0].outerHTML)
         $(data.modal_id).modal('toggle')
-        jsonCfg = @manager.getJsonCfg(response)
+        jsonCfg = @_manager.getJsonCfg(response)
 
-        @manager.requireModule jsonCfg, (View) =>
+        @_manager.requireModule jsonCfg, (View) =>
           Q = (selector) -> $(data.modal_id).find(selector)
           view = new View(Q, data.modal_id)
           view.viewCache = @

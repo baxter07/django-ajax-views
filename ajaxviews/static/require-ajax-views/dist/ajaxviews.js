@@ -289,8 +289,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
                     }
                     return $(modalId).modal('hide');
                   } else {
-                    _this.jsonCfg = _this.manager.getJsonCfg(response);
-                    _this.manager.updateModal(modalId, response);
+                    _this.jsonCfg = _this._manager.getJsonCfg(response);
+                    _this._manager.updateModal(modalId, response);
                     return _this._loadAjaxView();
                   }
                 };
@@ -329,7 +329,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
                       value = ref[key];
                       _this.viewCache.jsonCache[key] = value;
                     }
-                    if (_this.jsonCache && _this.manager.cfg.debug) {
+                    if (_this.jsonCache && _this._manager.cfg.debug) {
                       console.log('jsonCache ->', _this.jsonCache);
                     }
                     subModalId = _this.viewCache.scopeName;
@@ -344,12 +344,12 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
                       }
                       data = $(formNode).formSerialize() + '&form_data=true';
                       return $.get($(formNode).attr('action'), data, function (response) {
-                        _this.manager.updateModal(subModalId, response);
+                        _this._manager.updateModal(subModalId, response);
                         return _this.viewCache._loadAjaxView();
                       });
                     } else {
                       return $.get(_this.viewCache.jsonCfg.full_url, {}, function (response) {
-                        _this.manager.updateModal(subModalId, response);
+                        _this._manager.updateModal(subModalId, response);
                         return _this.viewCache._loadAjaxView();
                       });
                     }
@@ -361,7 +361,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
                       value = ref2[key];
                       _this.viewCache.jsonCache[key] = value;
                     }
-                    if (_this.jsonCache && _this.manager.cfg.debug) {
+                    if (_this.jsonCache && _this._manager.cfg.debug) {
                       console.log('jsonCache ->', _this.jsonCache);
                     }
                     if (_this.jsonCache.ajax_load) {
@@ -424,7 +424,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           if (opts == null) {
             opts = {};
           }
-          _opts = this.manager.cfg.defaults.dateWidget || {};
+          _opts = this._manager.cfg.defaults.dateWidget || {};
           $.extend(_opts, opts);
           ref = $(element).toArray();
           results = [];
@@ -443,7 +443,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
         animateProgressBar: function () {
           var animateProgress, animationSpeed;
           if ($('#ajax-progress-bar').length) {
-            animationSpeed = this.manager.cfg.defaults.progressBar.animationSpeed;
+            animationSpeed = this._manager.cfg.defaults.progressBar.animationSpeed;
             animateProgress = function () {
               $(this).stop().width(0);
               if ($(this).data('stop-animate')) {
@@ -474,7 +474,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           var method, name, ref;
           this.Q = Q1;
           this.scopeName = scopeName;
-          this.manager = ViewManager.get();
+          this._manager = ViewManager.get();
           this.initMiddleware = true;
           this.viewCache = null;
           this.jsonCache = {};
@@ -489,7 +489,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
             method = appMiddleware[name];
             this['__' + name] = method;
           }
-          ref = this.manager.userMiddleware;
+          ref = this._manager.userMiddleware;
           for (name in ref) {
             method = ref[name];
             this['_' + name] = method;
@@ -507,7 +507,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
               this._onLoad();
             }
             if (this.jsonCfg.init_view_type) {
-              method = this.manager.getViewTypeMethod(this.jsonCfg.init_view_type);
+              method = this._manager.getViewTypeMethod(this.jsonCfg.init_view_type);
               if (this[method] != null) {
                 this[method]();
               }
@@ -554,7 +554,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
         View.prototype._initRequest = function (viewName, urlKwargs, jsonData, callback) {
           var _jsonData, _urlKwargs, ref, url;
           ref = this._getRequestData(urlKwargs, jsonData), _urlKwargs = ref[0], _jsonData = ref[1];
-          if (this.manager.cfg.debug) {
+          if (this._manager.cfg.debug) {
             console.log('Debug request: ', _urlKwargs, _jsonData);
           }
           url = null;
@@ -601,14 +601,14 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           }
           return this._initRequest(viewName, urlKwargs, jsonData, function (_this) {
             return function (response) {
-              _this.jsonCfg = _this.manager.getJsonCfg(response);
+              _this.jsonCfg = _this._manager.getJsonCfg(response);
               if (_this.jsonCfg.ajax_load) {
-                _this.manager.updateView(response, animate);
-                _this.manager.debugInfo(_this.jsonCfg);
+                _this._manager.updateView(response, animate);
+                _this._manager.debugInfo(_this.jsonCfg);
                 _this._loadAjaxView();
                 return _this.utils.stopProgressBar();
               } else {
-                if (_this.manager.cfg.debug) {
+                if (_this._manager.cfg.debug) {
                   console.log('this should only happen if user session has expired');
                 }
                 return location.reload();
@@ -636,7 +636,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           }
           this.utils.animateProgressBar();
           if (animate) {
-            $(this.manager.cfg.html.ajaxNode).fadeOut('fast');
+            $(this._manager.cfg.html.ajaxNode).fadeOut('fast');
           }
           if (!viewName) {
             return this._initView(null, urlKwargs, jsonData, animate);
@@ -644,14 +644,14 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
             ref1 = this._getRequestData(urlKwargs, jsonData), _urlKwargs = ref1[0], _jsonData = ref1[1];
             return location.href = Urls[viewName](_urlKwargs) + '?json_cfg=' + JSON.stringify(_jsonData);
           } else {
-            module = this.manager.getModuleName(viewName);
-            return require([this.manager.cfg.modules.prefix + module], function (_this) {
+            module = this._manager.getModuleName(viewName);
+            return require([this._manager.cfg.modules.prefix + module], function (_this) {
               return function (View) {
                 var Q, view;
                 Q = function (selector) {
-                  return $(this.manager.cfg.html.ajaxNode).find(selector);
+                  return $(this._manager.cfg.html.ajaxNode).find(selector);
                 };
-                view = new View(Q, _this.manager.cfg.html.ajaxNode);
+                view = new View(Q, _this._manager.cfg.html.ajaxNode);
                 view.__requestContext = _this;
                 view._initView(viewName, urlKwargs, jsonData, animate);
                 return delete view.__requestContext;
@@ -679,7 +679,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           if (jsonData == null) {
             jsonData = null;
           }
-          if (this.manager.cfg.debug) {
+          if (this._manager.cfg.debug) {
             console.log('Debug request: ', href, jsonData);
           }
           data = {
@@ -691,8 +691,8 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
               var jsonCfg;
               $('body').append($(response).find('.modal')[0].outerHTML);
               $(data.modal_id).modal('toggle');
-              jsonCfg = _this.manager.getJsonCfg(response);
-              return _this.manager.requireModule(jsonCfg, function (View) {
+              jsonCfg = _this._manager.getJsonCfg(response);
+              return _this._manager.requireModule(jsonCfg, function (View) {
                 var Q, view;
                 Q = function (selector) {
                   return $(data.modal_id).find(selector);
