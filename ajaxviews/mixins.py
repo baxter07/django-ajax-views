@@ -2,9 +2,11 @@ import json
 
 from django.shortcuts import redirect
 from django.core.exceptions import ImproperlyConfigured
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse, QueryDict
 from django.utils.html import force_text
 from django.utils.decorators import method_decorator
+from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
@@ -29,7 +31,7 @@ class AjaxMixin:
         super().__init__(**kwargs)
 
     def dispatch(self, request, *args, **kwargs):
-        self.json_cfg = kwargs.copy()
+        self.json_cfg.update(kwargs.copy())
         for key, value in json.loads(request.GET.dict().get('json_cfg', '{}')).items():
             if value or value is False or value == 0:
                 self.json_cfg[key] = value
@@ -51,7 +53,10 @@ class AjaxMixin:
         context['view_name'] = self.json_cfg.get('view_name', None)
         if hasattr(self, 'page_size') and self.page_size:
             context['page_size'] = self.page_size
-        context['json_cfg'] = self.json_cfg
+        context['json_cfg'] = mark_safe(json.dumps(
+            self.json_cfg, cls=DjangoJSONEncoder
+        ))
+        # context['json_cfg'] = self.json_cfg
         return context
 
 
@@ -117,11 +122,11 @@ class FormMixin(SuccessMessageMixin):
         return success_url
 
     def get_context_data(self, **kwargs):
+        if hasattr(self, 'json_cfg') and 'init_view_type' not in self.json_cfg:
+            self.json_cfg['init_view_type'] = 'formView'
         context = super().get_context_data(**kwargs)
         if hasattr(self, 'get_form_class'):
             context['page_size'] = getattr(self.get_form_class().Meta, 'form_size', 'sm')
-        if hasattr(self, 'json_cfg') and 'init_view_type' not in self.json_cfg:
-            self.json_cfg['init_view_type'] = 'formView'
         return context
 
 
@@ -130,16 +135,18 @@ class ModalMixin:
         self.modal_id = request.GET.get('modal_id', '').replace('#', '')
         if not self.modal_id and hasattr(self, 'json_cfg') and 'modal_id' in self.json_cfg:
             self.modal_id = self.json_cfg.get('modal_id', '').replace('#', '')
+        if self.modal_id and not hasattr(self, 'form_class'):
+            self.json_cfg['full_url'] = self.request.get_full_path()
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.modal_id:
-            if not hasattr(self, 'form_class'):
-                if 'json_cfg' in context:
-                    context['json_cfg']['full_url'] = self.request.get_full_path()
-                else:
-                    context['json_cfg'] = {'full_url': self.request.get_full_path()}
+            # if not hasattr(self, 'form_class'):
+            #     if 'json_cfg' in context:
+            #         context['json_cfg']['full_url'] = self.request.get_full_path()
+            #     else:
+            #         context['json_cfg'] = {'full_url': self.request.get_full_path()}
             context.update({
                 'modal_id': self.modal_id,
                 'generic_template': 'ajaxviews/__modal_base.html',
@@ -297,20 +304,25 @@ class PreviewMixin:
         return self.render_to_response(self.get_context_data(form=preview_form))
 
     def get_context_data(self, **kwargs):
+        self.json_cfg['preview_stage'] = self._stage
+        if self._stage == 2:
+            self.json_cfg['preview_model_form'] = render_crispy_form(self._model_form)
+        if self._preview_back and hasattr(self.form_class.Meta, 'form_size'):
+            self.json_cfg['page_size'] = getattr(self.form_class.Meta, 'form_size')
         context = super().get_context_data(**kwargs)
-        if 'json_cfg' not in context:
-            context['json_cfg'] = {}
-        context['json_cfg']['preview_stage'] = self._stage
+        # if 'json_cfg' not in context:
+        #     context['json_cfg'] = {}
+        # context['json_cfg']['preview_stage'] = self._stage
         if self._stage == 2:
             # Remember to pass your CSRF token to the helper method using the context dictionary if you want
             # the rendered form to be able to submit.   render_crispy_form(form, helper=None, context=None)
-            context['json_cfg']['preview_model_form'] = render_crispy_form(self._model_form)
+            # context['json_cfg']['preview_model_form'] = render_crispy_form(self._model_form)
             if hasattr(self.preview_form_class.Meta, 'headline'):
                 context['headline'] = 'Preview ' + self.preview_form_class.headline
             elif hasattr(self.preview_form_class.Meta, 'headline_full'):
                 context['headline'] = self.preview_form_class.headline
-        if self._preview_back and hasattr(self.form_class.Meta, 'form_size'):
-            context['json_cfg']['page_size'] = getattr(self.form_class.Meta, 'form_size')
+        # if self._preview_back and hasattr(self.form_class.Meta, 'form_size'):
+        #     context['json_cfg']['page_size'] = getattr(self.form_class.Meta, 'form_size')
         if self.request.is_ajax() and self._preview_back and not self.request.GET.get('modal_id', False):
             context['generic_template'] = 'ajaxviews/__ajax_base.html'
         return context

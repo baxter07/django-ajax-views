@@ -150,6 +150,8 @@ class AjaxListView(AjaxMixin, ListView):
         })
 
     def get_context_data(self, **kwargs):
+        if 'init_view_type' not in self.json_cfg:
+            self.json_cfg['init_view_type'] = 'listView'
         context = super().get_context_data(**kwargs)
         if self.request.is_ajax() and not self.request.GET.get('modal_id', False):
             context['generic_template'] = 'ajaxviews/__ajax_base.html'
@@ -158,8 +160,6 @@ class AjaxListView(AjaxMixin, ListView):
         if self.json_cfg.get('sort_index', -1) >= 0:
             context['sort_index'] = self.json_cfg['sort_index']
             context['sort_order'] = self.json_cfg.get('sort_order', None)
-        if 'init_view_type' not in self.json_cfg:
-            self.json_cfg['init_view_type'] = 'listView'
         return context
 
 
@@ -183,11 +183,11 @@ class GenericDetailView(ModalMixin, AjaxMixin, DetailView):
         return self.queryset.all()
 
     def get_context_data(self, **kwargs):
+        if 'init_view_type' not in self.json_cfg:
+            self.json_cfg['init_view_type'] = 'detailView'
         context = super().get_context_data(**kwargs)
         if self.request.is_ajax() and not self.request.GET.get('modal_id', False):
             context['generic_template'] = 'ajaxviews/__ajax_base.html'
-        if 'init_view_type' not in self.json_cfg:
-            self.json_cfg['init_view_type'] = 'detailView'
         if self.request.GET.get('disable_full_view', False):
             context['disable_full_view'] = True
         if self.request.GET.get('success_url', None):

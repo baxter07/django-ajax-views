@@ -54,7 +54,6 @@ setup(
     install_requires=[
         'Django>=1.9',
         'django-require',
-        'django-jsonify',
         'django-js-reverse',
         'django-crispy-forms',
         'python-dateutil',

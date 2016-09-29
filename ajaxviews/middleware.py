@@ -1,10 +1,6 @@
-import json
-
 from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
-from django.utils.safestring import mark_safe
 from django.template.loader import get_template
-from django.core.serializers.json import DjangoJSONEncoder
 
 from .conf import settings
 
@@ -13,13 +9,12 @@ class AjaxMiddleware:
     def process_response(self, request, response):
         if not request.is_ajax() and not isinstance(response, HttpResponseRedirect):
             _content = force_text(response.content, encoding=response.charset)
-            if '</body>' not in _content:  # TODO HttpResponse _content.find('</body>') > 1
+            if '</body>' not in _content:
                 return response
 
-            json_cfg = mark_safe(json.dumps(
-                response.context_data.get('json_cfg', {}) if hasattr(response, 'context_data') else {},
-                cls=DjangoJSONEncoder
-            ))
+            json_cfg = {}
+            if hasattr(response, 'context_data'):
+                json_cfg = response.context_data.get('json_cfg', {})
 
             template = get_template('ajaxviews/__middleware.html')
             html = template.render({
@@ -27,7 +22,10 @@ class AjaxMiddleware:
                 'main_name': settings.REQUIRE_MAIN_NAME,
             })
 
-            response.content = response.make_bytes(_content.replace('</body>', html))
+            l_content, r_content = _content.rsplit('</body>', 1)
+            _content = ''.join([l_content, html, '</body>', r_content])
+
+            response.content = response.make_bytes(_content)
             if response.get('Content-Length', None):
                 response['Content-Length'] = len(response.content)
         return response

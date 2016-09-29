@@ -1,8 +1,6 @@
-{% load jsonify %}
-
 <div>
 
-<script id="config" type="application/json">{{ json_cfg|jsonify }}</script>
+<script id="config" type="application/json">{{ json_cfg }}</script>
 
 <div class="modal fade" id="{{ modal_id }}" tabindex="-1" role="dialog" aria-labelledby="{{ modal_id }}" aria-hidden="true">
   <div class="modal-dialog modal-size-{{ page_size|default:'sm' }}">

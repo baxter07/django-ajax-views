@@ -24,7 +24,7 @@ Dependencies
 `django-js-reverse`_
     Django's URL reverse in javascript
 `django-crispy-forms`_ (TODO make optional)
-    Integrating bootstrap into Django forms
+    Integrating Bootstrap into Django forms
 `django-guardian`_ (optional)
     Object level permission handling
 `django-extra-views`_ (optional)
@@ -32,11 +32,10 @@ Dependencies
 `django-autocomplete-light`_ == 2.3.3 (optional)
     Support for autocompletion
 
-
 Django settings
 ===============
 
-Add ``ajaxviews`` and dependencies to your ``INSTALLED_APPS``:
+Add ``ajaxviews`` and dependencies to ``INSTALLED_APPS``:
 
 .. code-block:: python
 
@@ -51,7 +50,7 @@ Add ``ajaxviews`` and dependencies to your ``INSTALLED_APPS``:
         'autocomplete_light',
     ]
 
-To append the **JSON config script** and the **require main script** in your HTML body tag, add the middleware class
+To append the **JSON config script** and the **require main script** to your HTML body tag, add the middleware class
 to your settings.
 
 .. code-block:: python
@@ -80,7 +79,7 @@ django-ajax-views
 
     Default: ``{messages.ERROR: 'error'}``
 
-    Set to ``danger`` for compatibility with bootstrap error tags.
+    Set to ``'danger'`` for compatibility with bootstrap error tags.
 
 - ``REQUIRE_MAIN_NAME``
 
@@ -95,7 +94,7 @@ django-crispy-forms
 
     Default: ``'bootstrap'``
 
-    Set the required template pack to ``'bootstrap3'``.
+    Set this to ``'bootstrap3'`` since this is the currently supported template pack.
 
 django-js-reverse
 -----------------
@@ -140,16 +139,6 @@ django-require
 Configure RequireJS
 ===================
 
-In JS root directory create a ``main.js`` file which is loaded by RequireJS. The module loading is handled by
-`django-require`_'s templatetag ``require_module``. Place the following at the bottom of your base HTML template.
-
-.. code-block:: django
-   :caption: base.html
-   :name: base html template
-
-    {% load require %}
-    {% require_module 'main' %}
-
 In ``main.js`` define the paths to the javascript libraries and require these together with ``cs!app`` to
 make them available throughout the whole application. I recommend setting up `NodeJS`_ and
 `Bower`_ to manage all javascript dependencies.
@@ -157,7 +146,6 @@ make them available throughout the whole application. I recommend setting up `No
 .. code-block:: javascript
    :caption: main.js
    :name: requirejs main file
-   :linenos:
 
     (function () {
 
@@ -193,13 +181,12 @@ make them available throughout the whole application. I recommend setting up `No
 
 Using the prefix ``cs!`` tells RequireJS to load a coffeescript file. The following initializes the
 ``ajaxviews.App`` and configures it to load all views and the middleware as coffeescript modules.
-To execute a user defined ``middleware`` on every request specify the file name without extension
+To execute a user defined ``middleware`` on every request, specify the file name without extension
 in the config.
 
 .. code-block:: coffeescript
    :caption: app.coffee
    :name: client application
-   :linenos:
 
     define ['ajaxviews'], (ajaxviews) ->
       App = ajaxviews.App
@@ -207,12 +194,42 @@ in the config.
       App.config
         module:
           prefix: 'cs!'
-        middleware: 'middleware'
+          middleware: 'middleware'
+        debug: true
 
       App.init()
 
-.. example build profile for requirejs
-   ___________________________________
+Build profile
+-------------
+
+For better performance in production use Almond_ as replacement for RequireJS. The following build profile bundles
+all your modules and dependencies into a single file using the ``r.js`` optimizer. Since Almond doesn't support
+dynamic loading it's much more lightweight and faster than RequireJS. For development you can use the built in
+default profile or create your own if needed.
+
+.. code-block:: javascript
+    :caption: app.build.js
+    :name: example build profile used in production
+
+    ({
+        baseUrl: 'path/to/js/root/',
+        name: 'almond',
+        include: [
+            'cs!middleware',
+            'cs!mixins/mixin_name',
+            'cs!views/view_name',
+        ],
+        exclude: ['coffee-script'],
+        insertRequire: ['main'],
+        stubModules: ['cs'],
+        mainConfigFile: 'path/to/main.js',
+        findNestedDependencies: true,
+        optimize: 'none',
+        wrap: true
+    });
+
+.. caution:: Be sure to include the middleware, views and mixins in the build profile since they can't be traced
+             automatically.
 
 
 .. _Django: https://github.com/django/django
@@ -234,3 +251,5 @@ in the config.
 .. _NodeJS: https://nodejs.org
 
 .. _Bower: https://bower.io
+
+.. _Almond: https://github.com/requirejs/almond

@@ -1,7 +1,5 @@
-{% load jsonify %}
-
 <div>
-  <script id="config" type="application/json">{{ json_cfg|jsonify }}</script>
+  <script id="config" type="application/json">{{ json_cfg }}</script>
 
   <div id="ajax-content">
     {% block main_content %}{% endblock %}

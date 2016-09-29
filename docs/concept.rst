@@ -22,7 +22,6 @@ using the built in ``extendjs`` function to mimic class inheritance.
 .. code-block:: javascript
    :caption: my_view.js
    :name: javascript class
-   :linenos:
 
     define(['ajaxviews'], function(ajaxviews) {
       var MyView = ajaxviews.extendjs(ajaxviews.View);
@@ -83,7 +82,6 @@ Django's *URL conf*.
 .. code-block:: javascript
    :caption: main.js
    :name: main js file
-   :linenos:
 
     // setup require config
 
@@ -132,16 +130,24 @@ Add ``ajax_view = True`` to the class if you have created a corresponding JS fil
 
 .. The client side **middleware** will always be executed.
 
-.. Ajaxable Template
-
-The **JSON config script** is the communication channel for sites requested via URL. It's included in the base
-html template by the AjaxMiddleware_.
-
-.. It should be included in the base html template from wich all other templates inherit from.
-
 .. code-block:: html
+    :caption: base.html
+    :name: base html template - JSON config
 
     <script id="config" type="application/json">{{ json_cfg }}</script>
+
+The **JSON config script** is the communication channel for sites requested via URL. It's included in the base
+html template by the AjaxMiddleware_ along with the **require main script**.
+
+.. code-block:: django
+   :caption: base.html
+   :name: base html template - require module
+
+    {% load require %}
+    {% require_module 'main' %}
+
+RequireJS loads the ``main.js`` file located in JS root. The module loading is handled by
+`django-require`_'s templatetag ``require_module``.
 
 .. code-block:: django
 
@@ -167,6 +173,8 @@ scope that's replaced when the view is updated.
 .. _coffeescript: http://coffeescript.org
 
 .. _typescript: https://www.typescriptlang.org
+
+.. _django-require: https://github.com/etianen/django-require
 
 .. _set up RequireJS: setup.html#configure-requirejs
 
