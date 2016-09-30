@@ -158,9 +158,9 @@ RequireJS loads the ``main.js`` file located in JS root. The module loading is h
     :width: 450
     :align: right
 
-Extend templates from ``generic_template`` to be able to update the view via AJAX by calling ``requestView`` .
-Set the default tag to the base template that's used for requests via URL. The ``#ajax-content`` is the
-scope that's replaced when the view is updated.
+Extend templates from ``generic_template`` to be able to update the view via AJAX by
+calling :func:`View.requestView`. Set the default tag to the base template that's used for requests
+via URL. The ``#ajax-content`` is the scope that's replaced when the view is updated.
 
 .. raw:: html
 

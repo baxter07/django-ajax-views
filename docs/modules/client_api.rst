@@ -9,14 +9,19 @@ Client API
 
     This is the base view class all other views extend from.
 
+    :var dict testvar: my description.
+
     :param dict jsonCfg: Data being passed in request and response.
     :param bool initMiddleware: Whether the middleware should be executed or not.
     :param dict utils: Helper functions loaded from ``Utils`` module.
 
-    .. js:function:: requestView
+    Args:
+        my_arg (dict): argument comment.
+
+    .. js:function:: requestView(viewName='', urlKwargs={}, jsonData={}, pageLoad=False, animate=True)
 
         AJAX request to update the view. This will update the ``jsonCfg`` attribute and replace the content of
-        ``.ajax-content`` that's returned by the response.
+        ``.ajax-content`` that's returned by the response. :class:`ajaxviews.mixins.AjaxMixin.dispatch`
 
         :param str viewName: Name mapped to Django's URL conf. Default is the current view name.
         :param dict urlKwargs: Keyword arguments parsed in URL string.

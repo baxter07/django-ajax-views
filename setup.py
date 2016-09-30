@@ -9,12 +9,9 @@ root_path = path.abspath(path.dirname(__file__))
 with open(path.join(root_path, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-version_str = '.'.join(str(n) for n in __version__)
-
-
 setup(
     name='django-ajax-views',
-    version=version_str,
+    version=__version__,
     description='Django class-based views extension working together with JS library require-ajax-views.',
     long_description=long_description,
     url='https://github.com/Pyco7/django-ajax-views',

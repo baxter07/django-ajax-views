@@ -17,10 +17,16 @@ from .forms import DefaultFormHelper
 
 
 class AjaxMixin:
-    """Used in all views to communicate data with client app.
+    """
+    This is the core mixin that's used in all other mixins and views to establish communication with the
+    client side app.
 
-        Args:
-            json_cfg (dict): received from request and passed on in response.
+    It merges the optional URL parameters from the GET request with the keyword arguments retrieved from
+    Django's URL conf into ``json_cfg``.
+
+    :ivar bool ajax_view: Set to True if you have created a client side module associated with the view
+        class that's inheriting from this mixin.
+    :ivar dict json_cfg: Data parsed from incoming requests and returned in each response.
     """
     ajax_view = False
 
@@ -31,6 +37,18 @@ class AjaxMixin:
         super().__init__(**kwargs)
 
     def dispatch(self, request, *args, **kwargs):
+        """
+        Parse incoming request parameters and assign the view name to ``json_cfg``.
+
+        :js:class:`View`
+
+        :js:func:`View.requestView`
+
+        :param request: Request object
+        :param args: URL positional arguments
+        :param kwargs: URL keyword arguments
+        :return: Call to super class
+        """
         self.json_cfg.update(kwargs.copy())
         for key, value in json.loads(request.GET.dict().get('json_cfg', '{}')).items():
             if value or value is False or value == 0:
@@ -49,6 +67,12 @@ class AjaxMixin:
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        """
+        Pass current view_name, page_size and stringified json_cfg on to template context.
+
+        :param kwargs: Template context keword arguments
+        :return: Modified context data from super call
+        """
         context = super().get_context_data(**kwargs)
         context['view_name'] = self.json_cfg.get('view_name', None)
         if hasattr(self, 'page_size') and self.page_size:
@@ -56,11 +80,15 @@ class AjaxMixin:
         context['json_cfg'] = mark_safe(json.dumps(
             self.json_cfg, cls=DjangoJSONEncoder
         ))
-        # context['json_cfg'] = self.json_cfg
         return context
 
 
 class CsrfExemptMixin:
+    """
+    Mixin to decorate the :func:`dispatch` method with :func:`django.views.decorators.csrf.csrf_exempt`.
+
+    .. note:: This should always be the left-most mixin.
+    """
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)

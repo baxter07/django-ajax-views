@@ -16,6 +16,18 @@ class classproperty(property):
 
 
 def get_objects_for_model(user, model, perm_prefix='access_'):
+    """
+    Shortcut to return objects of a model for an authenticated user with permissions.
+    This uses guardians ``get_objects_for_user`` function.
+
+    >>> get_objects_for_model(request.user, ModelClass)
+    <queryset>
+
+    :param user: Authenticated user
+    :param model: Django model instance
+    :param perm_prefix: Default 'access\_'
+    :return: None if no permission else queryset
+    """
     package, module = model.__module__.split('.')
 
     for perm in get_perms_for_model(model):

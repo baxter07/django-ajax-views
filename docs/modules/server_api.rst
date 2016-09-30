@@ -3,16 +3,16 @@
 Server API
 **********
 
-Views
-=====
-
-.. automodule:: ajaxviews.views
-    :members:
-
 Mixins
 ======
 
 .. automodule:: ajaxviews.mixins
+    :members:
+
+Views
+=====
+
+.. automodule:: ajaxviews.views
     :members:
 
 Middleware
