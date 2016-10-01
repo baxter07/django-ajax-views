@@ -195,9 +195,7 @@ Build profile
 -------------
 
 For better performance in production use Almond_ as replacement for RequireJS. The following build profile bundles
-all your modules and dependencies into a single file using the ``r.js`` optimizer. Since Almond doesn't support
-dynamic loading it's much more lightweight and faster than RequireJS. For development you can use the built in
-default profile or create your own if desired.
+all your modules and dependencies into a single file using the ``r.js`` optimizer.
 
 .. code-block:: javascript
     :caption: app.build.js
@@ -221,9 +219,11 @@ default profile or create your own if desired.
     });
 
 .. caution:: Be sure to include the middleware, views and mixins modules that you have created in the build profile.
-             Since those modules are loaded dynamically they can't be traced automatically if they are not required
-             elsewhere in a modules first 'define' call.
+             Since those modules are loaded dynamically they can't be traced automatically on build if they are not
+             required elsewhere in a modules first 'define' call.
 
+Since Almond doesn't support dynamic loading it's much more lightweight and faster than RequireJS. For development
+you can use the built in default profile or create your own if desired.
 
 .. _Django: https://github.com/django/django
 

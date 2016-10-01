@@ -19,7 +19,7 @@ from .forms import DefaultFormHelper
 class AjaxMixin:
     """
     This is the core mixin that's used in all other mixins and views to establish communication with the
-    client side app.
+    client side :class:`App`.
 
     It merges the optional URL parameters from the GET request with the keyword arguments retrieved from
     Django's URL conf into ``json_cfg``.
@@ -39,10 +39,6 @@ class AjaxMixin:
     def dispatch(self, request, *args, **kwargs):
         """
         Parse incoming request parameters and assign the view name to ``json_cfg``.
-
-        :js:class:`View`
-
-        :js:func:`View.requestView`
 
         :param request: Request object
         :param args: URL positional arguments
@@ -159,6 +155,9 @@ class FormMixin(SuccessMessageMixin):
 
 
 class ModalMixin:
+    """
+    *Detail* views inheriting this mixin can be displayed in a modal by calling :func:`View.requestModal`.
+    """
     def dispatch(self, request, *args, **kwargs):
         self.modal_id = request.GET.get('modal_id', '').replace('#', '')
         if not self.modal_id and hasattr(self, 'json_cfg') and 'modal_id' in self.json_cfg:
@@ -183,6 +182,10 @@ class ModalMixin:
 
 
 class ModalFormMixin(ModalMixin):
+    """
+    Used in *Update* and *Create* views to display in modals by simply calling :func:`View.requestModal` from
+    the client side view class.
+    """
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         if self.modal_id:

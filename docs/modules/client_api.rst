@@ -1,86 +1,187 @@
 
+sphinx.addnodes.desc_addname
+
 **********
 Client API
 **********
 
-.. js:class:: View
+.. class:: App
 
-    .. js:attribute:: testme
+    This is the client side application which should be initialized once the DOM is loaded.
 
-    This is the base view class all other views extend from.
+    If the JSON config script is found in the DOM, it executes the view class with the file name that
+    equals the ``view_name`` contained in the JSON config.
 
-    :var dict testvar: my description.
+    The initial startup of the application executes the :func:`onPageLoad` and :func:`onLoad` functions
+    of the :class:`View` class and if specified the :class:`Middleware`.
 
-    :param dict jsonCfg: Data being passed in request and response.
-    :param bool initMiddleware: Whether the middleware should be executed or not.
-    :param dict utils: Helper functions loaded from ``Utils`` module.
+    See configurations below:
 
-    Args:
-        my_arg (dict): argument comment.
+    :ivar str html.cfgNode: ID of JSON config script element. Default: ``'#config'``
+    :ivar str html.ajaxNode: ID of element that's replaced on :func:`View.requestView`. Default: ``'#ajax-content'``
+    :ivar str html.modalNode: Class of element that's replaced when modal is updated. Default: ``'.modal-dialog'``
+    :ivar str modules.prefix: Define the prefix for all module loading. Default: ``''``
+    :ivar str modules.viewPath: Path to view modules relative to JS root. Default: ``'views/'``
+    :ivar str modules.mixinPath: Path to mixin modules relative to JS root. Default: ``'mixins/'``
+    :ivar str modules.middleware: Name and path of the middleware file relative to JS root. Default: ``''``
+    :ivar dict mixins: Define mixins to execute a single module for multiple views. Default: ``{}``
+    :ivar bool debug: Print request and response parameters to console. Default: ``false``
+    :ivar dict defaults.dateWidget: Options to initialize date input elements. Default: ``{}``
+    :ivar int defaults.progressBar.animationSpeed: Speed in milliseconds. Default: ``300``
 
-    .. js:function:: requestView(viewName='', urlKwargs={}, jsonData={}, pageLoad=False, animate=True)
+    ..
+        Args:
+            my_arg (dict): argument comment.
 
-        AJAX request to update the view. This will update the ``jsonCfg`` attribute and replace the content of
-        ``.ajax-content`` that's returned by the response. :class:`ajaxviews.mixins.AjaxMixin.dispatch`
+.. class:: View
+
+    This is the base view class all other views extend from. It provides functions to update the view and
+    request views to be displayed in bootstrap modals.
+
+    Whenever a view is requested via URL the :func:`View.onPageLoad` function is executed. When
+    :func:`requestView` or :func:`requestModal` is called the :func:`View.onAjaxLoad` function is
+    executed for the given view. The :func:`View.onLoad` function is always executed but any of those functions
+    can also be omitted.
+
+    .. None of them are required to be added to the view class.
+
+    :ivar dict jsonCfg: Data returned by response.
+    :ivar bool initMiddleware: Whether the middleware should be executed or not.
+    :ivar dict utils: Helper functions loaded from :class:`Utils` module.
+    :ivar object viewCache: When :func:`requestModal` initializes the requested view class it saves the current view
+        instance to *viewCache*.
+    :ivar dict jsonCache: Is used to pass data between views when a modal form is closed if changes require custom
+        behavior to update the view below.
+    :ivar int modalNr: If the current view is displayed in a modal it will increment the count of modals by one.
+
+    .. function:: requestView(viewName='', urlKwargs={}, jsonData={}, pageLoad=False, animate=True)
+
+        AJAX request to update the current view. ``urlKwargs`` are the parameters sent to the server through
+        the URL string. ``jsonData`` are the keyword arguments sent to the server as hidden parameters.
+
+        If the view class has :func:`getUrlKwargs` and/or :func:`getJsonData` functions, the parameters they return
+        will also be sent to the server. The function arguments will override keywords arguments from
+        :func:`getUrlKwargs` and :func:`getJsonData`.
+
+        The server side :class:`ajaxviews.mixins.AjaxMixin` handles the incoming request and assigns all parameters
+        to the ``json_cfg`` variable of the view class.
+
+        On request complete will update the client side ``jsonCfg`` variable and update the ``.ajax-content`` element
+        that's returned by the response. If the :func:`View.onAjaxLoad` function has been added to the view class,
+        it's executed automatically.
 
         :param str viewName: Name mapped to Django's URL conf. Default is the current view name.
-        :param dict urlKwargs: Keyword arguments parsed in URL string.
-        :param dict jsonData: Keyword arguments passed as additional data.
-        :param bool pageLoad: If true the request won't be AJAX but via URL. Default is false.
-        :param bool animate: Animate the ajax content when replaced. Default is true.
+        :param dict urlKwargs: Keyword arguments passed through URL string.
+        :param dict jsonData: Keyword arguments passed as additional data to the server.
+        :param bool pageLoad: If True the request won't be AJAX but via URL.
+        :param bool animate: Animate the ajax content when replaced.
 
-    .. js:function:: requestSnippet
+    .. function:: requestSnippet(urlKwargs, jsonData, callback)
 
-        AJAX request to retrieve data or html snippets from the server.
+        AJAX request to retrieve data or html snippets for the current view. The request works the same as
+        with :func:`requestView` but on request complete will only execute the callback function and won't update
+        the view automatically.
 
-        :param dict urlKwargs: Keyword arguments parsed in URL string.
-        :param dict jsonData: Keyword arguments passed as additional data.
+        :param dict urlKwargs: Keyword arguments used for URL reverse to parse the URL string.
+        :param dict jsonData: Keyword arguments passed as additional data to the server.
+        :param dict callback: Function that's called once request is complete.
 
-    .. js:function:: requestModal
+    .. function:: requestModal(href, jsonData)
 
-        AJAX request to open a modal with the requested view.
+        Request a view via AJAX and display it in a boostrap modal.
 
         :param str href: URL of the view to be displayed in modal.
-        :param dict jsonData: Keyword arguments passed as additional data.
+        :param dict jsonData: Keyword arguments passed as additional data to the server.
 
-.. js:data:: Middleware
+    .. function:: getUrlKwargs
+
+        Keyword arguments used for URL reverse to parse the URL string.
+
+        :returns: dict
+
+    .. function:: getJsonData
+
+        Keyword arguments passed as additional data to the server.
+
+        :returns: dict
+
+    .. function:: onPageLoad
+
+        Executed whenever a view is requested via URL.
+
+    .. function:: onAjaxLoad
+
+        Executed when a view is updated by calling :func:`requestView` or when a modal is opened by
+        calling :func:`requestModal`.
+
+    .. function:: onLoad
+
+        Executed on every request.
+
+    .. function:: onBeforeFormSerialize(form, options)
+
+        For form views this function will be executed before the form is serialized.
+
+    .. function:: onBeforeFormSubmit(arr, form, options)
+
+        For form views this function will be executed before the form is submitted.
+
+.. data:: Middleware
 
     The middleware module provides functions that are hooked into the view class on every request.
 
-    If you have not created a view class yourself it will be hooked into the base view which will be executed
-    in any case.
+    If you have not created a class for the requested view it will be hooked into the base view which
+    will be executed for all requests.
 
     :returns: dictionary containing the functions listed below.
 
-    .. js:function:: getUrlKwargs
+    .. function:: onPageLoad
 
-        Parameters parsed in URL string.
+        Executed whenever a view is requested via URL.
 
-        :returns: dict
+    .. function:: onAjaxLoad
 
-    .. js:function:: getJsonData
+        Executed when a view is updated by calling :func:`View.requestView` or when a modal is opened by
+        calling :func:`View.requestModal`.
 
-        Parameters passed as data in ajax requests or as query strings in URL.
+    .. function:: onLoad
 
-        :returns: dict
+        Executed on every request.
 
-    .. js:function:: onPageLoad
+    .. function:: onListLoad
 
-        Executed for all pages requested via URL.
+        Only executed for list views.
 
-    .. js:function:: onAjaxLoad
+    .. function:: onDetailLoad
 
-        Executed
+        Only executed for detail views.
 
-.. js:data:: Utils
+    .. function:: onFormLoad
 
-    Built-in functions available for use in the view class.
+        Only executed for form views.
 
-    .. js:function:: initModalLinks
+.. data:: Utils
 
-        Initialize all elements with ``.modal-link`` class to be opened in a modal.
+    Built-in functions available for use in the :class:`View` class through the ``utils`` attribute.
 
-        The element requires a ``href`` attribute that points to a view that extends from ``ModalMixin``.
+    :returns: dictionary containing the functions listed below.
+
+    .. function:: initModalLinks(scope)
+
+        Initialize all elements with a ``.modal-link`` class to be opened in a modal.
+
+        The elements require a ``href`` attribute that points to a view that extends from
+        :class:`ajaxviews.mixins.ModalMixin`.
+
+        :param str scope: Element in which all modal links are initialized.
+
+    .. function:: initDateInput(element, opts={})
+
+        Initialize the input element using the default date widget options from the :class:`App` config.
+        ``opts`` overrides the defaults.
+
+        :param opject element: Date input field.
+        :param dict opts: Options to pass to the widget.
 
 ..
     If the user doesn't specify a class for a given view the middleware will always be executed.

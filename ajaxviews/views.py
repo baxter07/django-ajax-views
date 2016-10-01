@@ -49,10 +49,10 @@ else:
 
 class AjaxListView(AjaxMixin, ListView):
     """
-    The ListView can be updated by calling `requestView` from client side view class.
+    The ListView can be updated by calling :func:`View.requestView` from client side view class.
 
-    :param int paginate_by: number of results in list by which to paginate.
-    :param int filter_search_input_by: number of results in list view filters by which to display a search input.
+    :ivar int paginate_by: number of results in list by which to paginate.
+    :ivar int filter_search_input_by: number of results in list view filters by which to display a search input.
     """
     def __init__(self, *args, **kwargs):
         """
@@ -67,6 +67,7 @@ class AjaxListView(AjaxMixin, ListView):
     def get(self, request, *args, **kwargs):
         """
         GET request
+
         :param args: positional url arguments
         :param kwargs: keyword url arguments
         """
@@ -164,6 +165,9 @@ class AjaxListView(AjaxMixin, ListView):
 
 
 class GenericDetailView(ModalMixin, AjaxMixin, DetailView):
+    """
+    Ajaxable detail view which can be automatically updated and displayed in modals.
+    """
     deleted_obj_lookup = True
 
     def get_queryset(self):
@@ -222,6 +226,9 @@ class CreateViewMixin(FormMixin, AjaxMixin):
 
 
 class GenericCreateView(CsrfExemptMixin, ModalFormMixin, CreateViewMixin, CreateView):
+    """
+    Ajaxable form view to create model objects. It is CSRF protected and can be displayed and updated in modals.
+    """
     pass
 
 
@@ -273,6 +280,9 @@ class UpdateViewMixin(FormMixin, AjaxMixin):
 
 
 class GenericUpdateView(CsrfExemptMixin, ModalFormMixin, UpdateViewMixin, UpdateView):
+    """
+    Ajaxable form view to update model objects. It is CSRF protected and can be displayed and updated in modals.
+    """
     pass
 
 
