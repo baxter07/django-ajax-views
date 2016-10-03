@@ -22,7 +22,7 @@ import sys
 import django
 from django.conf import settings
 
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('..'))
 import ajaxviews
 
 settings.configure(
@@ -49,6 +49,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
+    # 'sphinxcontrib.coffeedomain',
     # 'sphinxcontrib-coffee',
 ]
 
@@ -365,3 +366,10 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
+
+
+# -- Options for Coffee output -------------------------------------------
+
+coffee_src_dir = os.path.abspath(os.path.join('..', 'ajaxviews', 'static', 'require-ajax-views', 'src'))
+
+coffee_src_parser = 'requirejs'

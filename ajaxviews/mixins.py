@@ -18,8 +18,7 @@ from .forms import DefaultFormHelper
 
 class AjaxMixin:
     """
-    This is the core mixin that's used in all other mixins and views to establish communication with the
-    client side :class:`App`.
+    This is the core mixin that's used for all views to establish communication with the client side :class:`App`.
 
     It merges the optional URL parameters from the GET request with the keyword arguments retrieved from
     Django's URL conf into ``json_cfg``.

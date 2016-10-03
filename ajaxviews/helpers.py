@@ -49,7 +49,7 @@ def get_model_perm(user, model, perm_prefix='access_'):
 def assign_obj_perm(user, obj):
     permission = get_model_perm(user, obj.__class__)
     if not permission:
-        raise Exception('No permissions to save object.')
+        raise PermissionError('No permissions to save object.')
     if not user.has_perm(permission, obj):
         assign_perm(permission, user, obj)
         return True
@@ -59,7 +59,7 @@ def assign_obj_perm(user, obj):
 def remove_obj_perm(user, obj):
     permission = get_model_perm(user, obj.__class__)
     if not permission:
-        raise Exception('No permissions to remove object.')
+        raise PermissionError('No permissions to remove object.')
     if user.has_perm(permission, obj):
         remove_perm(permission, user, obj)
         return True

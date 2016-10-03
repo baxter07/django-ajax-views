@@ -1,11 +1,14 @@
 
-sphinx.addnodes.desc_addname
+.. sphinx.addnodes.desc_addname
 
 **********
 Client API
 **********
 
 .. class:: App
+
+    ..
+        :source: /_modules/ajaxviews/static/require-ajax-views/src/app.coffee
 
     This is the client side application which should be initialized once the DOM is loaded.
 
@@ -17,19 +20,21 @@ Client API
 
     See configurations below:
 
-    :ivar str html.cfgNode: ID of JSON config script element. Default: ``'#config'``
-    :ivar str html.ajaxNode: ID of element that's replaced on :func:`View.requestView`. Default: ``'#ajax-content'``
-    :ivar str html.modalNode: Class of element that's replaced when modal is updated. Default: ``'.modal-dialog'``
-    :ivar str modules.prefix: Define the prefix for all module loading. Default: ``''``
-    :ivar str modules.viewPath: Path to view modules relative to JS root. Default: ``'views/'``
-    :ivar str modules.mixinPath: Path to mixin modules relative to JS root. Default: ``'mixins/'``
-    :ivar str modules.middleware: Name and path of the middleware file relative to JS root. Default: ``''``
-    :ivar dict mixins: Define mixins to execute a single module for multiple views. Default: ``{}``
-    :ivar bool debug: Print request and response parameters to console. Default: ``false``
-    :ivar dict defaults.dateWidget: Options to initialize date input elements. Default: ``{}``
-    :ivar int defaults.progressBar.animationSpeed: Speed in milliseconds. Default: ``300``
+    :ivar str html.cfgNode: Default: ``'#config'`` - ID of JSON config script element.
+    :ivar str html.ajaxNode: Default: ``'#ajax-content'`` - ID of element that's replaced on :func:`View.requestView`.
+    :ivar str html.modalNode: Default: ``'.modal-dialog'`` - Class of element that's replaced when modal is updated.
+    :ivar str modules.prefix: Default: ``''`` - Define a prefix for all modules to be required.
+    :ivar str modules.viewPath: Default: ``'views/'`` - Path to view modules relative to JS root.
+    :ivar str modules.mixinPath: Default: ``'mixins/'`` - Path to mixin modules relative to JS root.
+    :ivar str modules.middleware: Default: ``''`` - Name and path of the middleware module relative to JS root.
+    :ivar dict mixins: Default: ``{}`` - Define mixins to execute a single module for multiple views.
+    :ivar bool debug: Default: ``false`` - Print request and response parameters to console.
+    :ivar dict defaults.dateWidget: Default: ``{}`` - Global default datepicker options.
+    :ivar int defaults.progressBar.animationSpeed: Default: ``300`` - Speed in milliseconds.
 
     ..
+        Options to initialize date input elements.
+
         Args:
             my_arg (dict): argument comment.
 
@@ -60,30 +65,42 @@ Client API
         the URL string. ``jsonData`` are the keyword arguments sent to the server as hidden parameters.
 
         If the view class has :func:`getUrlKwargs` and/or :func:`getJsonData` functions, the parameters they return
-        will also be sent to the server. The function arguments will override keywords arguments from
-        :func:`getUrlKwargs` and :func:`getJsonData`.
+        (as dictionaries) will also be sent to the server. The function arguments will override keywords arguments
+        from :func:`getUrlKwargs` and :func:`getJsonData`.
+
+        .. image:: /_static/request_view.svg
+            :alt: request view from server
 
         The server side :class:`ajaxviews.mixins.AjaxMixin` handles the incoming request and assigns all parameters
         to the ``json_cfg`` variable of the view class.
 
-        On request complete will update the client side ``jsonCfg`` variable and update the ``.ajax-content`` element
+        On request complete will update the client side ``jsonCfg`` variable and update the ``#ajax-content`` element
         that's returned by the response. If the :func:`View.onAjaxLoad` function has been added to the view class,
         it's executed automatically.
 
         :param str viewName: Name mapped to Django's URL conf. Default is the current view name.
         :param dict urlKwargs: Keyword arguments passed through URL string.
-        :param dict jsonData: Keyword arguments passed as additional data to the server.
-        :param bool pageLoad: If True the request won't be AJAX but via URL.
+        :param dict jsonData: Keyword arguments passed as additional data in request.
+        :param bool pageLoad: If True the request won't be AJAX but via URL. Used when switching between views with
+            different template layouts.
         :param bool animate: Animate the ajax content when replaced.
+
+    ..
+            # request via URL
+            >>> Urls[viewName](urlKwargs) + '?json_cfg=' + JSON.stringify(jsonData)
+            /my/view/1/?json_cfg=<stringified json data>
 
     .. function:: requestSnippet(urlKwargs, jsonData, callback)
 
         AJAX request to retrieve data or html snippets for the current view. The request works the same as
-        with :func:`requestView` but on request complete will only execute the callback function and won't update
-        the view automatically.
+        :func:`requestView` except that the view is not updated automatically on request complete (the callback
+        function is executed instead).
 
-        :param dict urlKwargs: Keyword arguments used for URL reverse to parse the URL string.
-        :param dict jsonData: Keyword arguments passed as additional data to the server.
+        The usual workflow would be to catch the request in the server side ``get(request, *args, **kwargs)``
+        method and return a ``JsonResponse`` or ``HttpResponse`` to update specific parts of the current view.
+
+        :param dict urlKwargs: Keyword arguments passed through URL string.
+        :param dict jsonData: Keyword arguments passed as additional data in request.
         :param dict callback: Function that's called once request is complete.
 
     .. function:: requestModal(href, jsonData)
@@ -91,7 +108,7 @@ Client API
         Request a view via AJAX and display it in a boostrap modal.
 
         :param str href: URL of the view to be displayed in modal.
-        :param dict jsonData: Keyword arguments passed as additional data to the server.
+        :param dict jsonData: Keyword arguments passed as additional data in request.
 
     .. function:: getUrlKwargs
 
@@ -101,7 +118,7 @@ Client API
 
     .. function:: getJsonData
 
-        Keyword arguments passed as additional data to the server.
+        Keyword arguments passed as additional data in request.
 
         :returns: dict
 
@@ -180,7 +197,7 @@ Client API
         Initialize the input element using the default date widget options from the :class:`App` config.
         ``opts`` overrides the defaults.
 
-        :param opject element: Date input field.
+        :param object element: Date input field.
         :param dict opts: Options to pass to the widget.
 
 ..
