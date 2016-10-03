@@ -10,25 +10,26 @@ Client API
     ..
         :source: /_modules/ajaxviews/static/require-ajax-views/src/app.coffee
 
-    This is the client side application which should be initialized once the DOM is loaded.
+    This is the client side application that's initialized once the DOM is ready.
 
-    If the JSON config script is found in the DOM, it executes the view class with the file name that
+    If the JSON config script is found in the DOM, it loads the :class:`View` class with the file name that
     equals the ``view_name`` contained in the JSON config.
 
     The initial startup of the application executes the :func:`onPageLoad` and :func:`onLoad` functions
-    of the :class:`View` class and if specified the :class:`Middleware`.
+    of the :class:`View` class and the :class:`Middleware`.
 
     See configurations below:
 
-    :ivar str html.cfgNode: Default: ``'#config'`` - ID of JSON config script element.
-    :ivar str html.ajaxNode: Default: ``'#ajax-content'`` - ID of element that's replaced on :func:`View.requestView`.
-    :ivar str html.modalNode: Default: ``'.modal-dialog'`` - Class of element that's replaced when modal is updated.
-    :ivar str modules.prefix: Default: ``''`` - Define a prefix for all modules to be required.
+    :ivar bool debug: Default: ``auto`` - Print request and response parameters to console. If RequireJS is found
+        then debug is ``true`` otherwise ``false``. Override this behavior by setting a value manually.
+    :ivar dict mixins: Default: ``{}`` - Define mixins to execute a single module for multiple views.
+    :ivar str modules.prefix: Default: ``''`` - Set a prefix for all modules loaded by RequireJS_.
     :ivar str modules.viewPath: Default: ``'views/'`` - Path to view modules relative to JS root.
     :ivar str modules.mixinPath: Default: ``'mixins/'`` - Path to mixin modules relative to JS root.
     :ivar str modules.middleware: Default: ``''`` - Name and path of the middleware module relative to JS root.
-    :ivar dict mixins: Default: ``{}`` - Define mixins to execute a single module for multiple views.
-    :ivar bool debug: Default: ``false`` - Print request and response parameters to console.
+    :ivar str html.cfgNode: Default: ``'#config'`` - ID of JSON config script.
+    :ivar str html.ajaxNode: Default: ``'#ajax-content'`` - ID of element that's replaced on :func:`View.requestView`.
+    :ivar str html.modalNode: Default: ``'.modal-dialog'`` - Class of element that's replaced when modal is updated.
     :ivar dict defaults.dateWidget: Default: ``{}`` - Global default datepicker options.
     :ivar int defaults.progressBar.animationSpeed: Default: ``300`` - Speed in milliseconds.
 
@@ -44,9 +45,8 @@ Client API
     request views to be displayed in bootstrap modals.
 
     Whenever a view is requested via URL the :func:`View.onPageLoad` function is executed. When
-    :func:`requestView` or :func:`requestModal` is called the :func:`View.onAjaxLoad` function is
-    executed for the given view. The :func:`View.onLoad` function is always executed but any of those functions
-    can also be omitted.
+    :func:`requestView` or :func:`requestModal` is called the :func:`View.onAjaxLoad` function is executed.
+    The :func:`View.onLoad` function is always executed but any of those functions can also be omitted.
 
     .. None of them are required to be added to the view class.
 
@@ -65,7 +65,7 @@ Client API
         the URL string. ``jsonData`` are the keyword arguments sent to the server as hidden parameters.
 
         If the view class has :func:`getUrlKwargs` and/or :func:`getJsonData` functions, the parameters they return
-        (as dictionaries) will also be sent to the server. The function arguments will override keywords arguments
+        (as dictionaries) will also be sent to the server. The function arguments will override keyword arguments
         from :func:`getUrlKwargs` and :func:`getJsonData`.
 
         .. image:: /_static/request_view.svg
@@ -75,8 +75,12 @@ Client API
         to the ``json_cfg`` variable of the view class.
 
         On request complete will update the client side ``jsonCfg`` variable and update the ``#ajax-content`` element
-        that's returned by the response. If the :func:`View.onAjaxLoad` function has been added to the view class,
-        it's executed automatically.
+        that's returned by the response. The :func:`View.onAjaxLoad` and :func:`View.onLoad` functions are executed
+        as last action of processing the response.
+
+        ..
+            If the :func:`View.onAjaxLoad` function has been added to the view class,
+            it's executed automatically.
 
         :param str viewName: Name mapped to Django's URL conf. Default is the current view name.
         :param dict urlKwargs: Keyword arguments passed through URL string.
@@ -93,7 +97,7 @@ Client API
     .. function:: requestSnippet(urlKwargs, jsonData, callback)
 
         AJAX request to retrieve data or html snippets for the current view. The request works the same as
-        :func:`requestView` except that the view is not updated automatically on request complete (the callback
+        :func:`requestView` except that the view is not updated automatically on request complete (the *callback*
         function is executed instead).
 
         The usual workflow would be to catch the request in the server side ``get(request, *args, **kwargs)``
@@ -142,6 +146,11 @@ Client API
     .. function:: onBeforeFormSubmit(arr, form, options)
 
         For form views this function will be executed before the form is submitted.
+
+.. class:: FilterView(View)
+
+    This class derives from the base :class:`View` and offers filter widgets for use with
+    :class:`ajaxviews.views.AjaxListView`.
 
 .. data:: Middleware
 
@@ -215,3 +224,5 @@ Client API
     :returns: this is a description of what is returned
     :raises keyError: raises an exception
     """
+
+.. _RequireJS: http://requirejs.org

@@ -16,7 +16,7 @@ Bootstrap modal views and generic forms are also supported.
 
 Some basic knowledge of Django's `class-based views`_ and `RequireJS`_ would be desirable to use this app.
 
-Contents:
+**Contents:**
 
 .. toctree::
    :maxdepth: 2

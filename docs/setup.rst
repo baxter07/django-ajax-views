@@ -15,22 +15,25 @@ This package is available on `PyPI <https://pypi.python.org/pypi/django-ajax-vie
 Dependencies
 ------------
 
-.. note:: Required dependencies are installed automatically. Install optional dependencies manually as needed.
+.. hlist::
+   :columns: 2
 
-`Django`_ >= 1.9
-    MVC Web Framework
-`django-require`_
-    Used to simplify setup of RequireJS
-`django-js-reverse`_
-    Django's URL reverse in javascript
-`django-crispy-forms`_ (TODO make optional)
-    Integrating Bootstrap into Django forms
-`django-guardian`_ (optional)
-    Object level permission handling
-`django-extra-views`_ (optional)
-    Formsets for class-based views
-`django-autocomplete-light`_ == 2.3.3 (optional)
-    Support for autocompletion
+   * `Django`_ >= 1.9
+        MVC Web Framework
+   * `django-require`_
+        Used to simplify setup of RequireJS
+   * `django-js-reverse`_
+        Django's URL reverse in javascript
+   * `django-crispy-forms`_
+        Integrating Bootstrap into Django forms
+   * `django-guardian`_ (optional)
+        Object level permission handling
+   * `django-extra-views`_ (optional)
+        Formsets for class-based views
+   * `django-autocomplete-light`_ == 2.3.3 (optional)
+        Support for autocompletion
+
+.. note:: Required dependencies are installed automatically. Install optional dependencies as needed.
 
 Django settings
 ===============
@@ -60,6 +63,8 @@ to your settings.
         'ajaxviews.middleware.AjaxMiddleware',
     ]
 
+If you don't want to use the middleware you need to include those scripts in the base template yourself.
+
 django-ajax-views
 -----------------
 
@@ -67,13 +72,14 @@ django-ajax-views
 
     Default: ``30``
 
-    If you use pagination for your *list views* you can override the default value.
+    If you use pagination for a :class:`ajaxviews.views.AjaxListView` you can override the default value
+    for all views.
 
 - ``FILTER_SEARCH_INPUT_BY``
 
     Default: ``10``
 
-    Number of results by which a search input field should be displayed for filter views.
+    Number of results by which a search input field should be displayed for the :class:`FilterView`.
 
 - ``MESSAGE_TAGS``
 
@@ -133,7 +139,7 @@ Configure RequireJS
 
 In ``main.js`` define the paths to the javascript libraries and require these together with ``cs!app`` to
 make them available throughout the whole application. I recommend setting up `NodeJS`_ and
-`Bower`_ to manage all javascript dependencies.
+`Bower`_ to manage the `Javascript Dependencies`_.
 
 .. code-block:: javascript
    :caption: main.js
@@ -150,6 +156,7 @@ make them available throughout the whole application. I recommend setting up `No
           'jquery':        '/path/to/jquery/dist/jquery',
           'urlreverse':    '/path/to/django_js_reverse/reverse',
           'bootstrap':     '/path/to/bootstrap/dist/js/bootstrap.min'
+          // ...
         }
       });
 
@@ -158,6 +165,7 @@ make them available throughout the whole application. I recommend setting up `No
           'jquery',
           'urlreverse',
           'bootstrap',
+          // ...
           'cs!app'
         ]);
       });
@@ -172,13 +180,12 @@ make them available throughout the whole application. I recommend setting up `No
     // 'autocompletewidget',
 
 Using the prefix ``cs!`` tells RequireJS to load a coffeescript file. The following initializes the
-``ajaxviews.App`` and configures it to load all views and the middleware as coffeescript modules.
-To execute a user defined ``middleware`` on every request, specify the file name without extension
-in the config.
+:class:`App` and configures it to load all views and the middleware as coffeescript modules.
+To execute a user defined :class:`Middleware` for all requests, specify the file name in the config.
 
 .. code-block:: coffeescript
    :caption: app.coffee
-   :name: client application
+   :name: client-application
 
     define ['ajaxviews'], (ajaxviews) ->
       App = ajaxviews.App
@@ -191,11 +198,30 @@ in the config.
 
       App.init()
 
+.. note:: Do not add file extensions to any path definitions or require calls. RequireJS expects all files
+    to be javascript files. With plugins like ``require-cs`` and using the **prefix** you can load different
+    file extensions as well.
+
+Javascript Dependencies
+-----------------------
+
+.. hlist::
+   :columns: 4
+
+   * `require-ajax-views`_
+   * `django-js-reverse`_
+   * `jquery`_
+   * `coffee-script`_
+   * `require-cs`_
+   * `domReady`_
+   * `bootstrap`_
+
 Build profile
 -------------
 
-For better performance in production use Almond_ as replacement for RequireJS. The following build profile bundles
-all your modules and dependencies into a single file using the ``r.js`` optimizer.
+For better performance in production use Almond_ as replacement AMD loader for RequireJS. The following build
+profile bundles all your modules and dependencies into a single file using the ``r.js`` optimizer. It's shipped
+with django-require_ which also includes the ``require.js`` and ``almond.js`` libraries.
 
 .. code-block:: javascript
     :caption: app.build.js
@@ -220,10 +246,12 @@ all your modules and dependencies into a single file using the ``r.js`` optimize
 
 .. caution:: Be sure to include the middleware, views and mixins modules that you have created in the build profile.
              Since those modules are loaded dynamically they can't be traced automatically on build if they are not
-             required elsewhere in a modules first 'define' call.
+             required elsewhere in a modules `top define`_ call.
 
 Since Almond doesn't support dynamic loading it's much more lightweight and faster than RequireJS. For development
-you can use the built in default profile or create your own if desired.
+you can use the built-in default profile or create your own if desired.
+
+.. _top define: #client-application
 
 .. _Django: https://github.com/django/django
 
@@ -246,3 +274,15 @@ you can use the built in default profile or create your own if desired.
 .. _Bower: https://bower.io
 
 .. _Almond: https://github.com/requirejs/almond
+
+.. _require-ajax-views: https://github.com/Pyco7/django-ajax-views
+
+.. _jquery: https://github.com/jquery/jquery
+
+.. _coffee-script: https://github.com/jashkenas/coffeescript
+
+.. _require-cs: https://github.com/requirejs/require-cs
+
+.. _domReady: https://github.com/requirejs/domReady
+
+.. _bootstrap: https://github.com/twbs/bootstrap

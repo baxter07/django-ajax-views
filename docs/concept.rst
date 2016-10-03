@@ -8,15 +8,16 @@ Concept
     :width: 380
     :align: right
 
-The idea is to create an interface between server side and client side classes that know how to communicate
-with each other. This is done by creating a JS file with the same name as the `URL name`_ that is mapped to the
-corresponding Django **view class**. `RequireJS`_ loads that file and it's class is executed automatically on request.
+The idea is to create an interface between server and client side classes that know how to communicate with
+each other. This is done by creating a JS file with the same name as the `URL name`_ that is mapped to the
+corresponding Django **view class**. That file is loaded by `RequireJS`_ and executed automatically for all
+requests.
 
 Client Side
 ===========
 
 Since javascript doesn't support class definitions and inheritance I recommend using `coffeescript`_ or
-`typescript`_ to simply inherit from ``ajaxviews.View`` class. You can still use javascript though by
+`typescript`_ to simply inherit from the base :func:`View` class. You can still use javascript though by
 using the built in ``extendjs`` function to mimic class inheritance.
 
 .. code-block:: javascript
@@ -30,14 +31,6 @@ using the built in ``extendjs`` function to mimic class inheritance.
       };
       return MyView;
     });
-
-.. MyView.prototype.onPageLoad = function () {
-     // console.log('instance variables and methods: ', this);
-     // executed on page load (init view)
-   };
-   MyView.prototype.onAjaxLoad = function () {
-     // executed on ajax load (update view)
-   };
 
 .. container:: flex-grid
 
@@ -62,22 +55,9 @@ using the built in ``extendjs`` function to mimic class inheritance.
           }
         }
 
-.. onPageLoad: ->
-     # executed on page load (init view)
-   onAjaxLoad: ->
-     # executed on ajax load (update view)
-
-.. onPageLoad() {
-     // executed on page load (init view)
-   }
-   onAjaxLoad() {
-     // executed on ajax load (update view)
-   }
-
 For this to work you need to `set up RequireJS`_ and place the JS files inside the ``views`` directory which is
-located in JS root. In ``main.js`` require the ``ajaxviews`` module and initialize the app.
-The ``ajaxviews.App`` will execute the **view class** whose file name equals the **URL name** from
-Django's *URL conf*.
+located in JS root. In ``main.js`` require the ``ajaxviews`` module and initialize the :class:`App`. This will
+execute the :class:`View` class whose file name equals the **URL name** from Django's URL conf.
 
 .. code-block:: javascript
    :caption: main.js
@@ -124,9 +104,9 @@ The server side ``ajaxviews`` app provides views and mixins your views can inher
         class MyAjaxView(AjaxMixin, View):
             ajax_view = True
 
-The ``AjaxMixin`` takes care of passing the **URL name** the view class is mapped to, to the client side app.
-Add ``ajax_view = True`` to the class if you have created a corresponding JS file. If not you can omit the
-``ajax_view`` property or set it to ``False``.
+The :class:`ajaxviews.mixins.AjaxMixin` takes care of passing the **URL name** the view class is mapped to, to the
+client side :class:`App`. Add ``ajax_view = True`` to the class if you have created a corresponding JS file. If not
+you can omit the ``ajax_view`` property or set it to ``False``.
 
 .. The client side **middleware** will always be executed.
 
