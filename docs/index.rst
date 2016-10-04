@@ -26,6 +26,15 @@ Some basic knowledge of Django's `class-based views`_ and `RequireJS`_ would be 
    modules/server_api
    modules/client_api
 
+
+.. ajaxviews/static/require-ajax-views/src/*
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+
 ..
     Release candidates
     1.2.0.dev1  # Development release

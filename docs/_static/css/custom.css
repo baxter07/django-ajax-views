@@ -3,6 +3,9 @@ a.internal[title='ajaxviews.mixins'] {
     pointer-events: none;
     cursor: default;
 }
+#dependencies .hlist dl {
+    margin-bottom: 0;
+}
 .flex-grid {
     display: flex;
     justify-content: space-between;

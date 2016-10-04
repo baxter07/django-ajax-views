@@ -172,13 +172,6 @@ make them available throughout the whole application. I recommend setting up `No
 
     })();
 
-..
-    // 'chosen',
-    // 'datepicker',
-    // 'confirmation',
-    // 'autocomplete',
-    // 'autocompletewidget',
-
 Using the prefix ``cs!`` tells RequireJS to load a coffeescript file. The following initializes the
 :class:`App` and configures it to load all views and the middleware as coffeescript modules.
 To execute a user defined :class:`Middleware` for all requests, specify the file name in the config.
@@ -206,15 +199,26 @@ Javascript Dependencies
 -----------------------
 
 .. hlist::
-   :columns: 4
+   :columns: 5
 
    * `require-ajax-views`_
    * `django-js-reverse`_
    * `jquery`_
+   * `bootstrap`_
+   * `jquery-form`_
+
+**Optional**
+
+.. hlist::
+   :columns: 4
+
    * `coffee-script`_
    * `require-cs`_
    * `domReady`_
-   * `bootstrap`_
+   * `chosen`_
+   * `bootstrap-datepicker`_
+   * `bootstrap-confirmation2`_
+   * `autocomplete`_
 
 Build profile
 -------------
@@ -286,3 +290,13 @@ you can use the built-in default profile or create your own if desired.
 .. _domReady: https://github.com/requirejs/domReady
 
 .. _bootstrap: https://github.com/twbs/bootstrap
+
+.. _chosen: https://github.com/harvesthq/chosen
+
+.. _bootstrap-datepicker: https://github.com/eternicode/bootstrap-datepicker
+
+.. _bootstrap-confirmation2: http://bootstrap-confirmation.js.org/
+
+.. _autocomplete: https://github.com/yourlabs/django-autocomplete-light
+
+.. _jquery-form: https://github.com/malsup/form

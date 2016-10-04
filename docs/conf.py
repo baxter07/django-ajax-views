@@ -22,6 +22,7 @@ import sys
 import django
 from django.conf import settings
 
+# sys.path.insert(0, os.path.abspath(os.path.join('..', 'ajaxviews', 'static', 'require-ajax-views', 'src')))
 sys.path.insert(0, os.path.abspath('..'))
 import ajaxviews
 
@@ -50,7 +51,6 @@ extensions = [
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
     # 'sphinxcontrib.coffeedomain',
-    # 'sphinxcontrib-coffee',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -368,8 +368,10 @@ texinfo_documents = [
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 
-# -- Options for Coffee output -------------------------------------------
+# -- Options for CoffeeScript output -------------------------------------------
 
-coffee_src_dir = os.path.abspath(os.path.join('..', 'ajaxviews', 'static', 'require-ajax-views', 'src'))
+# coffee_src_dir = os.path.abspath(os.path.join('..', 'ajaxviews', 'static', 'require-ajax-views', 'src'))
+#
+# coffee_src_parser = 'requirejs'
 
-coffee_src_parser = 'requirejs'
+# primary_domain = 'python'
