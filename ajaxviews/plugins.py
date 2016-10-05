@@ -1,22 +1,59 @@
 import datetime
+import json
+
 from dateutil.parser import parse
+from django.core.serializers.json import DjangoJSONEncoder
 
 from django.shortcuts import render_to_response
 from django.db.models import Min, Max
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 from .helpers import get_objects_for_model, construct_autocomplete_searchform
 
 
+class ViewAdapter:
+    def __init__(self, view, plugins):
+        self.view = view
+        # self.plugins = [p() for p in plugins]
+
+    # def run(self, name, *args, **kwargs):
+    #     for plugin in self.plugins:
+    #         if hasattr(plugin, name):
+    #             # plugin.json_cfg = {}
+    #             return getattr(plugin, name)(*args, **kwargs)
+    #     return args, kwargs
+
+
 class ListMixin:
+    ajax_view = True
     paginate_by = 10
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.paginate_by and hasattr(settings, 'DEFAULT_PAGINATE_BY'):
-            self.paginate_by = settings.DEFAULT_PAGINATE_BY
-        if hasattr(settings, 'FILTER_SEARCH_INPUT_BY'):
-            self.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
+    def __init__(self, view):
+        self.json_cfg = {}
+        self.view = view
+        # if not self.paginate_by and hasattr(settings, 'DEFAULT_PAGINATE_BY'):
+        #     self.paginate_by = settings.DEFAULT_PAGINATE_BY
+        # if hasattr(settings, 'FILTER_SEARCH_INPUT_BY'):
+        #     self.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
+
+    def dispatch(self, request, *args, **kwargs):
+        self.json_cfg.update(kwargs.copy())
+        for key, value in json.loads(request.GET.dict().get('json_cfg', '{}')).items():
+            if value or value is False or value == 0:
+                self.json_cfg[key] = value
+
+        if request.is_ajax():
+            self.json_cfg['ajax_load'] = True
+
+        if 'ajax_page_nr' in self.json_cfg:
+            self.kwargs['page'] = self.json_cfg['ajax_page_nr']
+
+        if self.ajax_view:
+            self.json_cfg['ajax_view'] = True
+
+        self.json_cfg['view_name'] = request.resolver_match.url_name
+        self.view.json_cfg = self.json_cfg
 
     def get(self, request, *args, **kwargs):
         if self.json_cfg.get('filter_index', -1) >= 0:
@@ -101,10 +138,19 @@ class ListMixin:
     def get_context_data(self, **kwargs):
         if 'init_view_type' not in self.json_cfg:
             self.json_cfg['init_view_type'] = 'listView'
-        context = super(self.__class__, self).get_context_data(**kwargs)
-        if self.request.is_ajax() and not self.request.GET.get('modal_id', False):
+        # context = super(self.__class__, self).get_context_data(**kwargs)
+        context = kwargs
+
+        context['view_name'] = self.json_cfg.get('view_name', None)
+        if hasattr(self, 'page_size') and self.page_size:
+            context['page_size'] = self.page_size
+        context['json_cfg'] = mark_safe(json.dumps(
+            self.json_cfg, cls=DjangoJSONEncoder
+        ))
+
+        if self.view.request.is_ajax() and not self.view.request.GET.get('modal_id', False):
             context['generic_template'] = 'ajaxviews/__ajax_base.html'
-        if not self.request.is_ajax() and hasattr(self, 'search_field'):
+        if not self.view.request.is_ajax() and hasattr(self, 'search_field'):
             context['search_form'] = construct_autocomplete_searchform(self.search_field)
         if self.json_cfg.get('sort_index', -1) >= 0:
             context['sort_index'] = self.json_cfg['sort_index']

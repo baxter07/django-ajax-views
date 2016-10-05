@@ -1,13 +1,10 @@
 import types
-import json
 
-from django.utils.safestring import mark_safe
-from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import BaseModelFormSet
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from .plugins import ListMixin, FormMixin, ModalMixin, PreviewMixin, DeleteMixin
-from .mixins import FormMixin, ModalMixin, PreviewMixin
+from .mixins import FormMixin, ModalMixin, PreviewMixin, AjaxMixin
 
 
 class ModelFormSet(BaseModelFormSet):
@@ -39,52 +36,36 @@ else:
     ModelFormSetView.formset_class = ModelFormSet
 
 
+from .plugins import ViewAdapter
+
+
 class BaseViewMixin:
     ajax_view = False
 
-    def __new__(cls, *args, **kwargs):
-        instance = super().__new__(cls, *args, **kwargs)
-        for plugin in cls.plugins:
-            for name in plugin.__dict__:
-                if name.startswith('__') and name.endswith('__')\
-                        or not isinstance(plugin.__dict__[name], types.FunctionType):
-                    continue
-                instance.__dict__[name] = plugin.__dict__[name].__get__(instance)
-        return instance
+    # def __new__(cls, *args, **kwargs):
+    #     instance = super().__new__(cls, *args, **kwargs)
+    #     for plugin in cls.plugins:
+    #         for name in plugin.__dict__:
+    #             if name.startswith('__') and name.endswith('__')\
+    #                     or not isinstance(plugin.__dict__[name], types.FunctionType):
+    #                 continue
+    #             instance.__dict__[name] = plugin.__dict__[name].__get__(instance)
+    #     return instance
 
     def __init__(self, **kwargs):
-        self.json_cfg = {}
-        if not self.ajax_view:
-            self.ajax_view = kwargs.pop('ajax_view', False)
+        self.adapter = ViewAdapter(self, self.plugins)
+        self.plugin = self.plugins[0](self)
         super().__init__(**kwargs)
 
     def dispatch(self, request, *args, **kwargs):
-        self.json_cfg.update(kwargs.copy())
-        for key, value in json.loads(request.GET.dict().get('json_cfg', '{}')).items():
-            if value or value is False or value == 0:
-                self.json_cfg[key] = value
-
-        if request.is_ajax():
-            self.json_cfg['ajax_load'] = True
-
-        if 'ajax_page_nr' in self.json_cfg:
-            self.kwargs['page'] = self.json_cfg['ajax_page_nr']
-
-        if self.ajax_view:
-            self.json_cfg['ajax_view'] = True
-
-        self.json_cfg['view_name'] = request.resolver_match.url_name
+        # _args, _kwargs = self.adapter.run('dispatch', *args, **kwargs)
+        # print('>>', _args, _kwargs)
+        self.plugin.dispatch(request, *args, **kwargs)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['view_name'] = self.json_cfg.get('view_name', None)
-        if hasattr(self, 'page_size') and self.page_size:
-            context['page_size'] = self.page_size
-        context['json_cfg'] = mark_safe(json.dumps(
-            self.json_cfg, cls=DjangoJSONEncoder
-        ))
-        return context
+        return self.plugin.get_context_data(**context)
 
 
 class AjaxListView(BaseViewMixin, ListView):
