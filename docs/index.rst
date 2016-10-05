@@ -58,6 +58,8 @@ Indices and tables
     http://build-me-the-docs-please.readthedocs.io/en/latest/index.html
     http://gisellezeno.com/tutorials/sphinx-for-python-documentation.html
 
+.. https://docs.djangoproject.com/en/dev/ref/class-based-views/flattened-index/
+
 .. _class-based views: https://docs.djangoproject.com/en/dev/topics/class-based-views/
 
 .. _RequireJS: http://requirejs.org
