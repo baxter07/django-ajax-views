@@ -14,11 +14,6 @@ class ModelFormSet(BaseModelFormSet):
             self.form_action = self.forms[0].helper.form_action
             self.render_form_actions = self.forms[0].render_form_actions()
             self.helper.layout = self.forms[0].helper.layout
-        # if hasattr(self.forms[0], 'headline'):
-        #     self.headline = self.forms[0].headline
-        # elif hasattr(self.forms[0], 'headline_full'):
-        #     self.headline_full = self.forms[0].headline
-        # self.queryset = Model.objects.all()
 
     def get_headline(self):
         return ''
@@ -39,7 +34,7 @@ else:
 from .plugins import ViewAdapter
 
 
-class BaseViewMixin:
+class GenericBaseView:
     ajax_view = False
 
     # def __new__(cls, *args, **kwargs):
@@ -52,59 +47,81 @@ class BaseViewMixin:
     #             instance.__dict__[name] = plugin.__dict__[name].__get__(instance)
     #     return instance
 
-    def __init__(self, **kwargs):
-        self.adapter = ViewAdapter(self, self.plugins)
-        self.plugin = self.plugins[0](self)
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.json_cfg = {}
+        self.adapter = ViewAdapter(super())
+        if hasattr(self, 'plugins'):
+            for plugin_class in self.plugins:
+                self.adapter.plugins.append(plugin_class(self))
 
     def dispatch(self, request, *args, **kwargs):
-        # _args, _kwargs = self.adapter.run('dispatch', *args, **kwargs)
-        # print('>>', _args, _kwargs)
-        self.plugin.dispatch(request, *args, **kwargs)
+        self.adapter.dispatch(request, *args, **kwargs)
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        return self.plugin.get_context_data(**context)
+        print('>> get_context_data', context)
+        return self.adapter.get_context_data(**context)
 
 
-class AjaxListView(BaseViewMixin, ListView):
+class AjaxListView(GenericBaseView, ListView):
     plugins = [ListMixin]
 
+    def get_queryset(self, **kwargs):
+        return super().get_queryset(**kwargs)
 
-class GenericDetailView(BaseViewMixin, DetailView):
+
+class GenericDetailView(GenericBaseView, DetailView):
     plugins = [ModalMixin]
 
+    def get_queryset(self, **kwargs):
+        return super().get_queryset(**kwargs)
 
-class GenericCreateView(BaseViewMixin, CreateView):
+
+class BaseFormView(GenericBaseView):
+    def get_success_url(self):
+        return super().get_success_url()
+
+    def get_form_kwargs(self, **kwargs):
+        return super().get_form_kwargs(**kwargs)
+
+
+class GenericCreateView(BaseFormView, CreateView):
     plugins = [FormMixin, ModalMixin]
 
+    def form_valid(self, form):
+        return super().form_valid(form)
 
-class FormSetCreateView(BaseViewMixin, ModelFormSetView):
+
+class FormSetCreateView(BaseFormView, ModelFormSetView):
     plugins = [FormMixin, ModalMixin]
 
+    def formset_valid(self, formset):
+        return super().formset_valid(formset)
 
-class PreviewCreateView(BaseViewMixin, CreateView):
+
+class PreviewCreateView(BaseFormView, CreateView):
     plugins = [FormMixin, PreviewMixin, ModalMixin]
 
 
-class GenericUpdateView(BaseViewMixin, UpdateView):
+class GenericUpdateView(BaseFormView, UpdateView):
     plugins = [FormMixin, ModalMixin]
 
 
-class FormSetUpdateView(BaseViewMixin, ModelFormSetView):
+class FormSetUpdateView(BaseFormView, ModelFormSetView):
     plugins = [FormMixin, ModalMixin]
 
 
-class PreviewUpdateView(BaseViewMixin, UpdateView):
+class PreviewUpdateView(BaseFormView, UpdateView):
     plugins = [FormMixin, PreviewMixin, ModalMixin]
 
 
-class GenericDeleteView(BaseViewMixin, DeleteView):
+class GenericDeleteView(BaseFormView, DeleteView):
     plugins = [DeleteMixin, ModalMixin]
 
 
-class PreviewDeleteView(BaseViewMixin, DeleteView):
+class PreviewDeleteView(BaseFormView, DeleteView):
     plugins = [DeleteMixin, PreviewMixin, ModalMixin]
 
 
