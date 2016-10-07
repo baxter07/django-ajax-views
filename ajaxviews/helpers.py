@@ -1,5 +1,9 @@
 try:
     import autocomplete_light.shortcuts as al
+except ImportError:
+    pass
+
+try:
     from guardian.shortcuts import assign_perm, remove_perm, get_perms_for_model, get_objects_for_user
 except ImportError:
     pass
