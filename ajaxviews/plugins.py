@@ -2,36 +2,26 @@ import datetime
 import json
 
 from dateutil.parser import parse
-from django.core.exceptions import ImproperlyConfigured
-from django.core.serializers.json import DjangoJSONEncoder
 
-from django.shortcuts import render_to_response
-from django.db.models import Min, Max
 from django.conf import settings
+from django.contrib.auth.models import Group
+from django.core.urlresolvers import reverse
+from django.http import JsonResponse
+from django.core.serializers.json import DjangoJSONEncoder
+from django.shortcuts import render_to_response, redirect
+from django.db.models import Min, Max
+from django.utils.html import force_text
 from django.utils.safestring import mark_safe
-from django.views.generic import CreateView
-from extra_views.formsets import ModelFormSetView
+from django.contrib import messages
 
-from .helpers import get_objects_for_model, construct_autocomplete_searchform
-
-
-# class ViewAdapter:
-#     def __init__(self, super_obj):
-#         self.super_call = super_obj
-#         self.plugins = []
-#
-#     def __getattr__(self, name):
-#         def wrapper(*args, **kwargs):
-#             for plugin in self.plugins:
-#                 if hasattr(plugin, name):
-#                     plugin.super_call = self.super_call
-#                     getattr(plugin, name)(*args, **kwargs)
-#         return wrapper
+from .helpers import get_objects_for_model, construct_autocomplete_searchform, assign_obj_perm
 
 
-class BaseMixin:
-    def __init__(self, view):
+class BasePlugin:
+    def __init__(self, view, super_call, **kwargs):
         self._view = view
+        self._init_kwargs = {}
+        self._super = super_call
 
     @property
     def json_cfg(self):
@@ -75,11 +65,9 @@ class BaseMixin:
         return context
 
 
-class ListMixin(BaseMixin):
-    ajax_view = True
-
-    def __init__(self, view):
-        super().__init__(view)
+class ListPlugin(BasePlugin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if hasattr(settings, 'DEFAULT_PAGINATE_BY'):
             self._view.paginate_by = settings.DEFAULT_PAGINATE_BY
         if hasattr(settings, 'FILTER_SEARCH_INPUT_BY'):
@@ -133,11 +121,11 @@ class ListMixin(BaseMixin):
             else:
                 raise LookupError('Invalid filter field!')
 
-    def get_queryset(self, super_call, **kwargs):
+    def get_queryset(self, **kwargs):
         if getattr(self._view, 'filter_user', False):
             queryset = get_objects_for_model(self.request.user, self.model)
         else:
-            queryset = super_call.get_queryset()
+            queryset = self._super.get_queryset()
         if hasattr(queryset, 'default_filter'):
             opts = self.json_cfg.copy()
             if hasattr(self, 'filter_fields'):
@@ -202,14 +190,14 @@ class ListMixin(BaseMixin):
         })
 
 
-class ModalMixin(BaseMixin):
-    modal_base_template = 'ajaxviews/__modal_base.html'
-
-    def __init__(self, view):
-        super().__init__(view)
+class ModalPlugin(BasePlugin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.modal_id = None
-        if hasattr(view, 'modal_base_template'):
-            self.modal_base_template = view.modal_base_template
+
+    @property
+    def modal_base_template(self):
+        return getattr(self._view, 'modal_base_template', 'ajaxviews/__modal_base.html')
 
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
@@ -227,40 +215,185 @@ class ModalMixin(BaseMixin):
         return context
 
 
-class DetailMixin(ModalMixin):
+class DetailPlugin(ModalPlugin):
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
         if self.modal_id and not hasattr(self, 'form_class'):
             self.json_cfg['full_url'] = self.request.get_full_path()
+        self.json_cfg['init_view_type'] = 'detailView'
 
-    def get_queryset(self, super_call, **kwargs):
+    def get_queryset(self, **kwargs):
         if getattr(self._view, 'deleted_obj_lookup', False) and self._view.queryset is None and self._view.model:
             return self._view.model._default_manager.all_with_deleted()
-        return super_call.get_queryset(**kwargs)
+        return self._super.get_queryset(**kwargs)
+
+    def get_context_data(self, context):
+        context = super().get_context_data(context)
+        if self.request.is_ajax() and not self.request.GET.get('modal_id', False):
+            context['generic_template'] = 'ajaxviews/__ajax_base.html'
+        if self.request.GET.get('disable_full_view', False):
+            context['disable_full_view'] = True
+        if self.request.GET.get('success_url', None):
+            context['success_url'] = self.request.GET['success_url']
+        return context
 
 
-class FormMixin(ModalMixin):
+class FormPlugin(ModalPlugin):
     csrf_protection = True
     form_set = True
 
-    def __init__(self, view):
-        super().__init__(view)
-        for base in view.__class__.__bases__:
-            if isinstance(base, ModelFormSetView):
-                self.form_set = True
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self.extras = []
+        # if hasattr(self._view, 'form_plugins'):
+        #     for plugin in self._view.form_plugins:
+        #         self.extras.append(plugin(self._view.form_class))
+        form_class = kwargs.get('form_class') or getattr(self._view, 'form_class', None)
+        if form_class:
+            if 'model' not in kwargs and hasattr(form_class.Meta, 'model'):
+                self._init_kwargs['model'] = getattr(form_class.Meta, 'model')
+            if hasattr(form_class.Meta, 'success_message'):
+                self._init_kwargs['success_message'] = getattr(form_class.Meta, 'success_message')
+
+    def dispatch(self, request, *args, **kwargs):
+        super().dispatch(request, *args, **kwargs)
+        self.json_cfg['init_view_type'] = 'formView'
+
+    def get_form_kwargs(self, kwargs):
+        kwargs['user'] = self.request.user
+        try:
+            kwargs['success_url'] = self._view.get_success_url()
+        except:
+            pass
+        related_obj_ids = {}
+        for key, value in self._view.kwargs.items():
+            if '_id' in key:
+                related_obj_ids[key] = value
+        if related_obj_ids:
+            kwargs['related_obj_ids'] = related_obj_ids
+        if self.modal_id:
+            kwargs.update({
+                'form_action': self.request.path + '?modal_id=' + self.modal_id,
+                'modal_form': True
+            })
+        if self.request.is_ajax() and 'form_data' in self.request.GET:
+            kwargs.update({
+                'data': self.request.GET,
+                'files': self.request.FILES,
+            })
+        return kwargs
+
+    def form_valid(self, form):
+        success_message = self._view.success_message(form.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message)
+        if self.modal_id:
+            self.object = form.save()
+            if self.request.POST.get('modal_reload', False):
+                return redirect(self.get_success_url() + '?modal_id=' + self.modal_id)
+            if hasattr(form, 'json_cache'):
+                return JsonResponse({'success': True, 'json_cache': form.json_cache})
+            return JsonResponse({'success': True})
+        else:
+            return self._super.form_valid(form) or self._super.formset_valid(form)
+
+    def get_context_data(self, context):
+        context = super().get_context_data(context)
+        if hasattr(self._view, 'get_form_class'):
+            context['page_size'] = getattr(self._view.get_form_class().Meta, 'form_size', 'sm')
+        return context
+
+    def get_success_url(self):
+        if 'success_url' in self.request.POST:
+            return self.request.POST.get('success_url')
+        if getattr(self._view, 'success_url', None):
+            success_url = force_text(self._view.success_url)
+        else:
+            success_url = self._super.get_success_url()
+        hashtag = self.request.GET.get('hashtag', None)
+        if hashtag:
+            success_url += '#' + hashtag
+        return success_url
+
+    def render_to_response(self, context, **response_kwargs):
+        # ignore validation errors on GET requests
+        if 'form_data' in self.request.GET:
+            context['form'].errors.clear()
+        return super().render_to_response(context, **response_kwargs)
 
 
-class CreateMixin(FormMixin):
+# from extra_views.formsets import ModelFormSetView
+
+
+class FormSet:
+    def formset_valid(self, formset):
+        # if create view
+        response = super().formset_valid(formset)
+        if hasattr(self.form_class.Meta, 'assign_perm') and getattr(self.form_class.Meta, 'assign_perm'):
+            # This needs to be done also for updating formsets (remove/assign)
+            for obj in self.object_list:
+                assign_obj_perm(self.request.user, obj)
+        return response
+
+
+class PreviewForm:
     pass
 
 
-class UpdateMixin(FormMixin):
-    pass
+class CreateForm:
+    def form_valid(self, form):
+        if getattr(form.Meta, 'assign_perm', False):
+            instance = form.save()
+            assign_obj_perm(self.request.user, instance)
+            # return super().form_valid(form)
+
+    def get_context_data(self, context):
+        if hasattr(self._view.form_class.Meta, 'headline'):
+            context['headline'] = 'Add ' + self.form_class.headline
+        elif hasattr(self._view.form_class.Meta, 'headline_full'):
+            context['headline'] = self.form_class.headline
+        context['disable_full_view'] = True
+        return context
 
 
-class DeleteMixin(FormMixin):
-    pass
+class UpdateForm:
+    def get_form_kwargs(self, kwargs):
+        kwargs['save_button_name'] = 'Update'
+        try:
+            url_name = self.request.resolver_match.url_name.replace('edit_', 'delete_')
+            kwargs['delete_url'] = reverse(url_name, args=(self.object.pk,))
+            if not isinstance(self.object, Group) and not self.request.user.has_delete_perm(self.model):
+                kwargs.pop('delete_url', None)
+        except:
+            pass
+        return kwargs
+
+    def get_context_data(self, context):
+        if hasattr(self.form_class.Meta, 'headline'):
+            context['headline'] = 'Edit ' + self.form_class.headline
+        elif hasattr(self.form_class.Meta, 'headline_full'):
+            context['headline'] = self.form_class.headline_full
+        context['disable_full_view'] = True
+        return context
 
 
-class PreviewMixin(FormMixin):
-    pass
+# class DeleteMixin(FormMixin):
+#     pass
+
+
+# class PreviewMixin(FormMixin):
+#     pass
+
+
+# class ViewAdapter:
+#     def __init__(self, super_obj):
+#         self.super_call = super_obj
+#         self.plugins = []
+#
+#     def __getattr__(self, name):
+#         def wrapper(*args, **kwargs):
+#             for plugin in self.plugins:
+#                 if hasattr(plugin, name):
+#                     plugin.super_call = self.super_call
+#                     getattr(plugin, name)(*args, **kwargs)
+#         return wrapper

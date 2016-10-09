@@ -105,13 +105,13 @@ Client API
 
         :param dict urlKwargs: Keyword arguments passed through URL string.
         :param dict jsonData: Keyword arguments passed as additional data in request.
-        :param dict callback: Function that's called once request is complete.
+        :param object callback: Function that's called once request is complete.
 
     .. function:: requestModal(href, jsonData)
 
         Request a view via AJAX and display it in a boostrap modal.
 
-        :param str href: URL of the view to be displayed in modal.
+        :param str href: URL of the view to be opend in modal.
         :param dict jsonData: Keyword arguments passed as additional data in request.
 
     .. function:: getUrlKwargs

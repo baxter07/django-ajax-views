@@ -14,14 +14,21 @@ django-ajax-views
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
     :target: https://raw.githubusercontent.com/collab-project/django-ajax-views/master/LICENSE
 
-This app is an extension of Django's `class-based views`_ and works together with javascript library
-**require-ajax-views**.
+This app is an extension of Django's
+`class-based views <https://docs.djangoproject.com/en/dev/topics/class-based-views/>`_
+and works together with javascript library **require-ajax-views**.
 
-It's main purpose is to encapsulate server/client communication to enable updating of views with a simple
-function call in javascript. `URL kwargs`_ and optional parameters for incoming requests are handled as one
-data set and returned as such in each response. This simplifies building complex views where filter
-parameters are partially passed through URL by using Django's `clean URL design`_ and as hidden parameters.
-Bootstrap modal views and generic forms are also supported.
+Features
+========
+
+- Ajax List Views
+   - Ajaxable templates to update views automatically
+   - Built-in generic filter support
+- Generic Forms
+   - Enhanced form action controls
+   - Display preview to confirm actions
+- Bootstrap Modals
+   - Support to display form and detail views in modals
 
 Documentation at https://django-ajax-views.readthedocs.io
 

@@ -135,7 +135,7 @@ class FormMixin(SuccessMessageMixin):
     def get_success_url(self):
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
-        if hasattr(self, 'success_url') and self.success_url:
+        if getattr(self, 'success_url', None):
             success_url = force_text(self.success_url)
         else:
             success_url = super().get_success_url()
@@ -211,6 +211,7 @@ class ModalFormMixin(ModalMixin):
             return super().form_valid(form)
 
     def render_to_response(self, context, **response_kwargs):
+        # ignore validation errors on GET requests
         if 'form_data' in self.request.GET:
             context['form'].errors.clear()
         return super().render_to_response(context, **response_kwargs)
