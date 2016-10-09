@@ -4,6 +4,80 @@ __version__ = '.'.join(map(str, __version_info__)) + 'b1'
 
 default_app_config = 'ajaxviews.apps.AjaxViewsConfig'
 
+# PyCharm suppress inspections list
+# usage: # noinspection <name> ...
+#
+# PyAbstractClass
+# PyArgumentEqualDefault
+# PyArgumentList
+# PyAssignmentToLoopOrWithParameter
+# PyAttributeOutsideInit
+# PyAugmentAssignment
+# PyBroadException
+# PyByteLiteral
+# PyCallByClass
+# PyCallingNonCallable
+# PyChainedComparisons
+# PyClassHasNoInit
+# PyClassicStyleClass
+# PyComparisonWithNone
+# PyCompatibility
+# PyDecorator
+# PyDefaultArgument
+# PyDeprecatedModules
+# PyDeprecation
+# PyDictCreation
+# PyDictDuplicateKeys
+# PyDocstring
+# PyDocstringTypes
+# PyExceptClausesOrder
+# PyExceptionInherit
+# PyFromFutureImport
+# PyGlobalUndefined
+# PyInconsistentIndentation
+# PyInitNewSignature
+# PyInterpreter
+# PyListCreation
+# PyMandatoryEncoding
+# PyMethodFirstArgAssignment
+# PyMethodMayBeStatic
+# PyMethodOverriding
+# PyMethodParameters
+# PyMissingConstructor
+# PyNestedDecorators
+# PyNonAsciiChar
+# PyNoneFunctionAssignment
+# PyOldStyleClasses
+# PyPackageRequirements
+# PyPep8
+# PyPep8Naming
+# PyPropertyAccess
+# PyPropertyDefinition
+# PyProtectedMember
+# PyRaisingNewStyleClass
+# PyRedeclaration
+# PyRedundantParentheses
+# PyReturnFromInit
+# PySetFunctionToLiteral
+# PyShadowingBuiltins
+# PyShadowingNames
+# PySimplifyBooleanCheck
+# PySingleQuotedDocstring
+# PyStatementEffect
+# PyStringException
+# PyStringFormat
+# PySuperArguments
+# PyTrailingSemicolon
+# PyTupleAssignmentBalance
+# PyTupleItemAssignment
+# PyTypeChecker
+# PyUnboundLocalVariable
+# PyUnnecessaryBackslash
+# PyUnreachableCode
+# PyUnresolvedReferences
+# PyUnsupportedFeatures
+# PyUnusedLocal
+
 # """
 # This is a reST style.
 #

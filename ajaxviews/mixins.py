@@ -218,9 +218,7 @@ class ModalFormMixin(ModalMixin):
 
 
 class PreviewMixin:
-    """ https://djangosnippets.org/snippets/10475/
-    Mixin for a 2-stage form
-
+    """
     For usage with the default django class-based views (CreateView, UpdateView, FormView)
 
     Procedure:

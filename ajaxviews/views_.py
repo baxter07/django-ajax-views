@@ -1,19 +1,3 @@
-
-# self.adapter = ViewAdapter(super())
-# if hasattr(self, 'plugins'):
-#     for plugin_class in self.plugins:
-#         self.adapter.plugins.append(plugin_class(self))
-
-# def __new__(cls, *args, **kwargs):
-#     instance = super().__new__(cls, *args, **kwargs)
-#     for plugin in cls.plugins:
-#         for name in plugin.__dict__:
-#             if name.startswith('__') and name.endswith('__')\
-#                     or not isinstance(plugin.__dict__[name], types.FunctionType):
-#                 continue
-#             instance.__dict__[name] = plugin.__dict__[name].__get__(instance)
-#     return instance
-
 import types
 import datetime
 from dateutil.parser import parse

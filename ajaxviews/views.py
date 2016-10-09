@@ -27,6 +27,7 @@ except ImportError:
 else:
     def get_form_kwargs(self):
         return {}
+    # ModelFormSetView.get_form_kwargs = types.MethodType(lambda s: {}, ModelFormSetView)
     ModelFormSetView.get_form_kwargs = types.MethodType(get_form_kwargs, ModelFormSetView)
     ModelFormSetView.formset_class = ModelFormSet
 
