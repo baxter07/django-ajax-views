@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
-from .plugins import BasePlugin, ListPlugin, DetailPlugin, FormPlugin, CreateForm, UpdateForm, PreviewForm, FormSet
+from .plugins import BasePlugin, ListPlugin, DetailPlugin, FormPlugin
 from .forms import DefaultFormHelper
 
 
@@ -27,7 +27,7 @@ except ImportError:
 else:
     def get_form_kwargs(self):
         return {}
-    # ModelFormSetView.get_form_kwargs = types.MethodType(lambda s: {}, ModelFormSetView)
+    # ModelFormSetView.get_form_kwargs = types.MethodType(lambda self: {}, ModelFormSetView)
     ModelFormSetView.get_form_kwargs = types.MethodType(get_form_kwargs, ModelFormSetView)
     ModelFormSetView.formset_class = ModelFormSet
 
@@ -39,11 +39,12 @@ class GenericBaseView:
         self.json_cfg = {}
         self.ajax_view = kwargs.pop('ajax_view', False) or getattr(self, 'ajax_view', False)
         if hasattr(self, 'plugin'):
-            self._plugin = self.plugin(self, super(), **kwargs)
+            self._plugin = self.plugin(self, **kwargs)
         else:
-            self._plugin = BasePlugin(self, super(), **kwargs)
-        if self._plugin._init_kwargs:
-            kwargs.update(self._plugin._init_kwargs)
+            self._plugin = BasePlugin(self, **kwargs)
+        self._plugin.super = super()
+        if self._plugin.view_kwargs:
+            kwargs.update(self._plugin.view_kwargs)
         super().__init__(*args, **kwargs)
 
     def dispatch(self, request, *args, **kwargs):
@@ -55,6 +56,7 @@ class GenericBaseView:
         return self._plugin.get_context_data(context)
 
 
+# noinspection PyUnresolvedReferences
 class AjaxListView(GenericBaseView, ListView):
     """
     The ListView can be updated by calling :func:`View.requestView` from client side view class.
@@ -72,13 +74,15 @@ class AjaxListView(GenericBaseView, ListView):
         return self._plugin.get_queryset(**kwargs)
 
 
-class GenericDetailView(GenericBaseView, DetailView):
+# noinspection PyUnresolvedReferences
+class AjaxDetailView(GenericBaseView, DetailView):
     plugin = DetailPlugin
 
     def get_queryset(self, **kwargs):
         return self._plugin.get_queryset(**kwargs)
 
 
+# noinspection PyUnresolvedReferences
 class BaseFormView(GenericBaseView):
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''
@@ -99,7 +103,21 @@ class BaseFormView(GenericBaseView):
         return self._plugin.get_success_url()
 
 
+# noinspection PyUnresolvedReferences
 class FormSetMixin:
+    # def get(self, request, *args, **kwargs):
+    #     formset = self.construct_formset()
+    #     return self.render_to_response(
+    #         self.get_context_data(formset=formset),
+    #         context=RequestContext(request),
+    #     )
+    #
+    # def formset_invalid(self, formset):
+    #     return self.render_to_response(
+    #         self.get_context_data(formset=formset),
+    #         context=RequestContext(request),
+    #     )
+
     def get_extra_form_kwargs(self):
         kwargs = super().get_extra_form_kwargs()
         kwargs.update(self.get_form_kwargs())
@@ -111,9 +129,12 @@ class FormSetMixin:
         formset.helper.form_tag = False
         return formset
 
+    # def render_to_response(self, context, **kwargs):
+    #     pass
+
 
 class CreateFormView(BaseFormView, CreateView):
-    form_plugins = [CreateForm]
+    form_controls = ['create']
 
     def __init__(self, **kwargs):
         form_class = kwargs.get('form_class') or getattr(self, 'form_class', None)
@@ -122,8 +143,9 @@ class CreateFormView(BaseFormView, CreateView):
         super().__init__(**kwargs)
 
 
-class CreateFormSetView(BaseFormView, FormSetMixin, ModelFormSetView):
-    form_plugins = [CreateForm, FormSet]
+# noinspection PyUnresolvedReferences
+class CreateFormSetView(FormSetMixin, BaseFormView, ModelFormSetView):
+    form_controls = ['create', 'formset']
 
     def formset_valid(self, formset):
         self._plugin.form_valid(formset)
@@ -131,19 +153,19 @@ class CreateFormSetView(BaseFormView, FormSetMixin, ModelFormSetView):
 
 
 class PreviewCreateView(BaseFormView, CreateView):
-    plugin_extras = [CreateForm, PreviewForm]
+    form_controls = ['create', 'preview']
 
 
 class UpdateFormView(BaseFormView, UpdateView):
-    form_plugins = [UpdateForm]
+    form_controls = ['update']
 
 
 class UpdateFormSetView(BaseFormView, FormSetMixin, ModelFormSetView):
-    form_plugins = [UpdateForm, FormSet]
+    form_controls = ['update', 'formset']
 
 
 class PreviewUpdateView(BaseFormView, UpdateView):
-    form_plugins = [UpdateForm, PreviewForm]
+    form_controls = ['update', 'preview']
 
 
 class DeleteFormView(BaseFormView, DeleteView):
@@ -156,21 +178,21 @@ class PreviewDeleteView(BaseFormView, DeleteView):
 
 # deprecated #########
 
-class CreateViewMixin:
-    pass
-
-
-class UpdateViewMixin:
-    pass
-
-
-class GenericCreateView(CreateFormView):
-    pass
-
-
-class GenericUpdateView(UpdateFormView):
-    pass
-
-
-class GenericDeleteView(DeleteFormView):
-    pass
+# class CreateViewMixin:
+#     pass
+#
+#
+# class UpdateViewMixin:
+#     pass
+#
+#
+# class GenericCreateView(CreateFormView):
+#     pass
+#
+#
+# class GenericUpdateView(UpdateFormView):
+#     pass
+#
+#
+# class GenericDeleteView(DeleteFormView):
+#     pass

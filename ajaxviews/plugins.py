@@ -19,26 +19,26 @@ from .helpers import get_objects_for_model, construct_autocomplete_searchform, a
 
 class BasePlugin:
     # noinspection PyUnusedLocal
-    def __init__(self, view, super_call, **kwargs):
-        self._view = view
-        self._init_kwargs = {}
-        self._super = super_call
+    def __init__(self, view, **kwargs):
+        self.view = view
+        self.view_kwargs = {}
+        self.super = None
 
     @property
     def json_cfg(self):
-        return self._view.json_cfg
+        return self.view.json_cfg
 
     @json_cfg.setter
     def json_cfg(self, value):
-        self._view.json_cfg = value
+        self.view.json_cfg = value
 
     @property
     def ajax_view(self):
-        return self._view.ajax_view
+        return self.view.ajax_view
 
     @property
     def request(self):
-        return self._view.request
+        return self.view.request
 
     def dispatch(self, request, *args, **kwargs):
         json_cfg = kwargs.copy()
@@ -58,10 +58,10 @@ class BasePlugin:
     def get_context_data(self, context):
         context.update({
             'view_name': self.json_cfg.get('view_name', None),
-            'page_size': getattr(self._view, 'page_size', None),
             'json_cfg': mark_safe(json.dumps(
                 self.json_cfg, cls=DjangoJSONEncoder
-            ))
+            )),
+            'page_size': getattr(self.view, 'page_size', None),
         })
         return context
 
@@ -69,39 +69,39 @@ class BasePlugin:
 class ListPlugin(BasePlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if hasattr(settings, 'DEFAULT_PAGINATE_BY'):
-            self._view.paginate_by = settings.DEFAULT_PAGINATE_BY
-        if hasattr(settings, 'FILTER_SEARCH_INPUT_BY'):
-            self._view.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
+        if hasattr(settings, 'DEFAULT_PAGINATE_BY') and not getattr(self.view, 'paginate_by', None):
+            self.view.paginate_by = settings.DEFAULT_PAGINATE_BY
+        if hasattr(settings, 'FILTER_SEARCH_INPUT_BY') and not getattr(self.view, 'filter_search_input_by', None):
+            self.view.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
 
     @property
     def model(self):
-        return self._view.model
+        return self.view.model
 
     @property
     def paginate_by(self):
-        return self._view.paginate_by
+        return self.view.paginate_by
 
     @property
     def filter_fields(self):
-        return self._view.filter_fields if hasattr(self._view, 'filter_fields') else None
+        return getattr(self.view, 'filter_fields', None)
 
     @property
     def filter_user(self):
-        return self._view.filter_user if hasattr(self._view, 'filter_user') else None
+        return getattr(self.view, 'filter_user', None)
 
     @property
     def filter_search_input_by(self):
-        return self._view.filter_search_input_by if hasattr(self._view, 'filter_search_input_by') else None
+        return getattr(self.view, 'filter_search_input_by', None)
 
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
+        self.json_cfg['init_view_type'] = 'listView'
         if 'ajax_page_nr' in self.json_cfg:
-            self._view.kwargs['page'] = self.json_cfg['ajax_page_nr']
+            self.view.kwargs['page'] = self.json_cfg['ajax_page_nr']
 
     # noinspection PyUnusedLocal
     def get(self, request, *args, **kwargs):
-        self.json_cfg['init_view_type'] = 'listView'
         if self.json_cfg.get('filter_index', -1) >= 0:
             filter_field = self.filter_fields[int(self.json_cfg['filter_index'])]
             if isinstance(filter_field, str):
@@ -124,10 +124,10 @@ class ListPlugin(BasePlugin):
                 raise LookupError('Invalid filter field!')
 
     def get_queryset(self, **kwargs):
-        if getattr(self._view, 'filter_user', False):
+        if getattr(self.view, 'filter_user', False):
             queryset = get_objects_for_model(self.request.user, self.model)
         else:
-            queryset = self._super.get_queryset()
+            queryset = self.super.get_queryset()
         if hasattr(queryset, 'default_filter'):
             opts = self.json_cfg.copy()
             if hasattr(self, 'filter_fields'):
@@ -150,7 +150,7 @@ class ListPlugin(BasePlugin):
         return context
 
     def _get_queryset_all(self):
-        if getattr(self._view, 'filter_user', False):
+        if getattr(self.view, 'filter_user', False):
             return get_objects_for_model(self.request.user, self.model)
         return self.model.objects.all()
 
@@ -199,7 +199,7 @@ class ModalPlugin(BasePlugin):
 
     @property
     def modal_base_template(self):
-        return getattr(self._view, 'modal_base_template', 'ajaxviews/__modal_base.html')
+        return getattr(self.view, 'modal_base_template', 'ajaxviews/__modal_base.html')
 
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
@@ -220,14 +220,18 @@ class ModalPlugin(BasePlugin):
 class DetailPlugin(ModalPlugin):
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
-        if self.modal_id and not hasattr(self, 'form_class'):
+        if self.modal_id and not hasattr(self.view, 'form_class'):
             self.json_cfg['full_url'] = self.request.get_full_path()
         self.json_cfg['init_view_type'] = 'detailView'
 
     def get_queryset(self, **kwargs):
-        if getattr(self._view, 'deleted_obj_lookup', False) and self._view.queryset is None and self._view.model:
-            return self._view.model._default_manager.all_with_deleted()
-        return self._super.get_queryset(**kwargs)
+        """
+        Display all objects including those that were marked as deleted by django-safedelete.
+        :return: Queryset with or without deleted objects depending on class attribute 'deleted_obj_lookup'
+        """
+        if getattr(self.view, 'deleted_obj_lookup', False) and self.view.queryset is None and self.view.model:
+            return self.view.model._default_manager.all_with_deleted()
+        return self.super.get_queryset(**kwargs)
 
     def get_context_data(self, context):
         context = super().get_context_data(context)
@@ -240,17 +244,94 @@ class DetailPlugin(ModalPlugin):
         return context
 
 
-class PluginAdapter:
+# noinspection PyUnresolvedReferences
+class CreateForm:
+    def form_valid(self, form):
+        print('create form valid:', form)
+        if getattr(form.Meta, 'assign_perm', False):
+            instance = form.save()
+            assign_obj_perm(self.view.request.user, instance)
+            # return super().form_valid(form)
+
+    def get_context_data(self, context):
+        if hasattr(self.view.form_class.Meta, 'headline'):
+            context['headline'] = 'Add ' + self.view.form_class.headline
+        elif hasattr(self.view.form_class.Meta, 'headline_full'):
+            context['headline'] = self.view.form_class.headline
+        context['disable_full_view'] = True
+        return context
+
+
+# noinspection PyUnresolvedReferences
+class UpdateForm:
+    # noinspection PyBroadException
+    def get_form_kwargs(self, kwargs):
+        kwargs['save_button_name'] = 'Update'
+        try:
+            # url_name = self.view.request.resolver_match.url_name.replace('edit_', 'delete_')
+            url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
+            kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
+            if not isinstance(self.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
+                kwargs.pop('delete_url', None)
+        except:
+            pass
+        return kwargs
+
+    def get_context_data(self, context):
+        if hasattr(self.view.form_class.Meta, 'headline'):
+            context['headline'] = 'Edit ' + self.view.form_class.headline
+        elif hasattr(self.view.form_class.Meta, 'headline_full'):
+            context['headline'] = self.view.form_class.headline_full
+        context['disable_full_view'] = True
+        return context
+
+
+# noinspection PyUnresolvedReferences
+class FormSet:
+    # noinspection PyUnusedLocal
+    def form_valid(self, formset):
+        # if create view
+        if getattr(self.view.form_class.Meta, 'assign_perm', False):
+            # This needs to be done also for updating formsets (remove/assign)
+            for obj in self.view.object_list:
+                assign_obj_perm(self.request.user, obj)
+
+
+class PreviewForm:
+    pass
+
+
+class FormControlAdapter:
+    _form_controls = {
+        'create': CreateForm,
+        'update': UpdateForm,
+        'preview': PreviewForm,
+        'formset': FormSet,
+    }
+    _control_instances = []
+
     def __get__(self, instance, owner):
-        def func(name, param):
-            param_ = param
-            for Plugin in instance._view.form_plugins:
-                plugin = Plugin()
-                plugin._view = instance._view
-                if hasattr(plugin, name):
-                    param_ = getattr(plugin, name)(param_)
-            return param_
-        return func
+        for control in getattr(instance.view, 'form_controls', []):
+            control = self._form_controls[control]()
+            control.plugin = instance
+            control.view = instance.view
+            self._control_instances.append(control)
+        return self
+
+    def __getattr__(self, name):
+        def wrapper(*args, **kwargs):
+            param = None
+            if not kwargs and len(args) == 1:
+                param = args[0]
+            for control in self._control_instances:
+                if hasattr(control, name):
+                    if param:
+                        param = getattr(control, name)(param)
+                    else:
+                        getattr(control, name)(*args, **kwargs)
+            if param:
+                return param
+        return wrapper
 
 
 # noinspection PyUnresolvedReferences
@@ -258,20 +339,16 @@ class PluginAdapter:
 class FormPlugin(ModalPlugin):
     csrf_protection = True
     form_set = True
-    extra = PluginAdapter()
+    extra = FormControlAdapter()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.extras = []
-        # if hasattr(self._view, 'form_plugins'):
-        #     for plugin in self._view.form_plugins:
-        #         self.extras.append(plugin(self._view.form_class))
-        form_class = kwargs.get('form_class') or getattr(self._view, 'form_class', None)
+        form_class = kwargs.get('form_class') or getattr(self.view, 'form_class', None)
         if form_class:
             if 'model' not in kwargs and hasattr(form_class.Meta, 'model'):
-                self._init_kwargs['model'] = getattr(form_class.Meta, 'model')
+                self.view_kwargs['model'] = getattr(form_class.Meta, 'model')
             if hasattr(form_class.Meta, 'success_message'):
-                self._init_kwargs['success_message'] = getattr(form_class.Meta, 'success_message')
+                self.view_kwargs['success_message'] = getattr(form_class.Meta, 'success_message')
 
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
@@ -281,11 +358,11 @@ class FormPlugin(ModalPlugin):
     def get_form_kwargs(self, kwargs):
         kwargs['user'] = self.request.user
         try:
-            kwargs['success_url'] = self._view.get_success_url()
+            kwargs['success_url'] = self.view.get_success_url()
         except:
             pass
         related_obj_ids = {}
-        for key, value in self._view.kwargs.items():
+        for key, value in self.view.kwargs.items():
             if '_id' in key:
                 related_obj_ids[key] = value
         if related_obj_ids:
@@ -300,37 +377,36 @@ class FormPlugin(ModalPlugin):
                 'data': self.request.GET,
                 'files': self.request.FILES,
             })
-        self.extra('get_form_kwargs', kwargs)
-        return kwargs
+        return self.extra.get_form_kwargs(kwargs)
 
     def form_valid(self, form):
-        success_message = self._view.success_message.format(**form.cleaned_data)
+        success_message = self.view.success_message.format(**form.cleaned_data)
         if success_message:
             messages.success(self.request, success_message)
-        self.extra('form_valid', form)
+        self.extra.form_valid(form)
         if self.modal_id:
-            self._view.object = form.save()
+            self.view.object = form.save()
             if self.request.POST.get('modal_reload', False):
                 return redirect(self.get_success_url() + '?modal_id=' + self.modal_id)
             if hasattr(form, 'json_cache'):
                 return JsonResponse({'success': True, 'json_cache': form.json_cache})
             return JsonResponse({'success': True})
         else:
-            return self._super.form_valid(form) or self._super.formset_valid(form)
+            return self.super.form_valid(form) or self.super.formset_valid(form)
 
     def get_context_data(self, context):
         context = super().get_context_data(context)
-        if hasattr(self._view, 'get_form_class'):
-            context['page_size'] = getattr(self._view.get_form_class().Meta, 'form_size', 'sm')
-        return self.extra('get_context_data', context)
+        if hasattr(self.view, 'get_form_class'):
+            context['page_size'] = getattr(self.view.get_form_class().Meta, 'form_size', 'sm')
+        return self.extra.get_context_data(context)
 
     def get_success_url(self):
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
-        if getattr(self._view, 'success_url', None):
-            success_url = force_text(self._view.success_url)
+        if getattr(self.view, 'success_url', None):
+            success_url = force_text(self.view.success_url)
         else:
-            success_url = self._super.get_success_url()
+            success_url = self.super.get_success_url()
         hashtag = self.request.GET.get('hashtag', None)
         if hashtag:
             success_url += '#' + hashtag
@@ -343,72 +419,8 @@ class FormPlugin(ModalPlugin):
         return super().render_to_response(context, **response_kwargs)
 
 
-# from extra_views.formsets import ModelFormSetView
-
-
-# noinspection PyUnresolvedReferences
-class FormSet:
-    # noinspection PyUnusedLocal
-    def form_valid(self, formset):
-        # if create view
-        if getattr(self._view.form_class.Meta, 'assign_perm', False):
-            # This needs to be done also for updating formsets (remove/assign)
-            for obj in self._view.object_list:
-                assign_obj_perm(self.request.user, obj)
-
-
-# noinspection PyUnresolvedReferences
-class CreateForm:
-    def form_valid(self, form):
-        print('create form valid:', form)
-        if getattr(form.Meta, 'assign_perm', False):
-            instance = form.save()
-            assign_obj_perm(self._view.request.user, instance)
-            # return super().form_valid(form)
-
-    def get_context_data(self, context):
-        if hasattr(self._view.form_class.Meta, 'headline'):
-            context['headline'] = 'Add ' + self._view.form_class.headline
-        elif hasattr(self._view.form_class.Meta, 'headline_full'):
-            context['headline'] = self._view.form_class.headline
-        context['disable_full_view'] = True
-        return context
-
-
-# noinspection PyUnresolvedReferences
-class UpdateForm:
-    # noinspection PyBroadException
-    def get_form_kwargs(self, kwargs):
-        kwargs['save_button_name'] = 'Update'
-        try:
-            # url_name = self._view.request.resolver_match.url_name.replace('edit_', 'delete_')
-            url_name = self._view.json_cfg['view_name'].replace('edit_', 'delete_')
-            kwargs['delete_url'] = reverse(url_name, args=(self._view.object.pk,))
-            if not isinstance(self.object, Group) and not self._view.request.user.has_delete_perm(self._view.model):
-                kwargs.pop('delete_url', None)
-        except:
-            pass
-        return kwargs
-
-    def get_context_data(self, context):
-        if hasattr(self._view.form_class.Meta, 'headline'):
-            context['headline'] = 'Edit ' + self._view.form_class.headline
-        elif hasattr(self._view.form_class.Meta, 'headline_full'):
-            context['headline'] = self._view.form_class.headline_full
-        context['disable_full_view'] = True
-        return context
-
-
-class PreviewForm:
+class DeletePlugin:
     pass
-
-
-# class DeleteMixin(FormMixin):
-#     pass
-
-
-# class PreviewMixin(FormMixin):
-#     pass
 
 
 # class ViewAdapter:

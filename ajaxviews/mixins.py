@@ -10,6 +10,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
+from django.forms import ValidationError
 
 from crispy_forms.utils import render_crispy_form
 
@@ -302,7 +303,7 @@ class PreviewMixin:
         # kwargs.pop('delete_url', None)
         form = self.form_class(QueryDict(form), **kwargs)
         if not form.is_valid():
-            raise Exception('model form did not validate!')
+            raise ValidationError('Model form did not validate!')
         return form
 
     def form_valid(self, form):

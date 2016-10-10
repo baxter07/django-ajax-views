@@ -1,6 +1,7 @@
 from django.conf import settings as django_settings
 
 
+# noinspection PyPep8Naming
 class LazySettings:
     @property
     def DEFAULT_PAGINATE_BY(self):
