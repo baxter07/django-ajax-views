@@ -15,4 +15,28 @@ class LazySettings:
     def REQUIRE_MAIN_NAME(self):
         return getattr(django_settings, 'REQUIRE_MAIN_NAME', 'main')
 
+    @property
+    def FORM_GENERIC_HEADLINE(self):
+        return getattr(django_settings, 'FORM_GENERIC_HEADLINE', True)
+
+    @property
+    def CREATE_FORM_HEADLINE_PREFIX(self):
+        return getattr(django_settings, 'CREATE_FORM_HEADLINE_PREFIX', 'Add')
+
+    @property
+    def UPDATE_FORM_HEADLINE_PREFIX(self):
+        return getattr(django_settings, 'UPDATE_FORM_HEADLINE_PREFIX', 'Edit')
+
+    @property
+    def GENERIC_FORM_BASE_TEMPLATE(self):
+        return getattr(django_settings, 'GENERIC_FORM_BASE_TEMPLATE', None)
+
+    @property
+    def FORM_RELATED_OBJECT_IDS(self):
+        return getattr(django_settings, 'FORM_RELATED_OBJECT_IDS', False)
+
+    @property
+    def FORM_DELETE_CONFIRMATION(self):
+        return getattr(django_settings, 'FORM_DELETE_CONFIRMATION', False)
+
 settings = LazySettings()

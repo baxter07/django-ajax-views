@@ -1,9 +1,7 @@
 import datetime
 import json
-
 from dateutil.parser import parse
 
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.http import JsonResponse
@@ -14,6 +12,7 @@ from django.utils.html import force_text
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 
+from .conf import settings
 from .helpers import get_objects_for_model, construct_autocomplete_searchform, assign_obj_perm
 
 
@@ -33,12 +32,12 @@ class BasePlugin:
         self.view.json_cfg = value
 
     @property
-    def ajax_view(self):
-        return self.view.ajax_view
-
-    @property
     def request(self):
         return self.view.request
+
+    @property
+    def ajax_base_template(self):
+        return getattr(self.view, 'ajax_base_template', 'ajaxviews/__ajax_base.html')
 
     def dispatch(self, request, *args, **kwargs):
         json_cfg = kwargs.copy()
@@ -49,7 +48,7 @@ class BasePlugin:
         if request.is_ajax():
             json_cfg['ajax_load'] = True
 
-        if self.ajax_view:
+        if self.view.ajax_view:
             json_cfg['ajax_view'] = True
 
         json_cfg['view_name'] = request.resolver_match.url_name
@@ -67,12 +66,12 @@ class BasePlugin:
 
 
 class ListPlugin(BasePlugin):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if hasattr(settings, 'DEFAULT_PAGINATE_BY') and not getattr(self.view, 'paginate_by', None):
-            self.view.paginate_by = settings.DEFAULT_PAGINATE_BY
-        if hasattr(settings, 'FILTER_SEARCH_INPUT_BY') and not getattr(self.view, 'filter_search_input_by', None):
-            self.view.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     if not getattr(self.view, 'paginate_by', None):
+    #         self.view.paginate_by = settings.DEFAULT_PAGINATE_BY
+    #     if not getattr(self.view, 'filter_search_input_by', None):
+    #         self.view.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
 
     @property
     def model(self):
@@ -80,19 +79,19 @@ class ListPlugin(BasePlugin):
 
     @property
     def paginate_by(self):
-        return self.view.paginate_by
+        return self.view.paginate_by if self.view.paginate_by else settings.DEFAULT_PAGINATE_BY
 
     @property
     def filter_fields(self):
-        return getattr(self.view, 'filter_fields', None)
+        return getattr(self.view, 'filter_fields', [])
 
     @property
     def filter_user(self):
-        return getattr(self.view, 'filter_user', None)
+        return getattr(self.view, 'filter_user', False)
 
     @property
     def filter_search_input_by(self):
-        return getattr(self.view, 'filter_search_input_by', None)
+        return getattr(self.view, 'filter_search_input_by', settings.FILTER_SEARCH_INPUT_BY)
 
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
@@ -141,7 +140,7 @@ class ListPlugin(BasePlugin):
     def get_context_data(self, context):
         context = super().get_context_data(context)
         if self.request.is_ajax() and not self.request.GET.get('modal_id', False):
-            context['generic_template'] = 'ajaxviews/__ajax_base.html'
+            context['generic_template'] = self.ajax_base_template
         if not self.request.is_ajax() and hasattr(self, 'search_field'):
             context['search_form'] = construct_autocomplete_searchform(self.search_field)
         if self.json_cfg.get('sort_index', -1) >= 0:
@@ -220,9 +219,9 @@ class ModalPlugin(BasePlugin):
 class DetailPlugin(ModalPlugin):
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
+        self.json_cfg['init_view_type'] = 'detailView'
         if self.modal_id and not hasattr(self.view, 'form_class'):
             self.json_cfg['full_url'] = self.request.get_full_path()
-        self.json_cfg['init_view_type'] = 'detailView'
 
     def get_queryset(self, **kwargs):
         """
@@ -236,7 +235,7 @@ class DetailPlugin(ModalPlugin):
     def get_context_data(self, context):
         context = super().get_context_data(context)
         if self.request.is_ajax() and not self.request.GET.get('modal_id', False):
-            context['generic_template'] = 'ajaxviews/__ajax_base.html'
+            context['generic_template'] = self.ajax_base_template
         if self.request.GET.get('disable_full_view', False):
             context['disable_full_view'] = True
         if self.request.GET.get('success_url', None):
@@ -247,43 +246,35 @@ class DetailPlugin(ModalPlugin):
 # noinspection PyUnresolvedReferences
 class CreateForm:
     def form_valid(self, form):
-        print('create form valid:', form)
         if getattr(form.Meta, 'assign_perm', False):
             instance = form.save()
             assign_obj_perm(self.view.request.user, instance)
-            # return super().form_valid(form)
 
-    def get_context_data(self, context):
-        if hasattr(self.view.form_class.Meta, 'headline'):
-            context['headline'] = 'Add ' + self.view.form_class.headline
-        elif hasattr(self.view.form_class.Meta, 'headline_full'):
-            context['headline'] = self.view.form_class.headline
-        context['disable_full_view'] = True
-        return context
+    # def get_context_data(self, context):
+    #     if settings.FORM_GENERIC_HEADLINE:
+    #         if hasattr(self.view.form_class.Meta, 'headline'):
+    #             context['headline'] = settings.CREATE_HEADLINE_PREFIX + ' ' + self.view.form_class.headline
+    #         elif hasattr(self.view.form_class.Meta, 'headline_full'):
+    #             context['headline'] = self.view.form_class.headline
+    #     return context
 
 
 # noinspection PyUnresolvedReferences
 class UpdateForm:
-    # noinspection PyBroadException
     def get_form_kwargs(self, kwargs):
-        kwargs['save_button_name'] = 'Update'
+        kwargs['save_button_name'] = getattr(self.view, 'save_button_name', 'Update')
         try:
-            # url_name = self.view.request.resolver_match.url_name.replace('edit_', 'delete_')
             url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
             kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
             if not isinstance(self.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
                 kwargs.pop('delete_url', None)
-        except:
+        except Exception:
             pass
         return kwargs
 
-    def get_context_data(self, context):
-        if hasattr(self.view.form_class.Meta, 'headline'):
-            context['headline'] = 'Edit ' + self.view.form_class.headline
-        elif hasattr(self.view.form_class.Meta, 'headline_full'):
-            context['headline'] = self.view.form_class.headline_full
-        context['disable_full_view'] = True
-        return context
+    # def get_context_data(self, context):
+    #
+    #     return context
 
 
 # noinspection PyUnresolvedReferences
@@ -320,9 +311,7 @@ class FormControlAdapter:
 
     def __getattr__(self, name):
         def wrapper(*args, **kwargs):
-            param = None
-            if not kwargs and len(args) == 1:
-                param = args[0]
+            param = args[0] if not kwargs and len(args) == 1 else None
             for control in self._control_instances:
                 if hasattr(control, name):
                     if param:
@@ -337,8 +326,6 @@ class FormControlAdapter:
 # noinspection PyUnresolvedReferences
 # noinspection PyCallingNonCallable
 class FormPlugin(ModalPlugin):
-    csrf_protection = True
-    form_set = True
     extra = FormControlAdapter()
 
     def __init__(self, *args, **kwargs):
@@ -350,6 +337,10 @@ class FormPlugin(ModalPlugin):
             if hasattr(form_class.Meta, 'success_message'):
                 self.view_kwargs['success_message'] = getattr(form_class.Meta, 'success_message')
 
+    @property
+    def related_object_ids(self):
+        return getattr(self.view, 'related_object_ids', getattr(settings, 'FORM_RELATED_OBJECT_IDS'))
+
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
         self.json_cfg['init_view_type'] = 'formView'
@@ -357,16 +348,16 @@ class FormPlugin(ModalPlugin):
     # noinspection PyBroadException
     def get_form_kwargs(self, kwargs):
         kwargs['user'] = self.request.user
-        try:
-            kwargs['success_url'] = self.view.get_success_url()
-        except:
-            pass
-        related_obj_ids = {}
-        for key, value in self.view.kwargs.items():
-            if '_id' in key:
-                related_obj_ids[key] = value
-        if related_obj_ids:
-            kwargs['related_obj_ids'] = related_obj_ids
+        if 'form_cfg' not in kwargs:
+            kwargs['form_cfg'] = {}
+        if self.related_object_ids:
+            for key, value in self.view.kwargs.items():
+                if key.endswith('_id'):
+                    if 'related_obj_ids' in kwargs['form_cfg']:
+                        kwargs['form_cfg']['related_obj_ids'][key] = value
+                    else:
+                        kwargs['form_cfg']['related_obj_ids'] = {key: value}
+        kwargs['delete_confirmation'] = getattr(self.view, 'delete_confirmation', settings.FORM_DELETE_CONFIRMATION)
         if self.modal_id:
             kwargs.update({
                 'form_action': self.request.path + '?modal_id=' + self.modal_id,
@@ -377,6 +368,10 @@ class FormPlugin(ModalPlugin):
                 'data': self.request.GET,
                 'files': self.request.FILES,
             })
+        try:
+            kwargs['success_url'] = self.get_success_url()
+        except:
+            pass
         return self.extra.get_form_kwargs(kwargs)
 
     def form_valid(self, form):
@@ -386,8 +381,8 @@ class FormPlugin(ModalPlugin):
         self.extra.form_valid(form)
         if self.modal_id:
             self.view.object = form.save()
-            if self.request.POST.get('modal_reload', False):
-                return redirect(self.get_success_url() + '?modal_id=' + self.modal_id)
+            # if self.request.POST.get('modal_reload', False):
+            #     return redirect(self.get_success_url() + '?modal_id=' + self.modal_id)
             if hasattr(form, 'json_cache'):
                 return JsonResponse({'success': True, 'json_cache': form.json_cache})
             return JsonResponse({'success': True})
@@ -396,8 +391,19 @@ class FormPlugin(ModalPlugin):
 
     def get_context_data(self, context):
         context = super().get_context_data(context)
+        context['generic_form_base_template'] = settings.GENERIC_FORM_BASE_TEMPLATE
+        context['disable_full_view'] = True
         if hasattr(self.view, 'get_form_class'):
             context['page_size'] = getattr(self.view.get_form_class().Meta, 'form_size', 'sm')
+        if settings.FORM_GENERIC_HEADLINE:
+            if hasattr(self.view.form_class.Meta, 'headline'):
+                if self.view.object.pk:
+                    prefix = settings.UPDATE_FORM_HEADLINE_PREFIX
+                else:
+                    prefix = settings.CREATE_FORM_HEADLINE_PREFIX
+                context['headline'] = prefix + ' ' + self.view.form_class.headline
+            elif hasattr(self.view.form_class.Meta, 'headline_full'):
+                context['headline'] = self.view.form_class.headline
         return self.extra.get_context_data(context)
 
     def get_success_url(self):
