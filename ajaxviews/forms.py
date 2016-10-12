@@ -1,6 +1,6 @@
 import json
 
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.contrib.admin.templatetags.admin_static import static
 from django.forms import Form, ModelForm, CharField, HiddenInput
 
@@ -125,6 +125,8 @@ class GenericModelForm(ModelForm):
         self.user = kwargs.pop('user', None)
         self.helper_kwargs = get_form_helper_attr(kwargs)
         init_helper = kwargs.pop('init_helper', True)
+        # modal_add_fields = kwargs.pop('modal_add_fields', True)
+        # kwargs.setdefault('label_suffix', 'yoyooooooooo')
         super().__init__(*args, **kwargs)
 
         if 'related_obj_ids' in self.form_cfg:
@@ -141,6 +143,8 @@ class GenericModelForm(ModelForm):
         if 'select_field' in kwargs.get('data', {}):
             self.fields[kwargs['data'].get('select_field')].initial = kwargs['data'].get('select_pk')
 
+        self._init_modal_add_fields()
+
         if init_helper:
             self.init_helper()
 
@@ -150,7 +154,7 @@ class GenericModelForm(ModelForm):
     #     return DefaultFormHelper(self, **self.helper_kwargs)
 
     def init_helper(self, form_actions=True):
-        self._init_modal_fields()
+        # self._init_modal_fields()
         # if hasattr(self.Meta, 'modal_fields'):
         #     self._init_modal_fields()
 
@@ -161,29 +165,24 @@ class GenericModelForm(ModelForm):
         self.helper = DefaultFormHelper(self, **self.helper_kwargs)
         # self.helper.render_hidden_fields = True
 
+        if self.form_cfg:
+            self.helper.layout.append(
+                '<input name="form_cfg" value="{}" type="hidden">'.format(json.dumps(self.form_cfg))
+            )
         if form_actions:
             self.append_form_actions()
 
-    def _init_modal_fields(self):
+    def _init_modal_add_fields(self):
         for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
+            try:
+                url = reverse(url_name)
+            except NoReverseMatch:
+                url = reverse(url_name, args=[self.instance.pk])
+            self.fields[field_name].help_text = '<b>test-{}</b>'.format(url)
             self.fields[field_name].label += """
                 <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
                     <img src="{1}" width="15" height="15" alt="{2}"/>
-                </a>""".format(reverse(url_name), static('admin/img/icon-addlink.svg'), 'Add')
-
-        # for field_name, url_name in getattr(self.Meta, 'modal_fields').items():
-        #     try:
-        #         url = reverse(url_name)
-        #     except:
-        #         try:
-        #             # TODO document that the id of the current model is used for generic add fields with parameter
-        #             url = reverse(url_name, args=(self.instance.pk,))
-        #         except:
-        #             url = None
-        #     if url:
-        #         self.fields[field_name].label += """ <a class="modal-link" href="{0}">
-        #                                                 <img src="{1}" width="15" height="15" alt="{2}"/>
-        #                                              </a>""".format(url, static('admin/img/icon_addlink.gif'), 'Add')
+                </a>""".format(url, static('admin/img/icon-addlink.svg'), 'Add')
 
     def custom_success_url(self, url):
         self.helper_kwargs['success_url'] = url
@@ -210,7 +209,7 @@ class GenericModelForm(ModelForm):
         return {}
 
     def get_related_obj(self, model, key=None):
-        related_obj_dict = self.form_cfg.get('related_obj_ids', None)
+        related_obj_dict = self.get_form_cfg.get('related_obj_ids', None)
         if not related_obj_dict:
             return None
         if key:

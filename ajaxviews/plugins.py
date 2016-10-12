@@ -330,6 +330,7 @@ class FormPlugin(ModalPlugin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.form_cfg = {}
         form_class = kwargs.get('form_class') or getattr(self.view, 'form_class', None)
         if form_class:
             if 'model' not in kwargs and hasattr(form_class.Meta, 'model'):
@@ -375,6 +376,7 @@ class FormPlugin(ModalPlugin):
         return self.extra.get_form_kwargs(kwargs)
 
     def form_valid(self, form):
+        self.form_cfg = form.form_cfg
         success_message = self.view.success_message.format(**form.cleaned_data)
         if success_message:
             messages.success(self.request, success_message)
@@ -389,6 +391,10 @@ class FormPlugin(ModalPlugin):
         else:
             return self.super.form_valid(form) or self.super.formset_valid(form)
 
+    def form_invalid(self, form):
+        self.form_cfg = form.form_cfg
+        return self.super.form_invalid(form) or self.super.formset_invalid(form)
+
     def get_context_data(self, context):
         context = super().get_context_data(context)
         context['generic_form_base_template'] = settings.GENERIC_FORM_BASE_TEMPLATE
@@ -397,7 +403,13 @@ class FormPlugin(ModalPlugin):
             context['page_size'] = getattr(self.view.get_form_class().Meta, 'form_size', 'sm')
         if settings.FORM_GENERIC_HEADLINE:
             if hasattr(self.view.form_class.Meta, 'headline'):
-                if self.view.object.pk:
+                if 'formset' in getattr(self.view, 'form_controls', []):
+                    object_exists = True if len(self.view.object_list) > 0 else False
+                else:
+                    object_exists = True if getattr(self.view.object, 'pk') else False
+                # instance_obj = getattr(self.view, 'object', getattr(self.view, 'object_list', None))
+                # if instance_obj and instance_obj.pk:
+                if object_exists:
                     prefix = settings.UPDATE_FORM_HEADLINE_PREFIX
                 else:
                     prefix = settings.CREATE_FORM_HEADLINE_PREFIX
@@ -407,6 +419,8 @@ class FormPlugin(ModalPlugin):
         return self.extra.get_context_data(context)
 
     def get_success_url(self):
+        print('- ' * 30 + 'form plugin: get_success_url' + ' -' * 30)
+        print('>>>', self.form_cfg)
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
         if getattr(self.view, 'success_url', None):
