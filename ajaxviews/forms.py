@@ -14,15 +14,17 @@ from .helpers import classproperty, init_chosen_widget, init_dateinput
 
 
 class DefaultFormActions(LayoutObject):
-    def __init__(self, **kwargs):
-        self.opts = kwargs.copy()
-        self.save_button_name = kwargs.pop('save_button_name', 'Save')
-        self.success_url = kwargs.pop('success_url', '#')
-        self.delete_url = kwargs.pop('delete_url', None)
-        self.modal_form = kwargs.pop('modal_form', False)
-        self.delete_confirmation = kwargs.pop('delete_confirmation', False)
+    # def __init__(self, **kwargs):
+    #     self.opts = kwargs.copy()
+        # self.save_button_name = kwargs.pop('save_button_name', 'Save')
+        # self.success_url = kwargs.pop('success_url', '#')
+        # self.delete_url = kwargs.pop('delete_url', None)
+        # self.modal_form = kwargs.pop('modal_form', False)
+        # self.delete_confirmation = kwargs.pop('delete_confirmation', False)
 
+    # noinspection PyUnusedLocal
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
+        self.opts = form.opts
         # preview_back_class = ''
         # cancel_button_name = 'Cancel'
         # if self.back_button:
@@ -41,7 +43,7 @@ class DefaultFormActions(LayoutObject):
         success_url = self.opts.get('success_url', '')
         delete_url = self.opts.get('delete_url', '')
         if delete_url:
-            if success_url and success_url != '#':
+            if success_url and success_url != '':
                 delete_url += '&' if '?' in delete_url else '?'
                 delete_url += 'success_url=' + success_url
             # btn_group += """<a role="button" class="btn btn-danger pull-right" data-toggle="confirmation" href="{0}">
@@ -58,7 +60,7 @@ class DefaultFormActions(LayoutObject):
         })
 
         layout_object = FormActions(
-            Submit('save', self.save_button_name),
+            Submit('save', self.opts.get('save_button_name', 'Save')),
             HTML(btn_group),
             style='margin-bottom: 0;'
         )
@@ -67,26 +69,22 @@ class DefaultFormActions(LayoutObject):
 
 class DefaultFormHelper(FormHelper):
     def __init__(self, *args, **kwargs):
-        form_action = kwargs.pop('form_action', None)
-        self.form_actions_attr = kwargs.copy()
-        kwargs = {}
+        self.form_action = kwargs.pop('form_action', None)
         super().__init__(*args, **kwargs)
-
-        if form_action:
-            self.form_action = form_action
         self.attrs = {'data-async': ''}
-        self.render_hidden_fields = True
 
     def append_form_actions(self):
-        self.layout.append(DefaultFormActions(**self.form_actions_attr))
+        self.layout.append(DefaultFormActions())
+        # DefaultFormActions(**self.form_actions_attr)
 
     def add_form_actions_only(self):
         self.form_tag = False
-        self.add_layout(Layout(DefaultFormActions(**self.form_actions_attr)))
+        self.add_layout(Layout(DefaultFormActions()))
 
 
 class SimpleForm(Form):
     def __init__(self, *args, **kwargs):
+        self.helper = None
         init_helper = kwargs.pop('init_helper', True)
         self.object = kwargs.pop('instance', None)
         self.model_data = kwargs.pop('model_data', None)
@@ -106,7 +104,7 @@ class SimpleForm(Form):
     def init_helper(self, init_chosen=True, form_actions=True):
         if init_chosen:
             init_chosen_widget(self.fields.items())
-        self.helper = DefaultFormHelper(self, **self.helper_kwargs)
+        self.helper = DefaultFormHelper(self)
         if form_actions:
             self.helper.append_form_actions()
 
@@ -123,10 +121,10 @@ class GenericModelForm(ModelForm):
         self.helper = None
         self.form_cfg = kwargs.pop('form_cfg', {})
         self.user = kwargs.pop('user', None)
-        self.helper_kwargs = get_form_helper_attr(kwargs)
+        self.opts = get_form_helper_attr(kwargs)
+        self.helper_kwargs = self.opts  # get_form_helper_attr(kwargs)
         init_helper = kwargs.pop('init_helper', True)
         # modal_add_fields = kwargs.pop('modal_add_fields', True)
-        # kwargs.setdefault('label_suffix', 'yoyooooooooo')
         super().__init__(*args, **kwargs)
 
         if 'related_obj_ids' in self.form_cfg:
@@ -136,14 +134,9 @@ class GenericModelForm(ModelForm):
                 if field_name in self.fields:
                     self.fields[field_name].initial = value
                     del self.form_cfg['related_obj_ids'][key]
-        if self.form_cfg:
-            self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
-            self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
 
         if 'select_field' in kwargs.get('data', {}):
             self.fields[kwargs['data'].get('select_field')].initial = kwargs['data'].get('select_pk')
-
-        self._init_modal_add_fields()
 
         if init_helper:
             self.init_helper()
@@ -153,17 +146,23 @@ class GenericModelForm(ModelForm):
     #     print('------------------------------------------- init form helper ---------------------------------------')
     #     return DefaultFormHelper(self, **self.helper_kwargs)
 
-    def init_helper(self, form_actions=True):
-        # self._init_modal_fields()
-        # if hasattr(self.Meta, 'modal_fields'):
-        #     self._init_modal_fields()
+    def init_helper(self, form_actions=True, render_hidden_fields=True):
+        self._init_modal_add_fields()
+
+        if self.form_cfg:
+            self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
+            self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
 
         if self.helper_kwargs.pop('init_chosen_widget', True):
             init_chosen_widget(self.fields.items())
         init_dateinput(self.fields.items())
 
-        self.helper = DefaultFormHelper(self, **self.helper_kwargs)
-        # self.helper.render_hidden_fields = True
+        # self.fields['name'].label_suffix = 'yoyoyoooooooooo'
+        # print(self.fields['name'].label_tag())
+        self.fields['testfield'] = CharField(widget=HiddenInput(), required=False, initial='abcdtest')
+
+        self.helper = DefaultFormHelper(self)
+        self.helper.render_hidden_fields = render_hidden_fields
 
         if self.form_cfg:
             self.helper.layout.append(
@@ -174,11 +173,12 @@ class GenericModelForm(ModelForm):
 
     def _init_modal_add_fields(self):
         for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
-            try:
-                url = reverse(url_name)
-            except NoReverseMatch:
-                url = reverse(url_name, args=[self.instance.pk])
-            self.fields[field_name].help_text = '<b>test-{}</b>'.format(url)
+            # try:
+            #     url = reverse(url_name)
+            # except NoReverseMatch:
+            #     url = reverse(url_name, args=[self.instance.pk])
+            # self.fields[field_name].label_suffix = ""
+            url = reverse(url_name)
             self.fields[field_name].label += """
                 <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
                     <img src="{1}" width="15" height="15" alt="{2}"/>

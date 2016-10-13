@@ -376,7 +376,7 @@ class FormPlugin(ModalPlugin):
         return self.extra.get_form_kwargs(kwargs)
 
     def form_valid(self, form):
-        self.form_cfg = form.form_cfg
+        self.form_cfg = form.get_form_cfg
         success_message = self.view.success_message.format(**form.cleaned_data)
         if success_message:
             messages.success(self.request, success_message)
@@ -392,7 +392,7 @@ class FormPlugin(ModalPlugin):
             return self.super.form_valid(form) or self.super.formset_valid(form)
 
     def form_invalid(self, form):
-        self.form_cfg = form.form_cfg
+        self.form_cfg = form.get_form_cfg
         return self.super.form_invalid(form) or self.super.formset_invalid(form)
 
     def get_context_data(self, context):
@@ -403,12 +403,13 @@ class FormPlugin(ModalPlugin):
             context['page_size'] = getattr(self.view.get_form_class().Meta, 'form_size', 'sm')
         if settings.FORM_GENERIC_HEADLINE:
             if hasattr(self.view.form_class.Meta, 'headline'):
-                if 'formset' in getattr(self.view, 'form_controls', []):
-                    object_exists = True if len(self.view.object_list) > 0 else False
-                else:
-                    object_exists = True if getattr(self.view.object, 'pk') else False
-                # instance_obj = getattr(self.view, 'object', getattr(self.view, 'object_list', None))
-                # if instance_obj and instance_obj.pk:
+                object_exists = False
+                if 'formset' in getattr(self.view, 'form_controls', []) and \
+                        getattr(self.view, 'object_list') and \
+                        len(self.view.object_list) > 0:
+                    object_exists = True
+                elif getattr(self.view, 'object') and getattr(self.view.object, 'pk'):
+                    object_exists = True
                 if object_exists:
                     prefix = settings.UPDATE_FORM_HEADLINE_PREFIX
                 else:
@@ -420,7 +421,9 @@ class FormPlugin(ModalPlugin):
 
     def get_success_url(self):
         print('- ' * 30 + 'form plugin: get_success_url' + ' -' * 30)
-        print('>>>', self.form_cfg)
+        print('>>>', self.get_form_cfg)
+        if 'success_url' in self.get_form_cfg:
+            return self.get_form_cfg.success_url
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
         if getattr(self.view, 'success_url', None):

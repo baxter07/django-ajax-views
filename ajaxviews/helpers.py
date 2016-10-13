@@ -8,7 +8,8 @@ try:
 except ImportError:
     pass
 
-from django.forms import Form, Select, SelectMultiple, DateInput, DateTimeInput
+from django.forms import Form, Select, SelectMultiple, DateInput
+from django.forms.widgets import DateTimeBaseInput
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import FieldWithButtons, StrictButton
@@ -71,8 +72,8 @@ def remove_obj_perm(user, obj):
 
 
 class DateWidget(DateInput):
-    def render(self, name, value, attrs=None):
-        html_input = super().render(name, value, attrs)
+    def render(self, *args, **kwargs):
+        html_input = super().render(*args, **kwargs)
         return """<div class="input-group date">{0}
                     <div class="input-group-addon">
                       <span class="glyphicon glyphicon-calendar"></span>
@@ -83,19 +84,19 @@ class DateWidget(DateInput):
 
 def init_dateinput(field_items):
     for name, field in field_items:
-        if isinstance(field.widget, DateInput) or isinstance(field.widget, DateTimeInput):
+        if isinstance(field.widget, DateTimeBaseInput):
             field.widget = DateWidget()
             field.widget.attrs['class'] = 'dateinput'
             # field.widget.attrs['data-date-format'] = 'yyyy-mm-dd'
 
 
-def init_chosen_widget(field_items):
+def init_chosen_widget(field_items, disable_help_text=True):
     for name, field in field_items:
         if isinstance(field.widget, SelectMultiple) or isinstance(field.widget, Select):
             field.widget.attrs['class'] = 'chosen-widget'
             # field.widget.attrs['style'] = 'width: 100%;'
-            # TODO provide option to use help_text, this disables it for all SelectMultiple and Select fields
-            field.help_text = None
+            if disable_help_text:
+                field.help_text = None
 
 
 def construct_autocomplete_searchform(autocomplete_classname):
