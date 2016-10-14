@@ -243,8 +243,11 @@ class DetailPlugin(ModalPlugin):
         return context
 
 
-# noinspection PyUnresolvedReferences
+# noinspection PyUnresolvedReferences, PyUnusedLocal
 class CreateForm:
+    def post(self, request, *args, **kwargs):
+        self.view.object = None
+
     def form_valid(self, form):
         if getattr(form.Meta, 'assign_perm', False):
             instance = form.save()
@@ -258,23 +261,26 @@ class CreateForm:
     #             context['headline'] = self.view.form_class.headline
     #     return context
 
+    def get_success_url(self):
+        return getattr(self.view.form_class.Meta, 'success_url', None)
 
-# noinspection PyUnresolvedReferences
+
+# noinspection PyUnresolvedReferences, PyUnusedLocal, PyBroadException
 class UpdateForm:
+    def post(self, request, *args, **kwargs):
+        self.view.object = self.view.get_object()
+
     def get_form_kwargs(self, kwargs):
         kwargs['save_button_name'] = getattr(self.view, 'save_button_name', 'Update')
-        try:
+        kwargs['delete_url'] = getattr(self.view, 'delete_url', None)
+        if not kwargs['delete_url'] and getattr(self.view, 'auto_delete_url', settings.FORM_NAMING_CONVENTION):
             url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
             kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
-            if not isinstance(self.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
+            if not isinstance(self.view.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
                 kwargs.pop('delete_url', None)
-        except Exception:
-            pass
+            # if isinstance(self.object, Group) or self.view.request.user.has_delete_perm(self.view.model):
+            #     kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
         return kwargs
-
-    # def get_context_data(self, context):
-    #
-    #     return context
 
 
 # noinspection PyUnresolvedReferences
@@ -345,6 +351,14 @@ class FormPlugin(ModalPlugin):
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
         self.json_cfg['init_view_type'] = 'formView'
+
+    def post(self, request, *args, **kwargs):
+        self.extra.post(request, *args, **kwargs)
+        form = self.view.get_form()
+        if form.is_valid():
+            return self.super.form_valid(form)
+        else:
+            return self.super.form_invalid(form)
 
     # noinspection PyBroadException
     def get_form_kwargs(self, kwargs):
@@ -421,15 +435,18 @@ class FormPlugin(ModalPlugin):
 
     def get_success_url(self):
         print('- ' * 30 + 'form plugin: get_success_url' + ' -' * 30)
-        print('>>>', self.get_form_cfg)
-        if 'success_url' in self.get_form_cfg:
-            return self.get_form_cfg.success_url
+        print('>>>', self.form_cfg)
+        success_url = self.extra.get_success_url()
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
-        if getattr(self.view, 'success_url', None):
-            success_url = force_text(self.view.success_url)
-        else:
-            success_url = self.super.get_success_url()
+        elif 'success_url' in self.form_cfg:
+            return self.form_cfg['success_url']
+        elif success_url:
+            return success_url
+        # if getattr(self.view, 'success_url', None):
+        #     success_url = force_text(self.view.success_url)
+        # else:
+        success_url = self.super.get_success_url()
         hashtag = self.request.GET.get('hashtag', None)
         if hashtag:
             success_url += '#' + hashtag
@@ -442,8 +459,11 @@ class FormPlugin(ModalPlugin):
         return super().render_to_response(context, **response_kwargs)
 
 
-class DeletePlugin:
-    pass
+class DeletePlugin(BasePlugin):
+    def get_success_url(self):
+        if 'success_url' in self.request.POST:
+            return self.request.POST.get('success_url')
+        return self.super.get_success_url()
 
 
 # class ViewAdapter:

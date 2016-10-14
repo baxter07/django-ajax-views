@@ -32,6 +32,22 @@ class LazySettings:
         return getattr(django_settings, 'GENERIC_FORM_BASE_TEMPLATE', None)
 
     @property
+    def FORM_NAMING_CONVENTION(self):
+        return getattr(django_settings, 'FORM_NAMING_CONVENTION', False)
+
+    # @property
+    # def AUTO_FORM_HEADLINE(self):
+    #     return getattr(django_settings, 'AUTO_FORM_HEADLINE', False)
+
+    # @property
+    # def AUTO_SUCCESS_URL(self):
+    #     return getattr(django_settings, 'AUTO_SUCCESS_URL', False)
+
+    # @property
+    # def AUTO_DELETE_URL(self):
+    #     return getattr(django_settings, 'AUTO_DELETE_URL', False)
+
+    @property
     def FORM_RELATED_OBJECT_IDS(self):
         return getattr(django_settings, 'FORM_RELATED_OBJECT_IDS', False)
 

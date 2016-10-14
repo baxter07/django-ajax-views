@@ -24,7 +24,6 @@ class DefaultFormActions(LayoutObject):
 
     # noinspection PyUnusedLocal
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
-        self.opts = form.opts
         # preview_back_class = ''
         # cancel_button_name = 'Cancel'
         # if self.back_button:
@@ -40,8 +39,8 @@ class DefaultFormActions(LayoutObject):
         # btn_group = """<a role="button" class="btn btn-default cancel-btn{0}" {1}>
         #                  {2}
         #                </a>""".format(preview_back_class, cancel_attr, cancel_button_name)
-        success_url = self.opts.get('success_url', '')
-        delete_url = self.opts.get('delete_url', '')
+        success_url = form.opts.get('success_url', '')
+        delete_url = form.opts.get('delete_url', '')
         if delete_url:
             if success_url and success_url != '':
                 delete_url += '&' if '?' in delete_url else '?'
@@ -54,13 +53,13 @@ class DefaultFormActions(LayoutObject):
         btn_group = template.render({
             'success_url': success_url,
             'delete_url': delete_url,
-            'modal_form': self.opts.get('modal_form', False),
-            'form_preview': self.opts.get('back_button', False),
-            'delete_confirmation': self.opts.get('delete_confirmation', False),
+            'modal_form': form.opts.get('modal_form', False),
+            'form_preview': form.opts.get('back_button', False),
+            'delete_confirmation': form.opts.get('delete_confirmation', False),
         })
 
         layout_object = FormActions(
-            Submit('save', self.opts.get('save_button_name', 'Save')),
+            Submit('save', form.opts.get('save_button_name', 'Save')),
             HTML(btn_group),
             style='margin-bottom: 0;'
         )
@@ -157,10 +156,6 @@ class GenericModelForm(ModelForm):
             init_chosen_widget(self.fields.items())
         init_dateinput(self.fields.items())
 
-        # self.fields['name'].label_suffix = 'yoyoyoooooooooo'
-        # print(self.fields['name'].label_tag())
-        self.fields['testfield'] = CharField(widget=HiddenInput(), required=False, initial='abcdtest')
-
         self.helper = DefaultFormHelper(self)
         self.helper.render_hidden_fields = render_hidden_fields
 
@@ -177,7 +172,7 @@ class GenericModelForm(ModelForm):
             #     url = reverse(url_name)
             # except NoReverseMatch:
             #     url = reverse(url_name, args=[self.instance.pk])
-            # self.fields[field_name].label_suffix = ""
+            # self.fields[field_name].label_suffix = ""  # suffix not supported by django-crispy-forms
             url = reverse(url_name)
             self.fields[field_name].label += """
                 <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
