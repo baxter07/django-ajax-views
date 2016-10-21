@@ -9,55 +9,30 @@ from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import LayoutObject, Layout, Submit, HTML
 from crispy_forms.utils import render_crispy_form, TEMPLATE_PACK
 from django.template.loader import get_template
+from django.utils.encoding import force_text
 
-from .helpers import classproperty, init_chosen_widget, init_dateinput
+from .helpers import init_chosen_widget, init_dateinput
 
 
 class DefaultFormActions(LayoutObject):
-    # def __init__(self, **kwargs):
-    #     self.opts = kwargs.copy()
-        # self.save_button_name = kwargs.pop('save_button_name', 'Save')
-        # self.success_url = kwargs.pop('success_url', '#')
-        # self.delete_url = kwargs.pop('delete_url', None)
-        # self.modal_form = kwargs.pop('modal_form', False)
-        # self.delete_confirmation = kwargs.pop('delete_confirmation', False)
-
-    # noinspection PyUnusedLocal
+    # noinspection PyUnusedLocal, PyMethodMayBeStatic
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
-        # preview_back_class = ''
-        # cancel_button_name = 'Cancel'
-        # if self.back_button:
-        #     preview_back_class = ' preview-back'
-        #     cancel_button_name = 'Back'
-        #
-        # cancel_attr = 'href="{0}"'.format(self.success_url)
-        #
-        # if not self.back_button and self.modal_form:
-        #     cancel_button_name = 'Close'
-        #     cancel_attr = 'data-dismiss="modal"'
-        #
-        # btn_group = """<a role="button" class="btn btn-default cancel-btn{0}" {1}>
-        #                  {2}
-        #                </a>""".format(preview_back_class, cancel_attr, cancel_button_name)
         success_url = form.opts.get('success_url', '')
+        # custom_success_url = form.opts.get('custom_success_url', '')
+        # add custom url to form_cfg
         delete_url = form.opts.get('delete_url', '')
         if delete_url:
-            if success_url and success_url != '':
-                delete_url += '&' if '?' in delete_url else '?'
-                delete_url += 'success_url=' + success_url
-            # btn_group += """<a role="button" class="btn btn-danger pull-right" data-toggle="confirmation" href="{0}">
-            #                   Delete
-            #                 </a>""".format(self.delete_url)
-
+            delete_url += '&' if '?' in delete_url else '?'
+            delete_url += 'success_url=' + force_text(getattr(form.Meta, 'success_url', success_url))
         template = get_template('ajaxviews/_form_controls.html')
         btn_group = template.render({
-            'success_url': success_url,
             'delete_url': delete_url,
+            'success_url': force_text(success_url),
             'modal_form': form.opts.get('modal_form', False),
             'form_preview': form.opts.get('back_button', False),
             'delete_confirmation': form.opts.get('delete_confirmation', False),
+            'form_cfg': json.dumps(form.form_cfg) if form.form_cfg else None,
         })
-
         layout_object = FormActions(
             Submit('save', form.opts.get('save_button_name', 'Save')),
             HTML(btn_group),
@@ -68,13 +43,11 @@ class DefaultFormActions(LayoutObject):
 
 class DefaultFormHelper(FormHelper):
     def __init__(self, *args, **kwargs):
-        self.form_action = kwargs.pop('form_action', None)
         super().__init__(*args, **kwargs)
         self.attrs = {'data-async': ''}
 
     def append_form_actions(self):
         self.layout.append(DefaultFormActions())
-        # DefaultFormActions(**self.form_actions_attr)
 
     def add_form_actions_only(self):
         self.form_tag = False
@@ -110,29 +83,28 @@ class SimpleForm(Form):
     def append_form_actions(self):
         self.helper.append_form_actions()
 
-    @classproperty
-    def headline(self):
-        return getattr(self.Meta, 'headline', getattr(self.Meta, 'headline_full', ''))
+    # @classproperty
+    # def headline(self):
+    #     return getattr(self.Meta, 'headline', getattr(self.Meta, 'headline_full', ''))
 
 
 class GenericModelForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.helper = None
+        self.json_cache = kwargs.pop('json_cache', {})
         self.form_cfg = kwargs.pop('form_cfg', {})
         self.user = kwargs.pop('user', None)
         self.opts = get_form_helper_attr(kwargs)
-        self.helper_kwargs = self.opts  # get_form_helper_attr(kwargs)
+        # self.helper_kwargs = self.opts  # get_form_helper_attr(kwargs)
         init_helper = kwargs.pop('init_helper', True)
         # modal_add_fields = kwargs.pop('modal_add_fields', True)
         super().__init__(*args, **kwargs)
 
-        if 'related_obj_ids' in self.form_cfg:
-            # for key, value in list(self.form_cfg['related_obj_ids'].items()):
-            for key, value in self.form_cfg['related_obj_ids'].items():
-                field_name = key.replace('_id', '')
-                if field_name in self.fields:
-                    self.fields[field_name].initial = value
-                    del self.form_cfg['related_obj_ids'][key]
+        for key, value in self.form_cfg.get('related_obj_ids', {}).items():
+            field_name = key.replace('_id', '')
+            if field_name in self.fields:
+                self.fields[field_name].initial = value
+                del self.form_cfg['related_obj_ids'][key]
 
         if 'select_field' in kwargs.get('data', {}):
             self.fields[kwargs['data'].get('select_field')].initial = kwargs['data'].get('select_pk')
@@ -142,45 +114,46 @@ class GenericModelForm(ModelForm):
 
     # @property
     # def helper(self):
-    #     print('------------------------------------------- init form helper ---------------------------------------')
     #     return DefaultFormHelper(self, **self.helper_kwargs)
 
     def init_helper(self, form_actions=True, render_hidden_fields=True):
         self._init_modal_add_fields()
 
-        if self.form_cfg:
-            self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
-            self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
+        # if self.form_cfg:
+        #     self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
+        #     self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
 
-        if self.helper_kwargs.pop('init_chosen_widget', True):
+        if self.opts.pop('init_chosen_widget', True):
             init_chosen_widget(self.fields.items())
         init_dateinput(self.fields.items())
 
         self.helper = DefaultFormHelper(self)
+        self.helper.form_action = self.opts.get('form_action', None)
         self.helper.render_hidden_fields = render_hidden_fields
 
-        if self.form_cfg:
-            self.helper.layout.append(
-                '<input name="form_cfg" value="{}" type="hidden">'.format(json.dumps(self.form_cfg))
-            )
+        # if self.form_cfg:
+        #     self.helper.layout.append(
+        #         '<input name="form_cfg" value="{}" type="hidden">'.format(json.dumps(self.form_cfg))
+        #     )
         if form_actions:
             self.append_form_actions()
 
     def _init_modal_add_fields(self):
         for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
-            # try:
-            #     url = reverse(url_name)
-            # except NoReverseMatch:
-            #     url = reverse(url_name, args=[self.instance.pk])
+            try:
+                url = reverse(url_name)
+            except NoReverseMatch:
+                url = reverse(url_name, args=[self.instance.pk])
             # self.fields[field_name].label_suffix = ""  # suffix not supported by django-crispy-forms
-            url = reverse(url_name)
+            # url = reverse(url_name) + '?select_field_name=' + field_name
+            url += '?select_field_name=' + field_name
             self.fields[field_name].label += """
                 <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
                     <img src="{1}" width="15" height="15" alt="{2}"/>
                 </a>""".format(url, static('admin/img/icon-addlink.svg'), 'Add')
 
-    def custom_success_url(self, url):
-        self.helper_kwargs['success_url'] = url
+    def set_success_url(self, url):
+        self.opts['success_url'] = url
         self.form_cfg['success_url'] = url
         # self.fields['success_url'] = CharField(widget=HiddenInput(), required=False, initial=url)
 
@@ -193,18 +166,18 @@ class GenericModelForm(ModelForm):
 
     def render_form_actions(self):
         form = Form()
-        form.helper = DefaultFormHelper(**self.helper_kwargs.copy())
+        form.helper = DefaultFormHelper(self)
         form.helper.add_form_actions_only()
         return render_crispy_form(form)
 
     @property
-    def get_form_cfg(self):
+    def cleaned_form_cfg(self):
         if 'form_cfg' in self.cleaned_data:
             return json.loads(self.cleaned_data['form_cfg'])
         return {}
 
     def get_related_obj(self, model, key=None):
-        related_obj_dict = self.get_form_cfg.get('related_obj_ids', None)
+        related_obj_dict = self.cleaned_form_cfg.get('related_obj_ids', None)
         if not related_obj_dict:
             return None
         if key:
@@ -213,22 +186,33 @@ class GenericModelForm(ModelForm):
             related_obj_id = list(related_obj_dict.values())[0]
         return model.objects.get(pk=int(related_obj_id))
 
-    @classproperty
-    def headline(self):
-        return getattr(self.Meta, 'headline', getattr(self.Meta, 'headline_full', ''))
+    def save(self, commit=True):
+        instance = super().save(commit)
+        if 'select_field' in self.cleaned_form_cfg:
+            if 'select_choice' in self.json_cache:
+                self.json_cache['select_choice'][self.form_cfg['select_field']] = instance.pk
+            else:
+                self.json_cache['select_choice'] = {self.form_cfg['select_field']: instance.pk}
+        print(self.cleaned_form_cfg)
+        return instance
 
 
 def get_form_helper_attr(kwargs):
     return {
-        'save_button_name': kwargs.pop('save_button_name', 'Save'),
         'success_url': kwargs.pop('success_url', None),
-        'delete_url': kwargs.pop('delete_url', None),
         'form_action': kwargs.pop('form_action', None),
+        'delete_url': kwargs.pop('delete_url', None),
         'modal_form': kwargs.pop('modal_form', False),
         'back_button': kwargs.pop('back_button', False),
-        'delete_confirmation': kwargs.pop('delete_confirmation', False),
+        'save_button_name': kwargs.pop('save_button_name', 'Save'),
         'init_chosen_widget': kwargs.pop('init_chosen_widget', True),
+        'delete_confirmation': kwargs.pop('delete_confirmation', False),
     }
+
+
+# @classproperty
+# def headline(self):
+#     return getattr(self.Meta, 'headline', getattr(self.Meta, 'headline_full', ''))
 
 # if hasattr(self.Meta, 'right_column'):
 #     left_fields, right_fields = [], []
@@ -285,3 +269,22 @@ def get_form_helper_attr(kwargs):
 #         amount, currency = self.fields['amount'].fields
 #         self.fields['amount'].widget = CustomMoneyWidget(
 #             amount_widget=amount.widget, currency_widget=currency.widget)
+
+# preview_back_class = ''
+# cancel_button_name = 'Cancel'
+# if self.back_button:
+#     preview_back_class = ' preview-back'
+#     cancel_button_name = 'Back'
+#
+# cancel_attr = 'href="{0}"'.format(self.success_url)
+#
+# if not self.back_button and self.modal_form:
+#     cancel_button_name = 'Close'
+#     cancel_attr = 'data-dismiss="modal"'
+#
+# btn_group = """<a role="button" class="btn btn-default cancel-btn{0}" {1}>
+#                  {2}
+#                </a>""".format(preview_back_class, cancel_attr, cancel_button_name)
+# btn_group += """<a role="button" class="btn btn-danger pull-right" data-toggle="confirmation" href="{0}">
+#                   Delete
+#                 </a>""".format(self.delete_url)

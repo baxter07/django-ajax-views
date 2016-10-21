@@ -5,8 +5,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
-from .plugins import BasePlugin, ListPlugin, DetailPlugin, FormPlugin
 from .forms import DefaultFormHelper
+from .plugins import PluginAdapter, AjaxPlugin, ListPlugin, DetailPlugin, FormPlugin, DeletePlugin, FormSetPlugin, \
+    CreateForm, UpdateForm, PreviewForm
 
 
 class ModelFormSet(BaseModelFormSet):
@@ -32,17 +33,59 @@ else:
     ModelFormSetView.formset_class = ModelFormSet
 
 
+class ViewFactory:
+    _plugins = {
+        'base': AjaxPlugin,
+        'list': ListPlugin,
+        'detail': DetailPlugin,
+        'form': FormPlugin,
+        'formset': FormSetPlugin,
+        'delete': DeletePlugin,
+    }
+    _extras = {
+        'create': CreateForm,
+        'update': UpdateForm,
+        'preview': PreviewForm,
+    }
+
+    def __init__(self, *args):
+        self.name = 'base'
+        self.extra_names = []
+        if len(args) == 1:
+            if args[0] not in self._plugins:
+                raise LookupError('Plugin {} not supported!'.format(args[0]))
+            self.name = args[0]
+        elif len(args) > 1:
+            for extra in args[1:]:
+                if extra not in self._extras:
+                    raise LookupError('Extension plugin {} not supported!'.format(extra))
+            self.name = args[0]
+            self.extra_names = args[1:]
+
+    def create(self, view, super_call, **kwargs):
+        instance = self._plugins[self.name](view, **kwargs)
+        instance.super = super_call
+        control_list = []
+        for name in self.extra_names:
+            extra = self._extras[name]()
+            extra.plugin = instance
+            extra.view = view
+            extra.super = super_call
+            control_list.append(extra)
+        instance.extra = PluginAdapter(control_list)
+        return instance
+
+
 class GenericBaseView:
     ajax_view = False
 
     def __init__(self, *args, **kwargs):
         self.json_cfg = {}
-        self.ajax_view = kwargs.pop('ajax_view', False) or getattr(self, 'ajax_view', False)
+        self.ajax_view = kwargs.pop('ajax_view', self.ajax_view)
         if hasattr(self, 'plugin'):
-            self._plugin = self.plugin(self, **kwargs)
+            self._plugin = self.plugin.create(self, super(), **kwargs)
         else:
-            self._plugin = BasePlugin(self, **kwargs)
-        self._plugin.super = super()
+            self._plugin = ViewFactory().create(self, super(), **kwargs)
         if self._plugin.view_kwargs:
             kwargs.update(self._plugin.view_kwargs)
         super().__init__(*args, **kwargs)
@@ -64,7 +107,8 @@ class AjaxListView(GenericBaseView, ListView):
     :ivar int paginate_by: number of results in list by which to paginate.
     :ivar int filter_search_input_by: number of results in list view filters by which to display a search input.
     """
-    plugin = ListPlugin
+    plugin = ViewFactory('list')
+    # plugin = ListPlugin
 
     def get(self, request, *args, **kwargs):
         response = self._plugin.get(request, *args, **kwargs)
@@ -76,7 +120,8 @@ class AjaxListView(GenericBaseView, ListView):
 
 # noinspection PyUnresolvedReferences
 class AjaxDetailView(GenericBaseView, DetailView):
-    plugin = DetailPlugin
+    plugin = ViewFactory('detail')
+    # plugin = DetailPlugin
 
     def get_queryset(self, **kwargs):
         return self._plugin.get_queryset(**kwargs)
@@ -86,7 +131,7 @@ class AjaxDetailView(GenericBaseView, DetailView):
 class BaseFormView(GenericBaseView):
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''
-    plugin = FormPlugin
+    # plugin = FormPlugin
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -104,24 +149,18 @@ class BaseFormView(GenericBaseView):
 
 
 # noinspection PyUnresolvedReferences
-class FormSetMixin:
-    # def get(self, request, *args, **kwargs):
-    #     formset = self.construct_formset()
-    #     return self.render_to_response(
-    #         self.get_context_data(formset=formset),
-    #         context=RequestContext(request),
-    #     )
-    #
-    # def formset_invalid(self, formset):
-    #     return self.render_to_response(
-    #         self.get_context_data(formset=formset),
-    #         context=RequestContext(request),
-    #     )
+class BaseFormSetView(GenericBaseView):
+    template_name = 'ajaxviews/generic_form.html'
+    success_message = ''
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def get_extra_form_kwargs(self):
         kwargs = super().get_extra_form_kwargs()
         kwargs.update(self.get_form_kwargs())
-        return kwargs
+        return self._plugin.get_form_kwargs(kwargs)
 
     def get_formset(self):
         formset = super().get_formset()
@@ -129,51 +168,87 @@ class FormSetMixin:
         formset.helper.form_tag = False
         return formset
 
+    def formset_valid(self, formset):
+        self._plugin.form_valid(formset)
+        return super().formset_valid(formset)
+
+    # def formset_invalid(self, formset):
+    #     return self.render_to_response(
+    #         self.get_context_data(formset=formset),
+    #         context=RequestContext(request),
+    #     )
+
+    def get_success_url(self):
+        return self._plugin.get_success_url()
+
+    # def get(self, request, *args, **kwargs):
+    #     formset = self.construct_formset()
+    #     return self.render_to_response(
+    #         self.get_context_data(formset=formset),
+    #         context=RequestContext(request),
+    #     )
+
     # def render_to_response(self, context, **kwargs):
     #     pass
 
 
 class CreateFormView(BaseFormView, CreateView):
-    form_controls = ['create']
+    plugin = ViewFactory('form', 'create')
+    # plugin = FormPlugin('create')
 
-    def __init__(self, **kwargs):
-        form_class = kwargs.get('form_class') or getattr(self, 'form_class', None)
-        if form_class and hasattr(form_class.Meta, 'success_url'):
-            kwargs['success_url'] = getattr(form_class.Meta, 'success_url', None)
-        super().__init__(**kwargs)
+    # def __init__(self, **kwargs):
+    #     form_class = kwargs.get('form_class') or getattr(self, 'form_class', None)
+    #     if form_class and hasattr(form_class.Meta, 'success_url'):
+    #         kwargs['success_url'] = getattr(form_class.Meta, 'success_url')
+    #     super().__init__(**kwargs)
 
 
 # noinspection PyUnresolvedReferences
-class CreateFormSetView(FormSetMixin, BaseFormView, ModelFormSetView):
-    form_controls = ['create', 'formset']
-
-    def formset_valid(self, formset):
-        self._plugin.form_valid(formset)
-        return super().formset_valid(formset)
+class CreateFormSetView(BaseFormSetView, ModelFormSetView):
+    plugin = ViewFactory('formset', 'create')
+    # plugin = FormPlugin('create', 'formset')
 
 
 class PreviewCreateView(BaseFormView, CreateView):
-    form_controls = ['create', 'preview']
+    plugin = ViewFactory('form', 'create', 'preview')
+    # plugin = FormPlugin('create', 'preview')
 
 
 class UpdateFormView(BaseFormView, UpdateView):
-    form_controls = ['update']
+    plugin = ViewFactory('form', 'update')
+    # plugin = FormPlugin('update')
 
 
-class UpdateFormSetView(BaseFormView, FormSetMixin, ModelFormSetView):
-    form_controls = ['update', 'formset']
+class UpdateFormSetView(BaseFormSetView, ModelFormSetView):
+    plugin = ViewFactory('formset', 'update')
+    # plugin = FormPlugin('update', 'formset')
 
 
 class PreviewUpdateView(BaseFormView, UpdateView):
-    form_controls = ['update', 'preview']
+    plugin = ViewFactory('form', 'update', 'preview')
+    # plugin = FormPlugin('update', 'preview')
 
 
-class DeleteFormView(BaseFormView, DeleteView):
-    pass
+# noinspection PyUnresolvedReferences
+class DeleteFormView(GenericBaseView, DeleteView):
+    plugin = ViewFactory('delete')
+    # plugin = DeletePlugin
+
+    def get(self, request, *args, **kwargs):
+        return self._plugin.get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self._plugin.post(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self._plugin.delete(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return self._plugin.get_success_url()
 
 
 class PreviewDeleteView(BaseFormView, DeleteView):
-    pass
+    plugin = ViewFactory('delete', 'preview')
 
 
 # deprecated #########

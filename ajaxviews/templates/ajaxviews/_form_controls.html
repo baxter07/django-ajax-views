@@ -10,3 +10,6 @@
    {% if delete_confirmation %}data-toggle="confirmation"{% endif %}
    href="{{ delete_url }}">Delete</a>
 {% endif %}
+{% if form_cfg %}
+<input name="form_cfg" value="{{ form_cfg }}" type="hidden">
+{% endif %}

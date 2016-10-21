@@ -16,8 +16,8 @@ class LazySettings:
         return getattr(django_settings, 'REQUIRE_MAIN_NAME', 'main')
 
     @property
-    def FORM_GENERIC_HEADLINE(self):
-        return getattr(django_settings, 'FORM_GENERIC_HEADLINE', True)
+    def AUTO_FORM_HEADLINE(self):
+        return getattr(django_settings, 'AUTO_FORM_HEADLINE', False)
 
     @property
     def CREATE_FORM_HEADLINE_PREFIX(self):
@@ -29,23 +29,15 @@ class LazySettings:
 
     @property
     def GENERIC_FORM_BASE_TEMPLATE(self):
-        return getattr(django_settings, 'GENERIC_FORM_BASE_TEMPLATE', None)
+        return getattr(django_settings, 'GENERIC_FORM_BASE_TEMPLATE', 'ajaxviews/generic_form.html')
 
     @property
-    def FORM_NAMING_CONVENTION(self):
-        return getattr(django_settings, 'FORM_NAMING_CONVENTION', False)
+    def AUTO_SUCCESS_URL(self):
+        return getattr(django_settings, 'AUTO_SUCCESS_URL', False)
 
-    # @property
-    # def AUTO_FORM_HEADLINE(self):
-    #     return getattr(django_settings, 'AUTO_FORM_HEADLINE', False)
-
-    # @property
-    # def AUTO_SUCCESS_URL(self):
-    #     return getattr(django_settings, 'AUTO_SUCCESS_URL', False)
-
-    # @property
-    # def AUTO_DELETE_URL(self):
-    #     return getattr(django_settings, 'AUTO_DELETE_URL', False)
+    @property
+    def AUTO_DELETE_URL(self):
+        return getattr(django_settings, 'AUTO_DELETE_URL', False)
 
     @property
     def FORM_RELATED_OBJECT_IDS(self):

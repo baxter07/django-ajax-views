@@ -59,6 +59,12 @@ define ->
 
         $(modalId).on 'hidden.bs.modal', (e) =>
           $(e.currentTarget).remove()
+          updateFormChoices = (form, choices) ->
+            for field, pk of choices
+              fieldNode = $(form).find("#id_#{field}")
+              $(fieldNode).append("""<option value="#{pk}"></option>""")
+              $(fieldNode).val(pk).trigger('chosen:updated')
+
           if @viewCache.modalNr
             $('body').addClass('modal-open')
 
@@ -69,10 +75,7 @@ define ->
               formNode = $(subModalId).find('form[data-async]')
 
               if $(formNode).length
-                for field, pk of @jsonCache.select_choice
-                  fieldNode = $(formNode).find("#id_#{field}")
-                  $(fieldNode).append("""<option value="#{pk}"></option>""")  # .trigger('chosen:updated')
-                  $(fieldNode).val(pk).trigger('chosen:updated')
+                updateFormChoices(formNode, @jsonCache.select_choice)
                 data = $(formNode).formSerialize() + '&form_data=true'
                 $.get $(formNode).attr('action'), data, (response) =>
                   @_manager.updateModal(subModalId, response)
@@ -81,15 +84,15 @@ define ->
                 $.get @viewCache.jsonCfg.full_url, {}, (response) =>
                   @_manager.updateModal(subModalId, response)
                   @viewCache._loadAjaxView()
-          else
-            if @jsonCache.reload_view
-              @viewCache.jsonCache[key] = value for key, value of @jsonCache
-              console.log('jsonCache ->', @jsonCache) if @jsonCache and @_manager.cfg.debug
+          else if @jsonCache.reload_view
+            @viewCache.jsonCache[key] = value for key, value of @jsonCache
+            console.log('jsonCache ->', @jsonCache) if @jsonCache and @_manager.cfg.debug
 
-              if @jsonCache.ajax_load
-                @viewCache.onAjaxLoad() if @viewCache.onAjaxLoad
-              else
-                @viewCache._initView(null, null, null, null)
+            updateFormChoices('form[data-async]', @jsonCache.select_choice)
+            if @jsonCache.ajax_load
+              @viewCache.onAjaxLoad() if @viewCache.onAjaxLoad
+            else
+              @viewCache._initView(null, null, null, null)
 
 #        @Q('.preview-back').click (e) =>
 #          e.preventDefault()

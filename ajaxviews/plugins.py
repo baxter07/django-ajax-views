@@ -6,17 +6,44 @@ from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response
 from django.db.models import Min, Max
-from django.utils.html import force_text
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 
 from .conf import settings
-from .helpers import get_objects_for_model, construct_autocomplete_searchform, assign_obj_perm
+from .helpers import get_objects_for_model, construct_autocomplete_searchform, assign_obj_perm, remove_obj_perm
 
 
-class BasePlugin:
+class PluginAdapter:
+    def __init__(self, controls):
+        self.controls = controls
+
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            for control_ in self.controls:
+                attr_ = getattr(control_, name, None)
+                if hasattr(control_, name) and not callable(attr_):
+                    return attr_
+            return None
+
+        def wrapper(*args, **kwargs):
+            param = args[0] if not kwargs and len(args) == 1 else None
+            if not kwargs and len(args) == 1:
+                param = args[0]
+            for control in self.controls:
+                if hasattr(control, name):
+                    attr = getattr(control, name)
+                    if param:
+                        param = attr(param)
+                    else:
+                        attr(*args, **kwargs)
+            if param is not None:
+                return param
+        return wrapper
+
+
+class AjaxPlugin:
     # noinspection PyUnusedLocal
     def __init__(self, view, **kwargs):
         self.view = view
@@ -65,7 +92,7 @@ class BasePlugin:
         return context
 
 
-class ListPlugin(BasePlugin):
+class ListPlugin(AjaxPlugin):
     # def __init__(self, *args, **kwargs):
     #     super().__init__(*args, **kwargs)
     #     if not getattr(self.view, 'paginate_by', None):
@@ -191,7 +218,7 @@ class ListPlugin(BasePlugin):
         })
 
 
-class ModalPlugin(BasePlugin):
+class ModalPlugin(AjaxPlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.modal_id = None
@@ -243,100 +270,50 @@ class DetailPlugin(ModalPlugin):
         return context
 
 
-# noinspection PyUnresolvedReferences, PyUnusedLocal
-class CreateForm:
-    def post(self, request, *args, **kwargs):
-        self.view.object = None
-
-    def form_valid(self, form):
-        if getattr(form.Meta, 'assign_perm', False):
-            instance = form.save()
-            assign_obj_perm(self.view.request.user, instance)
-
-    # def get_context_data(self, context):
-    #     if settings.FORM_GENERIC_HEADLINE:
-    #         if hasattr(self.view.form_class.Meta, 'headline'):
-    #             context['headline'] = settings.CREATE_HEADLINE_PREFIX + ' ' + self.view.form_class.headline
-    #         elif hasattr(self.view.form_class.Meta, 'headline_full'):
-    #             context['headline'] = self.view.form_class.headline
-    #     return context
-
-    def get_success_url(self):
-        return getattr(self.view.form_class.Meta, 'success_url', None)
-
-
-# noinspection PyUnresolvedReferences, PyUnusedLocal, PyBroadException
-class UpdateForm:
-    def post(self, request, *args, **kwargs):
-        self.view.object = self.view.get_object()
-
-    def get_form_kwargs(self, kwargs):
-        kwargs['save_button_name'] = getattr(self.view, 'save_button_name', 'Update')
-        kwargs['delete_url'] = getattr(self.view, 'delete_url', None)
-        if not kwargs['delete_url'] and getattr(self.view, 'auto_delete_url', settings.FORM_NAMING_CONVENTION):
-            url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
-            kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
-            if not isinstance(self.view.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
-                kwargs.pop('delete_url', None)
-            # if isinstance(self.object, Group) or self.view.request.user.has_delete_perm(self.view.model):
-            #     kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
-        return kwargs
+# class FormControlAdapter:
+#     _form_controls = {
+#         'create': CreateForm,
+#         'update': UpdateForm,
+#         'preview': PreviewForm,
+#         'formset': FormSet,
+#     }
+#
+#     def __init__(self, *args):
+#         self._control_instances = []
+#         for control in args:
+#             control = self._form_controls[control]()
+#             self._control_instances.append(control)
+#
+#     def __get__(self, instance, owner):
+#         for control in self._control_instances:
+#             control.plugin = instance
+#             control.view = instance.view
+#         return self
+#
+#     def __getattr__(self, name):
+#         def wrapper(*args, **kwargs):
+#             param = args[0] if not kwargs and len(args) == 1 else None
+#             for control in self._control_instances:
+#                 if hasattr(control, name):
+#                     if param:
+#                         param = getattr(control, name)(param)
+#                     else:
+#                         param = getattr(control, name)(*args, **kwargs)
+#                         if param:
+#                             return param
+#             if param:
+#                 return param
+#         return wrapper
 
 
-# noinspection PyUnresolvedReferences
-class FormSet:
-    # noinspection PyUnusedLocal
-    def form_valid(self, formset):
-        # if create view
-        if getattr(self.view.form_class.Meta, 'assign_perm', False):
-            # This needs to be done also for updating formsets (remove/assign)
-            for obj in self.view.object_list:
-                assign_obj_perm(self.request.user, obj)
-
-
-class PreviewForm:
-    pass
-
-
-class FormControlAdapter:
-    _form_controls = {
-        'create': CreateForm,
-        'update': UpdateForm,
-        'preview': PreviewForm,
-        'formset': FormSet,
-    }
-    _control_instances = []
-
-    def __get__(self, instance, owner):
-        for control in getattr(instance.view, 'form_controls', []):
-            control = self._form_controls[control]()
-            control.plugin = instance
-            control.view = instance.view
-            self._control_instances.append(control)
-        return self
-
-    def __getattr__(self, name):
-        def wrapper(*args, **kwargs):
-            param = args[0] if not kwargs and len(args) == 1 else None
-            for control in self._control_instances:
-                if hasattr(control, name):
-                    if param:
-                        param = getattr(control, name)(param)
-                    else:
-                        getattr(control, name)(*args, **kwargs)
-            if param:
-                return param
-        return wrapper
-
-
-# noinspection PyUnresolvedReferences
-# noinspection PyCallingNonCallable
+# noinspection PyCallingNonCallable, PyUnresolvedReferences
 class FormPlugin(ModalPlugin):
-    extra = FormControlAdapter()
+    # extra = FormControlAdapter()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.form_cfg = {}
+        self.cleaned_form_cfg = {}
         form_class = kwargs.get('form_class') or getattr(self.view, 'form_class', None)
         if form_class:
             if 'model' not in kwargs and hasattr(form_class.Meta, 'model'):
@@ -347,6 +324,10 @@ class FormPlugin(ModalPlugin):
     @property
     def related_object_ids(self):
         return getattr(self.view, 'related_object_ids', getattr(settings, 'FORM_RELATED_OBJECT_IDS'))
+
+    @property
+    def form_meta(self):
+        return getattr(self.view.get_form_class(), 'Meta', None)
 
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
@@ -363,8 +344,11 @@ class FormPlugin(ModalPlugin):
     # noinspection PyBroadException
     def get_form_kwargs(self, kwargs):
         kwargs['user'] = self.request.user
-        if 'form_cfg' not in kwargs:
+        if 'form_cfg' in self.request.POST:
+            kwargs['form_cfg'] = json.loads(self.request.POST.get('form_cfg'))
+        else:
             kwargs['form_cfg'] = {}
+        kwargs['form_cfg']['__test__'] = 'yoooo'
         if self.related_object_ids:
             for key, value in self.view.kwargs.items():
                 if key.endswith('_id'):
@@ -372,25 +356,23 @@ class FormPlugin(ModalPlugin):
                         kwargs['form_cfg']['related_obj_ids'][key] = value
                     else:
                         kwargs['form_cfg']['related_obj_ids'] = {key: value}
-        kwargs['delete_confirmation'] = getattr(self.view, 'delete_confirmation', settings.FORM_DELETE_CONFIRMATION)
+        if 'select_field_name' in self.request.GET:
+            kwargs['form_cfg']['select_field_name'] = self.request.GET.get('select_field_name')
         if self.modal_id:
             kwargs.update({
                 'form_action': self.request.path + '?modal_id=' + self.modal_id,
-                'modal_form': True
+                'modal_form': True,
             })
         if self.request.is_ajax() and 'form_data' in self.request.GET:
             kwargs.update({
                 'data': self.request.GET,
                 'files': self.request.FILES,
             })
-        try:
-            kwargs['success_url'] = self.get_success_url()
-        except:
-            pass
+        kwargs['success_url'] = self.get_success_url()
         return self.extra.get_form_kwargs(kwargs)
 
     def form_valid(self, form):
-        self.form_cfg = form.get_form_cfg
+        self.cleaned_form_cfg = form.cleaned_form_cfg
         success_message = self.view.success_message.format(**form.cleaned_data)
         if success_message:
             messages.success(self.request, success_message)
@@ -406,42 +388,28 @@ class FormPlugin(ModalPlugin):
             return self.super.form_valid(form) or self.super.formset_valid(form)
 
     def form_invalid(self, form):
-        self.form_cfg = form.get_form_cfg
+        self.cleaned_form_cfg = form.cleaned_form_cfg
         return self.super.form_invalid(form) or self.super.formset_invalid(form)
 
     def get_context_data(self, context):
         context = super().get_context_data(context)
         context['generic_form_base_template'] = settings.GENERIC_FORM_BASE_TEMPLATE
-        context['disable_full_view'] = True
+        context['disable_full_view'] = getattr(self.view, 'disable_full_view', True)
         if hasattr(self.view, 'get_form_class'):
-            context['page_size'] = getattr(self.view.get_form_class().Meta, 'form_size', 'sm')
-        if settings.FORM_GENERIC_HEADLINE:
-            if hasattr(self.view.form_class.Meta, 'headline'):
-                object_exists = False
-                if 'formset' in getattr(self.view, 'form_controls', []) and \
-                        getattr(self.view, 'object_list') and \
-                        len(self.view.object_list) > 0:
-                    object_exists = True
-                elif getattr(self.view, 'object') and getattr(self.view.object, 'pk'):
-                    object_exists = True
-                if object_exists:
-                    prefix = settings.UPDATE_FORM_HEADLINE_PREFIX
-                else:
-                    prefix = settings.CREATE_FORM_HEADLINE_PREFIX
-                context['headline'] = prefix + ' ' + self.view.form_class.headline
-            elif hasattr(self.view.form_class.Meta, 'headline_full'):
-                context['headline'] = self.view.form_class.headline
+            context['page_size'] = getattr(self.form_meta, 'form_size', 'sm')
+        if settings.AUTO_FORM_HEADLINE:
+            full_headline = getattr(self.form_meta, 'headline_full', None)
+            headline = getattr(self.form_meta, 'headline', full_headline)
+            context['headline'] = self.extra._headline_prefix + ' ' + headline
         return self.extra.get_context_data(context)
 
     def get_success_url(self):
-        print('- ' * 30 + 'form plugin: get_success_url' + ' -' * 30)
-        print('>>>', self.form_cfg)
-        success_url = self.extra.get_success_url()
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
         elif 'success_url' in self.form_cfg:
             return self.form_cfg['success_url']
-        elif success_url:
+        success_url = self.extra._success_url
+        if success_url:
             return success_url
         # if getattr(self.view, 'success_url', None):
         #     success_url = force_text(self.view.success_url)
@@ -452,56 +420,106 @@ class FormPlugin(ModalPlugin):
             success_url += '#' + hashtag
         return success_url
 
-    def render_to_response(self, context, **response_kwargs):
+    def render_to_response(self, context, **kwargs):
         # ignore validation errors on GET requests
         if 'form_data' in self.request.GET:
             context['form'].errors.clear()
-        return super().render_to_response(context, **response_kwargs)
+        return super().render_to_response(context, **kwargs)
 
 
-class DeletePlugin(BasePlugin):
+# noinspection PyUnresolvedReferences, PyUnusedLocal
+class CreateForm:
+    @property
+    def _headline_prefix(self):
+        return getattr(self.view, 'headline_prefix', settings.CREATE_FORM_HEADLINE_PREFIX)
+
+    @property
+    def _success_url(self):
+        if self.view.success_url:
+            return self.view.success_url
+        return getattr(self.plugin.form_meta, 'success_url', '')
+
+    def post(self, request, *args, **kwargs):
+        self.view.object = None
+
+    def form_valid(self, form):
+        if getattr(form.Meta, 'assign_perm', False):
+            instance = form.save()
+            assign_obj_perm(self.view.request.user, instance)
+
+
+# noinspection PyUnresolvedReferences, PyUnusedLocal
+class UpdateForm:
+    @property
+    def _headline_prefix(self):
+        return getattr(self.view, 'headline_prefix', settings.UPDATE_FORM_HEADLINE_PREFIX)
+
+    def post(self, request, *args, **kwargs):
+        self.view.object = self.view.get_object()
+
+    def get_form_kwargs(self, kwargs):
+        kwargs['save_button_name'] = getattr(self.view, 'save_button_name', 'Update')
+        kwargs['delete_confirmation'] = getattr(self.view, 'delete_confirmation', settings.FORM_DELETE_CONFIRMATION)
+        kwargs['delete_url'] = getattr(self.view, 'delete_url', None)
+        if not kwargs['delete_url'] and getattr(self.view, 'auto_delete_url', settings.AUTO_DELETE_URL):
+            url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
+            kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
+            if not isinstance(self.view.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
+                kwargs.pop('delete_url', None)
+        return kwargs
+
+
+class FormSetPlugin(ModalPlugin):
+    pass
+    # def form_valid(self, formset):
+    #     # if create view
+    #     if getattr(self.view.form_class.Meta, 'assign_perm', False):
+    #         # This needs to be done also for updating formsets (remove/assign)
+    #         for obj in self.view.object_list:
+    #             assign_obj_perm(self.request.user, obj)
+
+
+class PreviewForm:
+    pass
+
+
+# noinspection PyUnresolvedReferences
+class DeletePlugin(AjaxPlugin):
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('delete_file', False):
+            instance = self.view.get_object()
+            if instance.file:
+                instance.file.delete(False)
+        return self.view.post(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if 'remove_obj_perm' in kwargs:
+            remove_obj_perm(self.request.user, self.view.get_object())
+        return self.super.post(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        response = self.super.delete(request, *args, **kwargs)
+        if request.is_ajax():
+            return JsonResponse({'success': True})
+        messages.success(request, 'Entry successfully deleted!')
+        return response
+
     def get_success_url(self):
-        if 'success_url' in self.request.POST:
-            return self.request.POST.get('success_url')
+        if 'success_url' in self.request.GET:
+            return self.request.GET.get('success_url')
+        try:
+            instance = self.get_object()
+            instance.pk = None
+            return instance.get_absolute_url()
+        except:
+            pass
         return self.super.get_success_url()
 
 
-# class ViewAdapter:
-#     def __init__(self, super_obj):
-#         self.super_call = super_obj
-#         self.plugins = []
-#
-#     def __getattr__(self, name):
-#         def wrapper(*args, **kwargs):
-#             for plugin in self.plugins:
-#                 if hasattr(plugin, name):
-#                     plugin.super_call = self.super_call
-#                     getattr(plugin, name)(*args, **kwargs)
-#         return wrapper
-
-# def __new__(cls, *args, **kwargs):
-#     instance = super().__new__(cls)
-#     for plugin in getattr(args[0], 'form_plugins'):
-#
-#         for name in plugin.__dict__:
-#             if name.startswith('__') or name.endswith('__') or \
-#                name.startswith('_') or name.endswith('_') or \
-#                not isinstance(plugin.__dict__[name], types.FunctionType):
-#                 continue
-#
-#             def decorator(func):
-#                 def wrapper(param):
-#                     print('wrapper >>>', param)
-#                     print('name:', name)
-#                     plugin._view = instance._view
-#                     print(getattr(plugin, name))
-#                     param = plugin.__dict__[name].__get__(plugin)(param)
-#                     print('return param:', param)
-#                     return func(param) if param else None
-#                 return wrapper
-#             print('>', name)
-#             if hasattr(instance, name):
-#                 setattr(instance, name, decorator(getattr(instance, name)))
-#             setattr(instance, name, decorator(None))
-#             # instance.__dict__[name] = decorator(None)
-#     return instance
+# def __getattr__(self, name):
+#     print('getattr >>>', name)
+#     if name != 'extra':
+#         try:
+#             return self.__dict__[name]
+#         except KeyError as e:
+#             raise AttributeError(e)
