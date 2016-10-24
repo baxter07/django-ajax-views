@@ -18,13 +18,13 @@ class DefaultFormActions(LayoutObject):
     # noinspection PyUnusedLocal, PyMethodMayBeStatic
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
         success_url = form.opts.get('success_url', '')
-        # custom_success_url = form.opts.get('custom_success_url', '')
-        # add custom url to form_cfg
         delete_url = form.opts.get('delete_url', '')
         if delete_url:
             delete_url += '&' if '?' in delete_url else '?'
-            delete_url += 'success_url=' + force_text(getattr(form.Meta, 'success_url', success_url))
-        template = get_template('ajaxviews/_form_controls.html')
+            delete_success_url = form.opts.get(
+                'delete_success_url', force_text(getattr(form.Meta, 'success_url', success_url)))
+            delete_url += 'success_url=' + delete_success_url
+        template = get_template(form.opts.get('form_actions_template', 'ajaxviews/_form_controls.html'))
         btn_group = template.render({
             'delete_url': delete_url,
             'success_url': force_text(success_url),
@@ -56,32 +56,63 @@ class DefaultFormHelper(FormHelper):
 
 class SimpleForm(Form):
     def __init__(self, *args, **kwargs):
-        self.helper = None
-        init_helper = kwargs.pop('init_helper', True)
+        self._helper_instance = None
+        # init_helper = kwargs.pop('init_helper', True)
+        self.form_cfg = kwargs.pop('form_cfg', {})
         self.object = kwargs.pop('instance', None)
         self.model_data = kwargs.pop('model_data', None)
         self.user = kwargs.pop('user', None)
-        self.helper_kwargs = get_form_helper_attr(kwargs)
-        success_message = kwargs.pop('success_message', None)
+        self.opts = get_form_helper_attr(kwargs)
+        success_message_ = kwargs.pop('success_message', None)
+        init_chosen_widget_ = kwargs.pop('init_chosen_widget', False)
+        init_date_widget_ = kwargs.pop('init_date_widget', False)
         kwargs.pop('related_obj_ids', None)
         super().__init__(*args, **kwargs)
 
-        if success_message:
-            self.fields['success_message'] = CharField(widget=HiddenInput(), required=False)
-            self.fields['success_message'].initial = success_message
-
-        if init_helper:
-            self.init_helper()
-
-    def init_helper(self, init_chosen=True, form_actions=True):
-        if init_chosen:
+        if init_chosen_widget_:
             init_chosen_widget(self.fields.items())
-        self.helper = DefaultFormHelper(self)
-        if form_actions:
-            self.helper.append_form_actions()
+        if init_date_widget_:
+            init_dateinput(self.fields.items())
+        if success_message_:
+            self.form_cfg['success_message'] = success_message_
+            # self.fields['success_message'] = CharField(widget=HiddenInput(), required=False)
+            # self.fields['success_message'].initial = success_message
 
-    def append_form_actions(self):
+        # if init_helper:
+        #     self.init_helper()
+
+    @property
+    def helper(self):
+        if self._helper_instance:
+            return self._helper_instance
+        if self.form_cfg:
+            self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
+            self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
+        helper = DefaultFormHelper(self)
+        helper.form_action = self.opts.get('form_action', None)
+        helper.render_hidden_fields = True
+        helper.append_form_actions()
+        self._helper_instance = helper
+        return helper
+
+    @property
+    def layout(self):
+        return self.helper.layout
+
+    @layout.setter
+    def layout(self, layout):
+        self.helper.add_layout(layout)
         self.helper.append_form_actions()
+
+    # def init_helper(self, init_chosen=True, form_actions=True):
+    #     if init_chosen:
+    #         init_chosen_widget(self.fields.items())
+    #     self.helper = DefaultFormHelper(self)
+    #     if form_actions:
+    #         self.helper.append_form_actions()
+    #
+    # def append_form_actions(self):
+    #     self.helper.append_form_actions()
 
     # @classproperty
     # def headline(self):
@@ -90,14 +121,11 @@ class SimpleForm(Form):
 
 class GenericModelForm(ModelForm):
     def __init__(self, *args, **kwargs):
-        self.helper = None
+        self._helper_instance = None
         self.json_cache = kwargs.pop('json_cache', {})
         self.form_cfg = kwargs.pop('form_cfg', {})
         self.user = kwargs.pop('user', None)
         self.opts = get_form_helper_attr(kwargs)
-        # self.helper_kwargs = self.opts  # get_form_helper_attr(kwargs)
-        init_helper = kwargs.pop('init_helper', True)
-        # modal_add_fields = kwargs.pop('modal_add_fields', True)
         super().__init__(*args, **kwargs)
 
         for key, value in self.form_cfg.get('related_obj_ids', {}).items():
@@ -106,75 +134,57 @@ class GenericModelForm(ModelForm):
                 self.fields[field_name].initial = value
                 del self.form_cfg['related_obj_ids'][key]
 
-        if 'select_field' in kwargs.get('data', {}):
-            self.fields[kwargs['data'].get('select_field')].initial = kwargs['data'].get('select_pk')
-
-        if init_helper:
-            self.init_helper()
-
-    # @property
-    # def helper(self):
-    #     return DefaultFormHelper(self, **self.helper_kwargs)
-
-    def init_helper(self, form_actions=True, render_hidden_fields=True):
-        self._init_modal_add_fields()
-
-        # if self.form_cfg:
-        #     self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
-        #     self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
-
         if self.opts.pop('init_chosen_widget', True):
             init_chosen_widget(self.fields.items())
-        init_dateinput(self.fields.items())
+        if self.opts.pop('init_date_widget', True):
+            init_dateinput(self.fields.items())
 
-        self.helper = DefaultFormHelper(self)
-        self.helper.form_action = self.opts.get('form_action', None)
-        self.helper.render_hidden_fields = render_hidden_fields
-
-        # if self.form_cfg:
-        #     self.helper.layout.append(
-        #         '<input name="form_cfg" value="{}" type="hidden">'.format(json.dumps(self.form_cfg))
-        #     )
-        if form_actions:
-            self.append_form_actions()
-
-    def _init_modal_add_fields(self):
         for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
             try:
                 url = reverse(url_name)
             except NoReverseMatch:
                 url = reverse(url_name, args=[self.instance.pk])
             # self.fields[field_name].label_suffix = ""  # suffix not supported by django-crispy-forms
-            # url = reverse(url_name) + '?select_field_name=' + field_name
-            url += '?select_field_name=' + field_name
+            url += '?auto_select_field=' + field_name
             self.fields[field_name].label += """
                 <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
                     <img src="{1}" width="15" height="15" alt="{2}"/>
                 </a>""".format(url, static('admin/img/icon-addlink.svg'), 'Add')
 
-    def set_success_url(self, url):
-        self.opts['success_url'] = url
-        self.form_cfg['success_url'] = url
-        # self.fields['success_url'] = CharField(widget=HiddenInput(), required=False, initial=url)
+    @property
+    def helper(self):
+        if self._helper_instance:
+            return self._helper_instance
+        if self.form_cfg:
+            self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
+            self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
+        helper = DefaultFormHelper(self)
+        helper.form_action = self.opts.get('form_action', None)
+        helper.render_hidden_fields = True
+        helper.append_form_actions()
+        self._helper_instance = helper
+        return helper
 
-    def append_form_actions(self):
+    @property
+    def layout(self):
+        return self.helper.layout
+
+    @layout.setter
+    def layout(self, layout):
+        self.helper.add_layout(layout)
         self.helper.append_form_actions()
-        # if 'related_obj_ids' in self.fields:
-        #     self.helper.layout.append('related_obj_ids')
-        # if 'success_url' in self.fields:
-        #     self.helper.layout.append('success_url')
-
-    def render_form_actions(self):
-        form = Form()
-        form.helper = DefaultFormHelper(self)
-        form.helper.add_form_actions_only()
-        return render_crispy_form(form)
 
     @property
     def cleaned_form_cfg(self):
         if 'form_cfg' in self.cleaned_data:
             return json.loads(self.cleaned_data['form_cfg'])
         return {}
+
+    def render_form_actions(self):
+        form = Form()
+        form.helper = DefaultFormHelper(self)
+        form.helper.add_form_actions_only()
+        return render_crispy_form(form)
 
     def get_related_obj(self, model, key=None):
         related_obj_dict = self.cleaned_form_cfg.get('related_obj_ids', None)
@@ -188,12 +198,12 @@ class GenericModelForm(ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit)
-        if 'select_field' in self.cleaned_form_cfg:
-            if 'select_choice' in self.json_cache:
-                self.json_cache['select_choice'][self.form_cfg['select_field']] = instance.pk
-            else:
-                self.json_cache['select_choice'] = {self.form_cfg['select_field']: instance.pk}
-        print(self.cleaned_form_cfg)
+        if 'auto_select_field' in self.cleaned_form_cfg:
+            self.json_cache['auto_select_choice'] = {
+                'pk': instance.pk,
+                'field': self.form_cfg['auto_select_field'],
+                'text': str(instance),
+            }
         return instance
 
 
@@ -206,7 +216,9 @@ def get_form_helper_attr(kwargs):
         'back_button': kwargs.pop('back_button', False),
         'save_button_name': kwargs.pop('save_button_name', 'Save'),
         'init_chosen_widget': kwargs.pop('init_chosen_widget', True),
+        'init_date_widget': kwargs.pop('init_date_widget', True),
         'delete_confirmation': kwargs.pop('delete_confirmation', False),
+        'form_actions_template': kwargs.pop('form_actions_template', 'ajaxviews/_form_controls.html'),
     }
 
 

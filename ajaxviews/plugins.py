@@ -18,6 +18,7 @@ from .helpers import get_objects_for_model, construct_autocomplete_searchform, a
 class PluginAdapter:
     def __init__(self, controls):
         self.controls = controls
+        self.extra = None
 
     def __getattr__(self, name):
         if name.startswith('_'):
@@ -97,8 +98,6 @@ class ListPlugin(AjaxPlugin):
     #     super().__init__(*args, **kwargs)
     #     if not getattr(self.view, 'paginate_by', None):
     #         self.view.paginate_by = settings.DEFAULT_PAGINATE_BY
-    #     if not getattr(self.view, 'filter_search_input_by', None):
-    #         self.view.filter_search_input_by = settings.FILTER_SEARCH_INPUT_BY
 
     @property
     def model(self):
@@ -270,46 +269,8 @@ class DetailPlugin(ModalPlugin):
         return context
 
 
-# class FormControlAdapter:
-#     _form_controls = {
-#         'create': CreateForm,
-#         'update': UpdateForm,
-#         'preview': PreviewForm,
-#         'formset': FormSet,
-#     }
-#
-#     def __init__(self, *args):
-#         self._control_instances = []
-#         for control in args:
-#             control = self._form_controls[control]()
-#             self._control_instances.append(control)
-#
-#     def __get__(self, instance, owner):
-#         for control in self._control_instances:
-#             control.plugin = instance
-#             control.view = instance.view
-#         return self
-#
-#     def __getattr__(self, name):
-#         def wrapper(*args, **kwargs):
-#             param = args[0] if not kwargs and len(args) == 1 else None
-#             for control in self._control_instances:
-#                 if hasattr(control, name):
-#                     if param:
-#                         param = getattr(control, name)(param)
-#                     else:
-#                         param = getattr(control, name)(*args, **kwargs)
-#                         if param:
-#                             return param
-#             if param:
-#                 return param
-#         return wrapper
-
-
 # noinspection PyCallingNonCallable, PyUnresolvedReferences
 class FormPlugin(ModalPlugin):
-    # extra = FormControlAdapter()
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.form_cfg = {}
@@ -323,7 +284,7 @@ class FormPlugin(ModalPlugin):
 
     @property
     def related_object_ids(self):
-        return getattr(self.view, 'related_object_ids', getattr(settings, 'FORM_RELATED_OBJECT_IDS'))
+        return getattr(self.view, 'related_object_ids', getattr(settings, 'FORM_RELATED_OBJECT_IDS', True))
 
     @property
     def form_meta(self):
@@ -337,6 +298,7 @@ class FormPlugin(ModalPlugin):
         self.extra.post(request, *args, **kwargs)
         form = self.view.get_form()
         if form.is_valid():
+            self.form_cfg = form.cleaned_form_cfg
             return self.super.form_valid(form)
         else:
             return self.super.form_invalid(form)
@@ -348,7 +310,6 @@ class FormPlugin(ModalPlugin):
             kwargs['form_cfg'] = json.loads(self.request.POST.get('form_cfg'))
         else:
             kwargs['form_cfg'] = {}
-        kwargs['form_cfg']['__test__'] = 'yoooo'
         if self.related_object_ids:
             for key, value in self.view.kwargs.items():
                 if key.endswith('_id'):
@@ -356,8 +317,8 @@ class FormPlugin(ModalPlugin):
                         kwargs['form_cfg']['related_obj_ids'][key] = value
                     else:
                         kwargs['form_cfg']['related_obj_ids'] = {key: value}
-        if 'select_field_name' in self.request.GET:
-            kwargs['form_cfg']['select_field_name'] = self.request.GET.get('select_field_name')
+        if 'auto_select_field' in self.request.GET:
+            kwargs['form_cfg']['auto_select_field'] = self.request.GET.get('auto_select_field')
         if self.modal_id:
             kwargs.update({
                 'form_action': self.request.path + '?modal_id=' + self.modal_id,
@@ -368,14 +329,16 @@ class FormPlugin(ModalPlugin):
                 'data': self.request.GET,
                 'files': self.request.FILES,
             })
+        if hasattr(self.view, 'form_actions_template'):
+            kwargs['form_actions_template'] = self.view.form_actions_template
         kwargs['success_url'] = self.get_success_url()
         return self.extra.get_form_kwargs(kwargs)
 
     def form_valid(self, form):
-        self.cleaned_form_cfg = form.cleaned_form_cfg
-        success_message = self.view.success_message.format(**form.cleaned_data)
-        if success_message:
-            messages.success(self.request, success_message)
+        if not self.modal_id:
+            success_message = self.view.success_message.format(**form.cleaned_data)
+            if success_message:
+                messages.success(self.request, success_message)
         self.extra.form_valid(form)
         if self.modal_id:
             self.view.object = form.save()
@@ -388,7 +351,6 @@ class FormPlugin(ModalPlugin):
             return self.super.form_valid(form) or self.super.formset_valid(form)
 
     def form_invalid(self, form):
-        self.cleaned_form_cfg = form.cleaned_form_cfg
         return self.super.form_invalid(form) or self.super.formset_invalid(form)
 
     def get_context_data(self, context):

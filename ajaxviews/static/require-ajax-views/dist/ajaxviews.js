@@ -319,34 +319,33 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
             }(this));
             return $(modalId).on('hidden.bs.modal', function (_this) {
               return function (e) {
-                var data, formNode, key, ref, ref1, subModalId, updateFormChoices, value;
+                var data, fieldNode, form, formNode, key, ref, select, subModalId, value;
                 $(e.currentTarget).remove();
-                updateFormChoices = function (form, choices) {
-                  var field, fieldNode, pk, results;
-                  results = [];
-                  for (field in choices) {
-                    pk = choices[field];
-                    fieldNode = $(form).find('#id_' + field);
-                    $(fieldNode).append('<option value="' + pk + '"></option>');
-                    results.push($(fieldNode).val(pk).trigger('chosen:updated'));
+                ref = _this.jsonCache;
+                for (key in ref) {
+                  value = ref[key];
+                  _this.viewCache.jsonCache[key] = value;
+                }
+                if (_this.jsonCache && _this._manager.cfg.debug) {
+                  console.log('jsonCache ->', _this.jsonCache);
+                }
+                if (_this.jsonCache.auto_select_choice != null) {
+                  delete _this.viewCache.jsonCache.auto_select_choice;
+                  select = _this.jsonCache.auto_select_choice;
+                  if (_this.viewCache.scopeName) {
+                    form = $(_this.viewCache.scopeName).find('form[data-async]');
+                  } else {
+                    form = $('form[data-async]');
                   }
-                  return results;
-                };
-                if (_this.viewCache.modalNr) {
+                  fieldNode = $(form).find('#id_' + select.field);
+                  $(fieldNode).append('<option value="' + select.pk + '">' + select.text + '</option>');
+                  return $(fieldNode).val(select.pk).trigger('chosen:updated');
+                } else if (_this.viewCache.modalNr) {
                   $('body').addClass('modal-open');
                   if (_this.jsonCache.reload_view) {
-                    ref = _this.jsonCache;
-                    for (key in ref) {
-                      value = ref[key];
-                      _this.viewCache.jsonCache[key] = value;
-                    }
-                    if (_this.jsonCache && _this._manager.cfg.debug) {
-                      console.log('jsonCache ->', _this.jsonCache);
-                    }
                     subModalId = _this.viewCache.scopeName;
                     formNode = $(subModalId).find('form[data-async]');
                     if ($(formNode).length) {
-                      updateFormChoices(formNode, _this.jsonCache.select_choice);
                       data = $(formNode).formSerialize() + '&form_data=true';
                       return $.get($(formNode).attr('action'), data, function (response) {
                         _this._manager.updateModal(subModalId, response);
@@ -360,21 +359,12 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
                     }
                   }
                 } else if (_this.jsonCache.reload_view) {
-                  ref1 = _this.jsonCache;
-                  for (key in ref1) {
-                    value = ref1[key];
-                    _this.viewCache.jsonCache[key] = value;
-                  }
-                  if (_this.jsonCache && _this._manager.cfg.debug) {
-                    console.log('jsonCache ->', _this.jsonCache);
-                  }
-                  updateFormChoices('form[data-async]', _this.jsonCache.select_choice);
                   if (_this.jsonCache.ajax_load) {
                     if (_this.viewCache.onAjaxLoad) {
                       return _this.viewCache.onAjaxLoad();
                     }
                   } else {
-                    return _this.viewCache._initView(null, null, null, null);
+                    return _this.viewCache._initView();
                   }
                 }
               };
@@ -562,14 +552,10 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
             console.log('Debug request: ', _urlKwargs, _jsonData);
           }
           url = null;
-          if (this.modalNr) {
-            if (this.Q('form[data-async]').length) {
-              url = this.Q('form[data-async]').attr('action');
-            } else if (this.jsonCfg.full_url != null) {
-              url = this.jsonCfg.full_url;
-            } else {
-              throw 'Modal view has no form action and no full_url specified.';
-            }
+          if (this.Q('form[data-async]').length) {
+            url = this.Q('form[data-async]').attr('action');
+          } else if (this.jsonCfg.full_url != null) {
+            url = this.jsonCfg.full_url;
           } else {
             url = Urls[viewName || this.jsonCfg.view_name](_urlKwargs);
             if (location.hash) {
@@ -582,6 +568,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
             if (url) {
               history.replaceState({}, null, url);
             }
+          }
+          if (!url && this.modalNr) {
+            throw 'The URL for this view can not be resolved';
           }
           if (url == null) {
             url = location.href;

@@ -121,7 +121,6 @@ class AjaxListView(GenericBaseView, ListView):
 # noinspection PyUnresolvedReferences
 class AjaxDetailView(GenericBaseView, DetailView):
     plugin = ViewFactory('detail')
-    # plugin = DetailPlugin
 
     def get_queryset(self, **kwargs):
         return self._plugin.get_queryset(**kwargs)
@@ -131,7 +130,6 @@ class AjaxDetailView(GenericBaseView, DetailView):
 class BaseFormView(GenericBaseView):
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''
-    # plugin = FormPlugin
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -157,6 +155,13 @@ class BaseFormSetView(GenericBaseView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    # def get(self, request, *args, **kwargs):
+    #     formset = self.construct_formset()
+    #     return self.render_to_response(
+    #         self.get_context_data(formset=formset),
+    #         context=RequestContext(request),
+    #     )
+
     def get_extra_form_kwargs(self):
         kwargs = super().get_extra_form_kwargs()
         kwargs.update(self.get_form_kwargs())
@@ -181,20 +186,12 @@ class BaseFormSetView(GenericBaseView):
     def get_success_url(self):
         return self._plugin.get_success_url()
 
-    # def get(self, request, *args, **kwargs):
-    #     formset = self.construct_formset()
-    #     return self.render_to_response(
-    #         self.get_context_data(formset=formset),
-    #         context=RequestContext(request),
-    #     )
-
     # def render_to_response(self, context, **kwargs):
     #     pass
 
 
 class CreateFormView(BaseFormView, CreateView):
     plugin = ViewFactory('form', 'create')
-    # plugin = FormPlugin('create')
 
     # def __init__(self, **kwargs):
     #     form_class = kwargs.get('form_class') or getattr(self, 'form_class', None)
@@ -206,33 +203,27 @@ class CreateFormView(BaseFormView, CreateView):
 # noinspection PyUnresolvedReferences
 class CreateFormSetView(BaseFormSetView, ModelFormSetView):
     plugin = ViewFactory('formset', 'create')
-    # plugin = FormPlugin('create', 'formset')
 
 
 class PreviewCreateView(BaseFormView, CreateView):
     plugin = ViewFactory('form', 'create', 'preview')
-    # plugin = FormPlugin('create', 'preview')
 
 
 class UpdateFormView(BaseFormView, UpdateView):
     plugin = ViewFactory('form', 'update')
-    # plugin = FormPlugin('update')
 
 
 class UpdateFormSetView(BaseFormSetView, ModelFormSetView):
     plugin = ViewFactory('formset', 'update')
-    # plugin = FormPlugin('update', 'formset')
 
 
 class PreviewUpdateView(BaseFormView, UpdateView):
     plugin = ViewFactory('form', 'update', 'preview')
-    # plugin = FormPlugin('update', 'preview')
 
 
 # noinspection PyUnresolvedReferences
 class DeleteFormView(GenericBaseView, DeleteView):
     plugin = ViewFactory('delete')
-    # plugin = DeletePlugin
 
     def get(self, request, *args, **kwargs):
         return self._plugin.get(request, *args, **kwargs)
@@ -249,25 +240,3 @@ class DeleteFormView(GenericBaseView, DeleteView):
 
 class PreviewDeleteView(BaseFormView, DeleteView):
     plugin = ViewFactory('delete', 'preview')
-
-
-# deprecated #########
-
-# class CreateViewMixin:
-#     pass
-#
-#
-# class UpdateViewMixin:
-#     pass
-#
-#
-# class GenericCreateView(CreateFormView):
-#     pass
-#
-#
-# class GenericUpdateView(UpdateFormView):
-#     pass
-#
-#
-# class GenericDeleteView(DeleteFormView):
-#     pass

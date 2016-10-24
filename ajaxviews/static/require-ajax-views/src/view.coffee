@@ -46,13 +46,13 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       console.log('Debug request: ', _urlKwargs, _jsonData) if @_manager.cfg.debug
 
       url = null
-      if @modalNr
-        if @Q('form[data-async]').length
-          url = @Q('form[data-async]').attr('action')
-        else if @jsonCfg.full_url?
-          url = @jsonCfg.full_url
-        else
-          throw 'Modal view has no form action and no full_url specified.'
+#      if @modalNr
+      if @Q('form[data-async]').length
+        url = @Q('form[data-async]').attr('action')
+      else if @jsonCfg.full_url?
+        url = @jsonCfg.full_url
+#        else
+#          throw 'Modal view has no form action and no full_url specified.'
       else
         url = Urls[viewName or @jsonCfg.view_name](_urlKwargs)
         if location.hash
@@ -61,6 +61,9 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
           else
             url = location.hash
         history.replaceState({}, null, url) if url
+
+      if not url and @modalNr
+        throw 'The URL for this view can not be resolved'
 
       url ?= location.href
       $.get url, {'json_cfg': JSON.stringify(_jsonData)}, (response) ->
