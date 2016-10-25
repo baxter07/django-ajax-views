@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import render_to_response
+from django.forms import CharField, HiddenInput
 from django.db.models import Min, Max
 from django.utils.safestring import mark_safe
 from django.contrib import messages
@@ -72,13 +73,10 @@ class AjaxPlugin:
         for key, value in json.loads(request.GET.dict().get('json_cfg', '{}')).items():
             if value or value is False or value == 0:
                 json_cfg[key] = value
-
         if request.is_ajax():
             json_cfg['ajax_load'] = True
-
         if self.view.ajax_view:
             json_cfg['ajax_view'] = True
-
         json_cfg['view_name'] = request.resolver_match.url_name
         self.json_cfg.update(json_cfg)
 
@@ -284,7 +282,7 @@ class FormPlugin(ModalPlugin):
 
     @property
     def related_object_ids(self):
-        return getattr(self.view, 'related_object_ids', getattr(settings, 'FORM_RELATED_OBJECT_IDS', True))
+        return getattr(self.view, 'related_object_ids', getattr(settings, 'FORM_RELATED_OBJECT_IDS'))
 
     @property
     def form_meta(self):
@@ -294,20 +292,11 @@ class FormPlugin(ModalPlugin):
         super().dispatch(request, *args, **kwargs)
         self.json_cfg['init_view_type'] = 'formView'
 
-    def post(self, request, *args, **kwargs):
-        self.extra.post(request, *args, **kwargs)
-        form = self.view.get_form()
-        if form.is_valid():
-            self.form_cfg = form.cleaned_form_cfg
-            return self.super.form_valid(form)
-        else:
-            return self.super.form_invalid(form)
-
     # noinspection PyBroadException
     def get_form_kwargs(self, kwargs):
         kwargs['user'] = self.request.user
         if 'form_cfg' in self.request.POST:
-            kwargs['form_cfg'] = json.loads(self.request.POST.get('form_cfg'))
+            kwargs['form_cfg'] = json.loads(self.request.POST.dict().get('form_cfg'))
         else:
             kwargs['form_cfg'] = {}
         if self.related_object_ids:
@@ -334,6 +323,17 @@ class FormPlugin(ModalPlugin):
         kwargs['success_url'] = self.get_success_url()
         return self.extra.get_form_kwargs(kwargs)
 
+    def post(self, request, *args, **kwargs):
+        self.extra.post(request, *args, **kwargs)
+        form = self.view.get_form()
+        if request.POST.get('form_cfg'):
+            form.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
+        if form.is_valid():
+            self.form_cfg = form.cleaned_form_cfg
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
     def form_valid(self, form):
         if not self.modal_id:
             success_message = self.view.success_message.format(**form.cleaned_data)
@@ -344,14 +344,14 @@ class FormPlugin(ModalPlugin):
             self.view.object = form.save()
             # if self.request.POST.get('modal_reload', False):
             #     return redirect(self.get_success_url() + '?modal_id=' + self.modal_id)
-            if hasattr(form, 'json_cache'):
+            if getattr(form, 'json_cache', None):
                 return JsonResponse({'success': True, 'json_cache': form.json_cache})
             return JsonResponse({'success': True})
         else:
-            return self.super.form_valid(form) or self.super.formset_valid(form)
+            return self.super.form_valid(form)
 
     def form_invalid(self, form):
-        return self.super.form_invalid(form) or self.super.formset_invalid(form)
+        return self.super.form_invalid(form)
 
     def get_context_data(self, context):
         context = super().get_context_data(context)
@@ -439,6 +439,8 @@ class FormSetPlugin(ModalPlugin):
     #         # This needs to be done also for updating formsets (remove/assign)
     #         for obj in self.view.object_list:
     #             assign_obj_perm(self.request.user, obj)
+    # self.super.formset_valid(form)
+    # self.super.formset_invalid(form)
 
 
 class PreviewForm:

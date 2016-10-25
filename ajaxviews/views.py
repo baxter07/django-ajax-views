@@ -135,6 +135,9 @@ class BaseFormView(GenericBaseView):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        return self._plugin.post(request, *args, **kwargs)
+
     def get_form_kwargs(self, **kwargs):
         kwargs = super().get_form_kwargs(**kwargs)
         return self._plugin.get_form_kwargs(kwargs)

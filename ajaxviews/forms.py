@@ -110,7 +110,7 @@ class SimpleForm(Form):
     #     self.helper = DefaultFormHelper(self)
     #     if form_actions:
     #         self.helper.append_form_actions()
-    #
+
     # def append_form_actions(self):
     #     self.helper.append_form_actions()
 
@@ -126,17 +126,19 @@ class GenericModelForm(ModelForm):
         self.form_cfg = kwargs.pop('form_cfg', {})
         self.user = kwargs.pop('user', None)
         self.opts = get_form_helper_attr(kwargs)
+        init_chosen_widget_ = kwargs.pop('init_chosen_widget', True)
+        init_date_widget_ = kwargs.pop('init_date_widget', True)
         super().__init__(*args, **kwargs)
 
-        for key, value in self.form_cfg.get('related_obj_ids', {}).items():
+        for key, value in self.form_cfg.get('related_obj_ids', {}).copy().items():
             field_name = key.replace('_id', '')
             if field_name in self.fields:
                 self.fields[field_name].initial = value
                 del self.form_cfg['related_obj_ids'][key]
 
-        if self.opts.pop('init_chosen_widget', True):
+        if init_chosen_widget_:
             init_chosen_widget(self.fields.items())
-        if self.opts.pop('init_date_widget', True):
+        if init_date_widget_:
             init_dateinput(self.fields.items())
 
         for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
@@ -222,29 +224,6 @@ def get_form_helper_attr(kwargs):
     }
 
 
-# @classproperty
-# def headline(self):
-#     return getattr(self.Meta, 'headline', getattr(self.Meta, 'headline_full', ''))
-
-# if hasattr(self.Meta, 'right_column'):
-#     left_fields, right_fields = [], []
-#     right_column_fields = getattr(self.Meta, 'right_column')
-#     for field_name, field in self.fields.items():
-#         if field_name in right_column_fields:
-#             right_fields.append(Field(field_name))
-#         else:
-#             left_fields.append(Field(field_name))
-#     self.helper.add_layout(
-#         Layout(
-#             Div(
-#                 Div(*left_fields, css_class='col-md-6'),
-#                 Div(*right_fields, css_class='col-md-6'),
-#                 css_class='row'
-#             ),
-#             self.helper.layout[-1][0]
-#         )
-#     )
-
 # helper.form_tag = False
 # helper.layout = Layout(
 #     TabHolder(
@@ -281,22 +260,3 @@ def get_form_helper_attr(kwargs):
 #         amount, currency = self.fields['amount'].fields
 #         self.fields['amount'].widget = CustomMoneyWidget(
 #             amount_widget=amount.widget, currency_widget=currency.widget)
-
-# preview_back_class = ''
-# cancel_button_name = 'Cancel'
-# if self.back_button:
-#     preview_back_class = ' preview-back'
-#     cancel_button_name = 'Back'
-#
-# cancel_attr = 'href="{0}"'.format(self.success_url)
-#
-# if not self.back_button and self.modal_form:
-#     cancel_button_name = 'Close'
-#     cancel_attr = 'data-dismiss="modal"'
-#
-# btn_group = """<a role="button" class="btn btn-default cancel-btn{0}" {1}>
-#                  {2}
-#                </a>""".format(preview_back_class, cancel_attr, cancel_button_name)
-# btn_group += """<a role="button" class="btn btn-danger pull-right" data-toggle="confirmation" href="{0}">
-#                   Delete
-#                 </a>""".format(self.delete_url)

@@ -61,7 +61,7 @@ define ->
           $(e.currentTarget).remove()
 
           @viewCache.jsonCache[key] = value for key, value of @jsonCache
-          console.log('jsonCache ->', @jsonCache) if @jsonCache and @_manager.cfg.debug
+          console.log('jsonCache ->', @jsonCache) if @jsonCache.length and @_manager.cfg.debug
 
           if @jsonCache.auto_select_choice?
             delete @viewCache.jsonCache.auto_select_choice

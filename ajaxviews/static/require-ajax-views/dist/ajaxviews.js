@@ -326,7 +326,7 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
                   value = ref[key];
                   _this.viewCache.jsonCache[key] = value;
                 }
-                if (_this.jsonCache && _this._manager.cfg.debug) {
+                if (_this.jsonCache.length && _this._manager.cfg.debug) {
                   console.log('jsonCache ->', _this.jsonCache);
                 }
                 if (_this.jsonCache.auto_select_choice != null) {
