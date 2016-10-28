@@ -120,6 +120,11 @@ class SimpleForm(Form):
 
 
 class GenericModelForm(ModelForm):
+    field_label_addon = """
+        <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
+            <img src="{1}" width="15" height="15" alt="{2}"/>
+        </a>"""
+
     def __init__(self, *args, **kwargs):
         self._helper_instance = None
         self.json_cache = kwargs.pop('json_cache', {})
@@ -148,10 +153,8 @@ class GenericModelForm(ModelForm):
                 url = reverse(url_name, args=[self.instance.pk])
             # self.fields[field_name].label_suffix = ""  # suffix not supported by django-crispy-forms
             url += '?auto_select_field=' + field_name
-            self.fields[field_name].label += """
-                <a class="modal-link pull-right" href="{0}" style="margin-top: -3px; margin-left: 5px;">
-                    <img src="{1}" width="15" height="15" alt="{2}"/>
-                </a>""".format(url, static('admin/img/icon-addlink.svg'), 'Add')
+            self.fields[field_name].label += self.field_label_addon.format(
+                url, static('admin/img/icon-addlink.svg'), 'Add')
 
     @property
     def helper(self):
@@ -214,8 +217,10 @@ def get_form_helper_attr(kwargs):
         'success_url': kwargs.pop('success_url', None),
         'form_action': kwargs.pop('form_action', None),
         'delete_url': kwargs.pop('delete_url', None),
-        'modal_form': kwargs.pop('modal_form', False),
-        'back_button': kwargs.pop('back_button', False),
+        'preview_stage': kwargs.pop('preview_stage', False),
+        'cleaned_model_data': kwargs.pop('cleaned_model_data', False),
+        # 'modal_form': kwargs.pop('modal_form', False),
+        # 'back_button': kwargs.pop('back_button', False),
         'save_button_name': kwargs.pop('save_button_name', 'Save'),
         'init_chosen_widget': kwargs.pop('init_chosen_widget', True),
         'init_date_widget': kwargs.pop('init_date_widget', True),

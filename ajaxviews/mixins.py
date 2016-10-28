@@ -283,7 +283,7 @@ class PreviewMixin:
             raise ImproperlyConfigured('Missing preview_form_class attribute.')
         if self._stage == 2:
             return self.preview_form_class
-        return self.form_class
+        return self.view.form_class
 
     def get_form(self, form_class=None):
         if self._preview_back:

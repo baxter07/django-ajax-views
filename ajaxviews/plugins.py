@@ -3,9 +3,10 @@ import json
 from dateutil.parser import parse
 
 from django.contrib.auth.models import Group
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.urlresolvers import reverse
-from django.http import JsonResponse
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import JsonResponse, QueryDict
 from django.shortcuts import render_to_response
 from django.forms import CharField, HiddenInput
 from django.db.models import Min, Max
@@ -272,7 +273,6 @@ class FormPlugin(ModalPlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.form_cfg = {}
-        self.cleaned_form_cfg = {}
         form_class = kwargs.get('form_class') or getattr(self.view, 'form_class', None)
         if form_class:
             if 'model' not in kwargs and hasattr(form_class.Meta, 'model'):
@@ -357,7 +357,7 @@ class FormPlugin(ModalPlugin):
         context = super().get_context_data(context)
         context['generic_form_base_template'] = settings.GENERIC_FORM_BASE_TEMPLATE
         context['disable_full_view'] = getattr(self.view, 'disable_full_view', True)
-        if hasattr(self.view, 'get_form_class'):
+        if settings.AUTO_PAGE_SIZE:
             context['page_size'] = getattr(self.form_meta, 'form_size', 'sm')
         if settings.AUTO_FORM_HEADLINE:
             full_headline = getattr(self.form_meta, 'headline_full', None)
@@ -420,9 +420,11 @@ class UpdateForm:
         self.view.object = self.view.get_object()
 
     def get_form_kwargs(self, kwargs):
-        kwargs['save_button_name'] = getattr(self.view, 'save_button_name', 'Update')
-        kwargs['delete_confirmation'] = getattr(self.view, 'delete_confirmation', settings.FORM_DELETE_CONFIRMATION)
-        kwargs['delete_url'] = getattr(self.view, 'delete_url', None)
+        kwargs.update({
+            'save_button_name': getattr(self.view, 'save_button_name', 'Update'),
+            'delete_confirmation': getattr(self.view, 'delete_confirmation', settings.FORM_DELETE_CONFIRMATION),
+            'delete_url': getattr(self.view, 'delete_url', None),
+        })
         if not kwargs['delete_url'] and getattr(self.view, 'auto_delete_url', settings.AUTO_DELETE_URL):
             url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
             kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
@@ -432,19 +434,116 @@ class UpdateForm:
 
 
 class FormSetPlugin(ModalPlugin):
-    pass
-    # def form_valid(self, formset):
-    #     # if create view
-    #     if getattr(self.view.form_class.Meta, 'assign_perm', False):
-    #         # This needs to be done also for updating formsets (remove/assign)
-    #         for obj in self.view.object_list:
-    #             assign_obj_perm(self.request.user, obj)
-    # self.super.formset_valid(form)
-    # self.super.formset_invalid(form)
+    def formset_valid(self, formset):
+        # if create view
+        if getattr(formset.Meta, 'assign_perm', False):
+            # This needs to be done also for updating formsets (remove/assign)
+            for obj in self.view.object_list:
+                assign_obj_perm(self.request.user, obj)
+        # response = super().formset_valid(formset)
+        # success_message = self.get_success_message(formset.cleaned_data)
+        # if success_message:
+        #     messages.success(self.request, success_message)
+        # return response
 
 
-class PreviewForm:
-    pass
+class PreviewFormPlugin(FormPlugin):
+    """
+    Preview for model forms to confirm actions.
+
+    Stages:
+        0 - display model form
+        1 - submitted model form and display preview form
+        2 - submitted preview form
+
+    :param int stage: the form construction varies depending on the stage
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.stage = 0
+        self.cleaned_data = None
+
+    @property
+    def preview_template_name(self):
+        return getattr(self.view, 'preview_template_name', 'ajaxviews/generic_form.html')
+
+    @property
+    def preview_form_class(self):
+        if not hasattr(self.view, 'preview_form_class'):
+            raise ImproperlyConfigured('Missing preview_form_class attribute.')
+        return self.view.preview_form_class
+
+    def post(self, request, *args, **kwargs):
+        self.cleaned_data = request.POST.get('model_form_cleaned_data', None)
+        self.stage = 2 if self.cleaned_data else 1
+        return self.view.post(request, *args, **kwargs)
+
+    # def get_form_class(self):
+    #     if self.stage == 2:
+    #         return self.preview_form_class
+    #     return self.view.get_form_class()
+
+    # def get_form(self, form_class=None):
+    #     # if self.stage == -1:
+    #     #     return self.model_form
+    #     return self.super.get_form(form_class)
+
+    def get_form_kwargs(self, kwargs):
+        kwargs = super().get_form_kwargs(kwargs)
+        kwargs['preview_stage'] = self.stage
+        # if self.stage == 1:  # if create view
+        #     kwargs['save_button_name'] = 'Create'
+        # else:
+        #     kwargs['save_button_name'] = 'Update'
+        # if not self.request.GET.get('modal_id', False):
+        #     kwargs['form_action'] = self.request.path
+        if self.stage == 1:
+            kwargs['cleaned_model_data'] = self.request.POST.get('cleaned_model_data')
+
+        if self.stage == 2:
+            kwargs['instance'] = self.view.object or self.view.get_object()
+            if self.model_form:
+                kwargs['model_data'] = self.model_form.cleaned_data
+            else:
+                kwargs['model_data'] = self.first_stage_form.cleaned_data
+            kwargs.pop('delete_url', None)
+
+            if hasattr(self, 'success_message') and self.success_message:
+                success_message = self.get_success_message(kwargs['model_data'])
+                if success_message:
+                    kwargs['success_message'] = success_message
+        return kwargs
+
+    def form_valid(self, form):
+        if self.stage == 1 and form.cleaned_data.get('skip_preview', False):
+            return self.view.done(form)
+
+        if self._stage == 2:
+            model_form = self._model_form
+            model_form.preview_data = form.cleaned_data
+            if self.request.POST.get('success_message', None):
+                messages.success(self.request, self.request.POST.get('success_message'))
+            if not self.request.GET.get('modal_id', False):
+                self.object = model_form.save()
+                return JsonResponse({'redirect': self.get_success_url()})
+            return self.view.done(model_form)
+
+        self.view.process_preview(form)
+        self.first_stage_form = form
+        self.stage = 2
+
+        preview_form = self.view.get_form(self.get_form_class())
+        preview_form.helper.form_class = 'preview-form'
+
+        if not self._model_form:
+            self._model_form = form
+
+        return self.render_to_response(self.get_context_data())
+        # return self.render_to_response(self.get_context_data(form=preview_form))
+
+    # def get_context_data(self, **kwargs):
+    #     context = super().get_context_data(**kwargs)
+    #     return context
 
 
 # noinspection PyUnresolvedReferences
@@ -462,21 +561,22 @@ class DeletePlugin(AjaxPlugin):
         return self.super.post(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
+        object_name = str(self.view.get_object())
         response = self.super.delete(request, *args, **kwargs)
         if request.is_ajax():
             return JsonResponse({'success': True})
-        messages.success(request, 'Entry successfully deleted!')
+        messages.success(request, '{} successfully deleted!'.format(object_name))
         return response
 
     def get_success_url(self):
         if 'success_url' in self.request.GET:
             return self.request.GET.get('success_url')
-        try:
-            instance = self.get_object()
-            instance.pk = None
-            return instance.get_absolute_url()
-        except:
-            pass
+        # try:
+        #     instance = self.view.get_object()
+        #     instance.pk = None
+        #     return instance.get_absolute_url()
+        # except:
+        #     pass
         return self.super.get_success_url()
 
 

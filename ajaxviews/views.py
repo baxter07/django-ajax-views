@@ -6,8 +6,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from .forms import DefaultFormHelper
-from .plugins import PluginAdapter, AjaxPlugin, ListPlugin, DetailPlugin, FormPlugin, DeletePlugin, FormSetPlugin, \
-    CreateForm, UpdateForm, PreviewForm
+from .plugins import PluginAdapter, AjaxPlugin, ListPlugin, DetailPlugin, FormPlugin, PreviewFormPlugin,\
+    FormSetPlugin, DeletePlugin, CreateForm, UpdateForm
 
 
 class ModelFormSet(BaseModelFormSet):
@@ -40,12 +40,13 @@ class ViewFactory:
         'detail': DetailPlugin,
         'form': FormPlugin,
         'formset': FormSetPlugin,
+        'formpreview': PreviewFormPlugin,
         'delete': DeletePlugin,
     }
     _extras = {
         'create': CreateForm,
         'update': UpdateForm,
-        'preview': PreviewForm,
+        'preview': None,
     }
 
     def __init__(self, *args):
@@ -77,6 +78,16 @@ class ViewFactory:
 
 
 class GenericBaseView:
+    """
+    This is the core mixin that's used for all views to establish communication with the client side :class:`App`.
+
+    It merges the optional URL parameters from the GET request with the keyword arguments retrieved from
+    Django's URL conf into ``json_cfg``.
+
+    :ivar bool ajax_view: Set to True if you have created a client side module associated with the view
+        class that's inheriting from this mixin.
+    :ivar dict json_cfg: Data parsed from incoming requests and returned in each response.
+    """
     ajax_view = False
 
     def __init__(self, *args, **kwargs):
@@ -108,9 +119,15 @@ class AjaxListView(GenericBaseView, ListView):
     :ivar int filter_search_input_by: number of results in list view filters by which to display a search input.
     """
     plugin = ViewFactory('list')
-    # plugin = ListPlugin
 
     def get(self, request, *args, **kwargs):
+        """
+        Called for all GET requests
+
+        :param request: request object
+        :param args: positional url arguments
+        :param kwargs: keyword url arguments
+        """
         response = self._plugin.get(request, *args, **kwargs)
         return response or super().get(request, *args, **kwargs)
 
@@ -177,7 +194,7 @@ class BaseFormSetView(GenericBaseView):
         return formset
 
     def formset_valid(self, formset):
-        self._plugin.form_valid(formset)
+        self._plugin.formset_valid(formset)
         return super().formset_valid(formset)
 
     # def formset_invalid(self, formset):
@@ -192,6 +209,12 @@ class BaseFormSetView(GenericBaseView):
     # def render_to_response(self, context, **kwargs):
     #     pass
 
+    def done(self):
+        pass
+
+    def process_preview(self):
+        pass
+
 
 class CreateFormView(BaseFormView, CreateView):
     plugin = ViewFactory('form', 'create')
@@ -203,25 +226,37 @@ class CreateFormView(BaseFormView, CreateView):
     #     super().__init__(**kwargs)
 
 
+class UpdateFormView(BaseFormView, UpdateView):
+    plugin = ViewFactory('form', 'update')
+
+
 # noinspection PyUnresolvedReferences
 class CreateFormSetView(BaseFormSetView, ModelFormSetView):
     plugin = ViewFactory('formset', 'create')
-
-
-class PreviewCreateView(BaseFormView, CreateView):
-    plugin = ViewFactory('form', 'create', 'preview')
-
-
-class UpdateFormView(BaseFormView, UpdateView):
-    plugin = ViewFactory('form', 'update')
 
 
 class UpdateFormSetView(BaseFormSetView, ModelFormSetView):
     plugin = ViewFactory('formset', 'update')
 
 
+class PreviewCreateView(BaseFormView, CreateView):
+    plugin = ViewFactory('formpreview', 'create')
+
+    def process_preview(self, form):
+        pass
+
+    def done(self, form):
+        return super().form_valid(form)
+
+
 class PreviewUpdateView(BaseFormView, UpdateView):
-    plugin = ViewFactory('form', 'update', 'preview')
+    plugin = ViewFactory('formpreview', 'update')
+
+    def process_preview(self, form):
+        pass
+
+    def done(self, form):
+        return super().form_valid(form)
 
 
 # noinspection PyUnresolvedReferences

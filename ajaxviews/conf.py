@@ -16,6 +16,10 @@ class LazySettings:
         return getattr(django_settings, 'REQUIRE_MAIN_NAME', 'main')
 
     @property
+    def AUTO_PAGE_SIZE(self):
+        return getattr(django_settings, 'AUTO_PAGE_SIZE', False)
+
+    @property
     def AUTO_FORM_HEADLINE(self):
         return getattr(django_settings, 'AUTO_FORM_HEADLINE', False)
 
