@@ -1,6 +1,7 @@
 import types
 
 from django.forms.models import BaseModelFormSet
+from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
@@ -165,6 +166,9 @@ class BaseFormView(GenericBaseView):
     def get_success_url(self):
         return self._plugin.get_success_url()
 
+    def get_template_names(self):
+        return self._plugin.get_template_names()
+
 
 # noinspection PyUnresolvedReferences
 class BaseFormSetView(GenericBaseView):
@@ -209,12 +213,6 @@ class BaseFormSetView(GenericBaseView):
     # def render_to_response(self, context, **kwargs):
     #     pass
 
-    def done(self):
-        pass
-
-    def process_preview(self):
-        pass
-
 
 class CreateFormView(BaseFormView, CreateView):
     plugin = ViewFactory('form', 'create')
@@ -246,7 +244,7 @@ class PreviewCreateView(BaseFormView, CreateView):
         pass
 
     def done(self, form):
-        return super().form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class PreviewUpdateView(BaseFormView, UpdateView):
@@ -256,7 +254,7 @@ class PreviewUpdateView(BaseFormView, UpdateView):
         pass
 
     def done(self, form):
-        return super().form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 # noinspection PyUnresolvedReferences

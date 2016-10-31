@@ -1,6 +1,5 @@
 import datetime
 import json
-from dateutil.parser import parse
 
 from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured, ValidationError
@@ -12,6 +11,9 @@ from django.forms import CharField, HiddenInput
 from django.db.models import Min, Max
 from django.utils.safestring import mark_safe
 from django.contrib import messages
+
+from dateutil.parser import parse
+from crispy_forms.utils import render_crispy_form
 
 from .conf import settings
 from .helpers import get_objects_for_model, construct_autocomplete_searchform, assign_obj_perm, remove_obj_perm
@@ -295,10 +297,7 @@ class FormPlugin(ModalPlugin):
     # noinspection PyBroadException
     def get_form_kwargs(self, kwargs):
         kwargs['user'] = self.request.user
-        if 'form_cfg' in self.request.POST:
-            kwargs['form_cfg'] = json.loads(self.request.POST.dict().get('form_cfg'))
-        else:
-            kwargs['form_cfg'] = {}
+        kwargs['form_cfg'] = json.loads(self.request.POST.dict().get('form_cfg', '{}'))
         if self.related_object_ids:
             for key, value in self.view.kwargs.items():
                 if key.endswith('_id'):
@@ -386,7 +385,10 @@ class FormPlugin(ModalPlugin):
         # ignore validation errors on GET requests
         if 'form_data' in self.request.GET:
             context['form'].errors.clear()
-        return super().render_to_response(context, **kwargs)
+        return self.view.render_to_response(context, **kwargs)
+
+    def get_template_names(self):
+        return self.super.get_template_names()
 
 
 # noinspection PyUnresolvedReferences, PyUnusedLocal
@@ -453,8 +455,8 @@ class PreviewFormPlugin(FormPlugin):
 
     Stages:
         0 - display model form
-        1 - submitted model form and display preview form
-        2 - submitted preview form
+        1 - submitted model form and display preview form (process_preview)
+        2 - submitted preview form (done)
 
     :param int stage: the form construction varies depending on the stage
     """
@@ -476,7 +478,8 @@ class PreviewFormPlugin(FormPlugin):
     def post(self, request, *args, **kwargs):
         self.cleaned_data = request.POST.get('model_form_cleaned_data', None)
         self.stage = 2 if self.cleaned_data else 1
-        return self.view.post(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
+        # return self.view.post(request, *args, **kwargs)
 
     # def get_form_class(self):
     #     if self.stage == 2:
@@ -497,53 +500,67 @@ class PreviewFormPlugin(FormPlugin):
         #     kwargs['save_button_name'] = 'Update'
         # if not self.request.GET.get('modal_id', False):
         #     kwargs['form_action'] = self.request.path
-        if self.stage == 1:
-            kwargs['cleaned_model_data'] = self.request.POST.get('cleaned_model_data')
+        # if self.stage == 1:
+        #     kwargs['cleaned_model_data'] = self.request.POST.get('cleaned_model_data')
 
-        if self.stage == 2:
-            kwargs['instance'] = self.view.object or self.view.get_object()
-            if self.model_form:
-                kwargs['model_data'] = self.model_form.cleaned_data
-            else:
-                kwargs['model_data'] = self.first_stage_form.cleaned_data
-            kwargs.pop('delete_url', None)
+        # if self.stage == 2:
+        #     kwargs['model_data'] = self.cleaned_data
+        #     # kwargs['instance'] = self.view.object or self.view.get_object()
+        #     kwargs.pop('delete_url', None)
+        #
+        #     success_message = self.view.success_message.format(**kwargs['cleaned_model_data'])
+        #     if success_message:
+        #         messages.success(self.request, success_message)
+        #     if getattr(self.view, 'success_message', None):
+        #         success_message = self.view.get_success_message(kwargs['model_data'])
+        #         if success_message:
+        #             kwargs['success_message'] = success_message
+        return kwargs
 
-            if hasattr(self, 'success_message') and self.success_message:
-                success_message = self.get_success_message(kwargs['model_data'])
-                if success_message:
-                    kwargs['success_message'] = success_message
+    def get_preview_form_kwargs(self, **kwargs):
+        kwargs = self.get_form_kwargs(kwargs)
+        kwargs.pop('delete_url', None)
+        kwargs['save_button_name'] = 'Confirm'
+        kwargs['instance'] = self.view.object or self.view.get_object()
         return kwargs
 
     def form_valid(self, form):
         if self.stage == 1 and form.cleaned_data.get('skip_preview', False):
             return self.view.done(form)
-
-        if self._stage == 2:
-            model_form = self._model_form
-            model_form.preview_data = form.cleaned_data
-            if self.request.POST.get('success_message', None):
-                messages.success(self.request, self.request.POST.get('success_message'))
-            if not self.request.GET.get('modal_id', False):
-                self.object = model_form.save()
-                return JsonResponse({'redirect': self.get_success_url()})
+        if self.stage == 2:
+            kwargs = {'preview_data': form.cleaned_data}
+            model_form = self.view.form_class(QueryDict(form), **self.get_form_kwargs(kwargs))
+            if not form.is_valid():
+                raise ValidationError('Model form did not validate!')
+            # model_form = self.view.form_class(**self.cleaned_data)
+            # model_form.preview_data = form.cleaned_data
+            if 'success_message' in form.cleaned_form_cfg:
+                messages.success(self.request, form.cleaned_form_cfg['success_message'])
             return self.view.done(model_form)
 
         self.view.process_preview(form)
-        self.first_stage_form = form
-        self.stage = 2
-
-        preview_form = self.view.get_form(self.get_form_class())
+        # form.save(commit=False)
+        kwargs = {
+            'model_data': form.cleaned_data,
+            'model_form': render_crispy_form(form),
+        }
+        preview_form = self.preview_form_class(**self.get_preview_form_kwargs(**kwargs))
         preview_form.helper.form_class = 'preview-form'
 
-        if not self._model_form:
-            self._model_form = form
-
-        return self.render_to_response(self.get_context_data())
+        return self.render_to_response(self.get_context_data({
+            # 'model_form_cleaned_data': form.cleaned_data,
+            'form': preview_form,
+        }))
         # return self.render_to_response(self.get_context_data(form=preview_form))
 
     # def get_context_data(self, **kwargs):
     #     context = super().get_context_data(**kwargs)
     #     return context
+
+    def get_template_names(self):
+        if self.stage == 1:
+            return [self.preview_template_name]
+        return super().get_template_names()
 
 
 # noinspection PyUnresolvedReferences

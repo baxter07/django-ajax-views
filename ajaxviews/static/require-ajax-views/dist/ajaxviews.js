@@ -228,33 +228,12 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
       var middleware;
       return middleware = {
         onPageLoad: function () {
-          var preview_data, preview_model_form;
-          if (this.jsonCfg.preview_stage && this.jsonCfg.preview_stage === 2) {
-            preview_data = {};
-            preview_data['preview_stage'] = this.jsonCfg.preview_stage;
-            preview_model_form = this.jsonCfg.preview_model_form;
-            if (preview_model_form) {
-              preview_data['preview_model_form'] = $(preview_model_form).formSerialize();
-            }
-            $('form[data-async]').ajaxForm({
-              data: preview_data,
-              success: function (_this) {
-                return function (response) {
-                  if (response.redirect != null) {
-                    return location.href = response.redirect;
-                  } else {
-                    return console.log('replace form?');
-                  }
-                };
-              }(this)
-            });
-            return $('.preview-back').click(function (_this) {
-              return function (e) {
-                e.preventDefault();
-                return history.back();
-              };
-            }(this));
-          }
+          return $('.url-history-back').click(function (_this) {
+            return function (e) {
+              e.preventDefault();
+              return history.back();
+            };
+          }(this));
         },
         onAjaxLoad: function () {
           var modalId;

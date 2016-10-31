@@ -1,24 +1,24 @@
 define ->
   middleware =
     onPageLoad: ->
-      if @jsonCfg.preview_stage and @jsonCfg.preview_stage == 2
-        preview_data = {}
-        preview_data['preview_stage'] = @jsonCfg.preview_stage
-        preview_model_form = @jsonCfg.preview_model_form
-        if preview_model_form
-          preview_data['preview_model_form'] = $(preview_model_form).formSerialize()
+#      if @jsonCfg.preview_stage and @jsonCfg.preview_stage == 2
+#        preview_data = {}
+#        preview_data['preview_stage'] = @jsonCfg.preview_stage
+#        preview_model_form = @jsonCfg.preview_model_form
+#        if preview_model_form
+#          preview_data['preview_model_form'] = $(preview_model_form).formSerialize()
+#
+#        $('form[data-async]').ajaxForm
+#          data: preview_data
+#          success: (response) =>
+#            if response.redirect?
+#              location.href = response.redirect
+#            else
+#              console.log('replace form?')
 
-        $('form[data-async]').ajaxForm
-          data: preview_data
-          success: (response) =>
-            if response.redirect?
-              location.href = response.redirect
-            else
-              console.log('replace form?')
-
-        $('.preview-back').click (e) =>
-          e.preventDefault()
-          history.back()
+      $('.url-history-back').click (e) =>
+        e.preventDefault()
+        history.back()
 
     onAjaxLoad: ->
       if @scopeName and @scopeName.indexOf('#modal_nr') >= 0
