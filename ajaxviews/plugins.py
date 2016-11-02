@@ -14,6 +14,7 @@ from django.contrib import messages
 
 from dateutil.parser import parse
 from crispy_forms.utils import render_crispy_form
+from math import modf
 
 from .conf import settings
 from .helpers import get_objects_for_model, construct_autocomplete_searchform, assign_obj_perm, remove_obj_perm
@@ -454,16 +455,15 @@ class PreviewFormPlugin(FormPlugin):
     Preview for model forms to confirm actions.
 
     Stages:
-        0 - display model form
-        1 - submitted model form and display preview form (process_preview)
-        2 - submitted preview form (done)
+        0 - GET: display model form
+        1 - POST: submitted model form and render preview form (process_preview)
+        2 - POST: submitted preview form and save model form (done)
 
     :param int stage: the form construction varies depending on the stage
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.stage = 0
-        self.cleaned_data = None
 
     @property
     def preview_template_name(self):
@@ -476,86 +476,50 @@ class PreviewFormPlugin(FormPlugin):
         return self.view.preview_form_class
 
     def post(self, request, *args, **kwargs):
-        self.cleaned_data = request.POST.get('model_form_cleaned_data', None)
-        self.stage = 2 if self.cleaned_data else 1
+        self.stage = 2 if 'preview_model_form' in request.POST else 1
         return super().post(request, *args, **kwargs)
-        # return self.view.post(request, *args, **kwargs)
 
-    # def get_form_class(self):
-    #     if self.stage == 2:
-    #         return self.preview_form_class
-    #     return self.view.get_form_class()
-
-    # def get_form(self, form_class=None):
-    #     # if self.stage == -1:
-    #     #     return self.model_form
-    #     return self.super.get_form(form_class)
-
-    def get_form_kwargs(self, kwargs):
-        kwargs = super().get_form_kwargs(kwargs)
-        kwargs['preview_stage'] = self.stage
-        # if self.stage == 1:  # if create view
-        #     kwargs['save_button_name'] = 'Create'
-        # else:
-        #     kwargs['save_button_name'] = 'Update'
-        # if not self.request.GET.get('modal_id', False):
-        #     kwargs['form_action'] = self.request.path
-        # if self.stage == 1:
-        #     kwargs['cleaned_model_data'] = self.request.POST.get('cleaned_model_data')
-
-        # if self.stage == 2:
-        #     kwargs['model_data'] = self.cleaned_data
-        #     # kwargs['instance'] = self.view.object or self.view.get_object()
-        #     kwargs.pop('delete_url', None)
-        #
-        #     success_message = self.view.success_message.format(**kwargs['cleaned_model_data'])
-        #     if success_message:
-        #         messages.success(self.request, success_message)
-        #     if getattr(self.view, 'success_message', None):
-        #         success_message = self.view.get_success_message(kwargs['model_data'])
-        #         if success_message:
-        #             kwargs['success_message'] = success_message
-        return kwargs
+    def get_form_class(self):
+        if self.stage == 2:
+            return self.preview_form_class
+        return self.super.get_form_class()
 
     def get_preview_form_kwargs(self, **kwargs):
         kwargs = self.get_form_kwargs(kwargs)
         kwargs.pop('delete_url', None)
-        kwargs['save_button_name'] = 'Confirm'
-        kwargs['instance'] = self.view.object or self.view.get_object()
+        kwargs.update({
+            'preview_stage': True,
+            'save_button_name': 'Confirm',
+            'instance': self.view.object or self.view.get_object(),
+        })
         return kwargs
 
     def form_valid(self, form):
         if self.stage == 1 and form.cleaned_data.get('skip_preview', False):
             return self.view.done(form)
         if self.stage == 2:
-            kwargs = {'preview_data': form.cleaned_data}
-            model_form = self.view.form_class(QueryDict(form), **self.get_form_kwargs(kwargs))
-            if not form.is_valid():
+            form.cleaned_data.pop('form_cfg', None)
+            form_kwargs = self.view.get_form_kwargs()
+            form_kwargs.update({
+                'preview_data': form.cleaned_data,
+                'data': QueryDict(self.request.POST.get('preview_model_form')),
+            })
+            model_form = self.super.get_form_class()(**form_kwargs)
+            if not model_form.is_valid():
                 raise ValidationError('Model form did not validate!')
-            # model_form = self.view.form_class(**self.cleaned_data)
-            # model_form.preview_data = form.cleaned_data
             if 'success_message' in form.cleaned_form_cfg:
                 messages.success(self.request, form.cleaned_form_cfg['success_message'])
             return self.view.done(model_form)
 
         self.view.process_preview(form)
-        # form.save(commit=False)
-        kwargs = {
-            'model_data': form.cleaned_data,
-            'model_form': render_crispy_form(form),
-        }
+        self.json_cfg['preview_model_form'] = render_crispy_form(form)
+        kwargs = {'model_data': form.cleaned_data}
         preview_form = self.preview_form_class(**self.get_preview_form_kwargs(**kwargs))
+        success_message = self.view.success_message.format(**form.cleaned_data)
+        if success_message:
+            preview_form.form_cfg['success_message'] = success_message
         preview_form.helper.form_class = 'preview-form'
-
-        return self.render_to_response(self.get_context_data({
-            # 'model_form_cleaned_data': form.cleaned_data,
-            'form': preview_form,
-        }))
-        # return self.render_to_response(self.get_context_data(form=preview_form))
-
-    # def get_context_data(self, **kwargs):
-    #     context = super().get_context_data(**kwargs)
-    #     return context
+        return self.render_to_response(self.get_context_data({'form': preview_form}))
 
     def get_template_names(self):
         if self.stage == 1:

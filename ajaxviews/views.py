@@ -240,20 +240,28 @@ class UpdateFormSetView(BaseFormSetView, ModelFormSetView):
 class PreviewCreateView(BaseFormView, CreateView):
     plugin = ViewFactory('formpreview', 'create')
 
+    def get_form_class(self):
+        return self._plugin.get_form_class()
+
     def process_preview(self, form):
         pass
 
     def done(self, form):
+        self.object = form.save()
         return HttpResponseRedirect(self.get_success_url())
 
 
 class PreviewUpdateView(BaseFormView, UpdateView):
     plugin = ViewFactory('formpreview', 'update')
 
+    def get_form_class(self):
+        return self._plugin.get_form_class()
+
     def process_preview(self, form):
         pass
 
     def done(self, form):
+        self.object = form.save()
         return HttpResponseRedirect(self.get_success_url())
 
 

@@ -2,7 +2,7 @@ import json
 
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.contrib.admin.templatetags.admin_static import static
-from django.forms import Form, ModelForm, CharField, HiddenInput
+from django.forms import Form, ModelForm, CharField, HiddenInput, BooleanField
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import FormActions
@@ -32,7 +32,7 @@ class DefaultFormActions(LayoutObject):
             'delete_url': delete_url,
             'success_url': force_text(success_url),
             'modal_form': form.opts.get('modal_form', False),
-            'form_preview': True if form.opts.get('preview_stage', 0) == 1 else False,
+            'form_preview': form.opts.get('preview_stage', False),
             'delete_confirmation': form.opts.get('delete_confirmation', False),
             'form_cfg': json.dumps(form.form_cfg) if getattr(form, 'form_cfg', None) else None,
         })
@@ -82,6 +82,12 @@ class FormMixin:
         return helper
 
     @property
+    def cleaned_form_cfg(self):
+        if 'form_cfg' in self.cleaned_data:
+            return json.loads(self.cleaned_data['form_cfg'])
+        return {}
+
+    @property
     def layout(self):
         return self.helper.layout
 
@@ -94,15 +100,10 @@ class FormMixin:
 class SimpleForm(FormMixin, Form):
     def __init__(self, *args, **kwargs):
         self.object = kwargs.pop('instance', None)
-        # self.model_data = kwargs.pop('model_data', None)
-        self.model_form = kwargs.pop('model_form', None)
+        self.model_data = kwargs.pop('model_data', None)
         success_message = kwargs.pop('success_message', None)
         super().__init__(*args, **kwargs)
 
-        if self.model_data is not None:
-            print('- ' * 30 + 'model data' + ' -' * 30)
-            print(self.opts.get('model_data'))
-            self.form_cfg['model_form'] = self.opts.get('model_data', None)
         if success_message is not None:
             self.form_cfg['success_message'] = success_message
         if self.opts.get('init_chosen_widget', True):
@@ -142,12 +143,6 @@ class GenericModelForm(FormMixin, ModelForm):
             url += '?auto_select_field=' + field_name
             self.fields[field_name].label += self.field_label_addon.format(
                 url, static('admin/img/icon-addlink.svg'), 'Add')
-
-    @property
-    def cleaned_form_cfg(self):
-        if 'form_cfg' in self.cleaned_data:
-            return json.loads(self.cleaned_data['form_cfg'])
-        return {}
 
     def render_form_actions(self):
         form = Form()

@@ -228,6 +228,13 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
       var middleware;
       return middleware = {
         onPageLoad: function () {
+          if (this.jsonCfg.preview_model_form) {
+            $('<input>').attr({
+              type: 'hidden',
+              name: 'preview_model_form',
+              value: $(this.jsonCfg.preview_model_form).formSerialize()
+            }).appendTo('form[data-async]');
+          }
           return $('.url-history-back').click(function (_this) {
             return function (e) {
               e.preventDefault();
