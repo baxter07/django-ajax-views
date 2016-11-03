@@ -14,7 +14,6 @@ from django.contrib import messages
 
 from dateutil.parser import parse
 from crispy_forms.utils import render_crispy_form
-from math import modf
 
 from .conf import settings
 from .helpers import get_objects_for_model, construct_autocomplete_searchform, assign_obj_perm, remove_obj_perm
@@ -271,6 +270,51 @@ class DetailPlugin(ModalPlugin):
         return context
 
 
+# noinspection PyUnresolvedReferences, PyUnusedLocal
+class CreateForm:
+    @property
+    def _headline_prefix(self):
+        return getattr(self.view, 'headline_prefix', settings.CREATE_FORM_HEADLINE_PREFIX)
+
+    @property
+    def _success_url(self):
+        if self.view.success_url:
+            return self.view.success_url
+        return getattr(self.plugin.form_meta, 'success_url', '')
+
+    def post(self, request, *args, **kwargs):
+        self.view.object = None
+
+    def form_valid(self, form):
+        if getattr(form.Meta, 'assign_perm', False):
+            instance = form.save()
+            assign_obj_perm(self.view.request.user, instance)
+
+
+# noinspection PyUnresolvedReferences, PyUnusedLocal
+class UpdateForm:
+    @property
+    def _headline_prefix(self):
+        return getattr(self.view, 'headline_prefix', settings.UPDATE_FORM_HEADLINE_PREFIX)
+
+    def post(self, request, *args, **kwargs):
+        self.view.object = self.view.get_object()
+
+    def get_form_kwargs(self, kwargs):
+        kwargs.update({
+            'save_button_name': getattr(self.view, 'save_button_name', 'Update'),
+            'delete_confirmation': getattr(self.view, 'delete_confirmation', settings.FORM_DELETE_CONFIRMATION),
+            'delete_url': getattr(self.view, 'delete_url', None),
+        })
+        if not kwargs['delete_url'] and self.view.auto_delete_url:
+            url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
+            kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
+            if not isinstance(self.view.object, Group) and not self.view.request.user.has_delete_perm(
+                    self.view.model):
+                kwargs.pop('delete_url', None)
+        return kwargs
+
+
 # noinspection PyCallingNonCallable, PyUnresolvedReferences
 class FormPlugin(ModalPlugin):
     def __init__(self, *args, **kwargs):
@@ -373,9 +417,6 @@ class FormPlugin(ModalPlugin):
         success_url = self.extra._success_url
         if success_url:
             return success_url
-        # if getattr(self.view, 'success_url', None):
-        #     success_url = force_text(self.view.success_url)
-        # else:
         success_url = self.super.get_success_url()
         hashtag = self.request.GET.get('hashtag', None)
         if hashtag:
@@ -392,51 +433,7 @@ class FormPlugin(ModalPlugin):
         return self.super.get_template_names()
 
 
-# noinspection PyUnresolvedReferences, PyUnusedLocal
-class CreateForm:
-    @property
-    def _headline_prefix(self):
-        return getattr(self.view, 'headline_prefix', settings.CREATE_FORM_HEADLINE_PREFIX)
-
-    @property
-    def _success_url(self):
-        if self.view.success_url:
-            return self.view.success_url
-        return getattr(self.plugin.form_meta, 'success_url', '')
-
-    def post(self, request, *args, **kwargs):
-        self.view.object = None
-
-    def form_valid(self, form):
-        if getattr(form.Meta, 'assign_perm', False):
-            instance = form.save()
-            assign_obj_perm(self.view.request.user, instance)
-
-
-# noinspection PyUnresolvedReferences, PyUnusedLocal
-class UpdateForm:
-    @property
-    def _headline_prefix(self):
-        return getattr(self.view, 'headline_prefix', settings.UPDATE_FORM_HEADLINE_PREFIX)
-
-    def post(self, request, *args, **kwargs):
-        self.view.object = self.view.get_object()
-
-    def get_form_kwargs(self, kwargs):
-        kwargs.update({
-            'save_button_name': getattr(self.view, 'save_button_name', 'Update'),
-            'delete_confirmation': getattr(self.view, 'delete_confirmation', settings.FORM_DELETE_CONFIRMATION),
-            'delete_url': getattr(self.view, 'delete_url', None),
-        })
-        if not kwargs['delete_url'] and getattr(self.view, 'auto_delete_url', settings.AUTO_DELETE_URL):
-            url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
-            kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
-            if not isinstance(self.view.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
-                kwargs.pop('delete_url', None)
-        return kwargs
-
-
-class FormSetPlugin(ModalPlugin):
+class FormSetPlugin(FormPlugin):
     def formset_valid(self, formset):
         # if create view
         if getattr(formset.Meta, 'assign_perm', False):
@@ -521,6 +518,10 @@ class PreviewFormPlugin(FormPlugin):
         preview_form.helper.form_class = 'preview-form'
         return self.render_to_response(self.get_context_data({'form': preview_form}))
 
+    def form_invalid(self, form):
+        self.stage = 0
+        return super().form_invalid(form)
+
     def get_template_names(self):
         if self.stage == 1:
             return [self.preview_template_name]
@@ -552,19 +553,4 @@ class DeletePlugin(AjaxPlugin):
     def get_success_url(self):
         if 'success_url' in self.request.GET:
             return self.request.GET.get('success_url')
-        # try:
-        #     instance = self.view.get_object()
-        #     instance.pk = None
-        #     return instance.get_absolute_url()
-        # except:
-        #     pass
         return self.super.get_success_url()
-
-
-# def __getattr__(self, name):
-#     print('getattr >>>', name)
-#     if name != 'extra':
-#         try:
-#             return self.__dict__[name]
-#         except KeyError as e:
-#             raise AttributeError(e)

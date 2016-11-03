@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
+from .conf import settings
 from .forms import DefaultFormHelper
 from .plugins import PluginAdapter, AjaxPlugin, ListPlugin, DetailPlugin, FormPlugin, PreviewFormPlugin,\
     FormSetPlugin, DeletePlugin, CreateForm, UpdateForm
@@ -18,9 +19,7 @@ class ModelFormSet(BaseModelFormSet):
             self.form_action = self.forms[0].helper.form_action
             self.render_form_actions = self.forms[0].render_form_actions()
             self.helper.layout = self.forms[0].helper.layout
-
-    def get_headline(self):
-        return ''
+            self.form = self.forms[0]
 
 try:
     from extra_views import ModelFormSetView
@@ -148,6 +147,7 @@ class AjaxDetailView(GenericBaseView, DetailView):
 class BaseFormView(GenericBaseView):
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''
+    auto_delete_url = settings.AUTO_DELETE_URL
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
@@ -163,6 +163,9 @@ class BaseFormView(GenericBaseView):
     def form_valid(self, form):
         return self._plugin.form_valid(form)
 
+    def form_invalid(self, form):
+        return self._plugin.form_invalid(form)
+
     def get_success_url(self):
         return self._plugin.get_success_url()
 
@@ -174,10 +177,17 @@ class BaseFormView(GenericBaseView):
 class BaseFormSetView(GenericBaseView):
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''
+    auto_delete_url = False
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
+
+    # def post(self, request, *args, **kwargs):
+    #     return self._plugin.post(request, *args, **kwargs)
+
+    # def get_template_names(self):
+    #     return self._plugin.get_template_names()
 
     # def get(self, request, *args, **kwargs):
     #     formset = self.construct_formset()
@@ -193,6 +203,7 @@ class BaseFormSetView(GenericBaseView):
 
     def get_formset(self):
         formset = super().get_formset()
+        print('>>>', formset.form)
         formset.helper = DefaultFormHelper()
         formset.helper.form_tag = False
         return formset

@@ -7,7 +7,7 @@ from .conf import settings
 
 class AjaxMiddleware:
     def process_response(self, request, response):
-        if not request.is_ajax() and not isinstance(response, HttpResponseRedirect):
+        if not request.is_ajax() and not isinstance(response, HttpResponseRedirect) and hasattr(response, 'content'):
             _content = force_text(response.content, encoding=response.charset)
             if '</body>' not in _content:
                 return response

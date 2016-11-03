@@ -59,11 +59,29 @@ class DefaultFormHelper(FormHelper):
 
 # noinspection PyUnresolvedReferences
 class FormMixin:
+    form_kwargs = [
+        'success_url',
+        'form_action',
+        'delete_url',
+        'modal_form',
+        'preview_stage',
+        'model_data',
+        'preview_data',
+        'save_button_name',
+        'init_chosen_widget',
+        'init_date_widget',
+        'delete_confirmation',
+        'form_actions_template',
+    ]
+
     def __init__(self, *args, **kwargs):
         self._helper_instance = None
         self.form_cfg = kwargs.pop('form_cfg', {})
         self.user = kwargs.pop('user', None)
-        self.opts = get_form_helper_kwargs(kwargs)
+        self.opts = {}
+        for key in list(kwargs):
+            if key in self.form_kwargs:
+                self.opts[key] = kwargs.pop(key)
         super().__init__(*args, **kwargs)
 
     @property
@@ -73,6 +91,10 @@ class FormMixin:
         if self.form_cfg:
             self.fields['form_cfg'] = CharField(widget=HiddenInput(), required=False)
             self.fields['form_cfg'].initial = json.dumps(self.form_cfg)
+        try:
+            self.init_add_fields()
+        except AttributeError:
+            pass
         helper = DefaultFormHelper(self)
         if 'form_action' in self.opts:
             helper.form_action = self.opts['form_action']
@@ -80,6 +102,10 @@ class FormMixin:
         helper.append_form_actions()
         self._helper_instance = helper
         return helper
+
+    @helper.setter
+    def helper(self, helper):
+        self._helper_instance = helper
 
     @property
     def cleaned_form_cfg(self):
@@ -117,11 +143,7 @@ class GenericModelForm(FormMixin, ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.json_cache = kwargs.pop('json_cache', {})
-        # model_data = kwargs.pop('model_data', None)
         super().__init__(*args, **kwargs)
-
-        # if model_data:
-        #     self.form_cfg['model_data'] = model_data
 
         for key, value in self.form_cfg.get('related_obj_ids', {}).copy().items():
             field_name = key.replace('_id', '')
@@ -134,6 +156,7 @@ class GenericModelForm(FormMixin, ModelForm):
         if self.opts.get('init_date_widget', True):
             init_dateinput(self.fields.items())
 
+    def init_add_fields(self):
         for field_name, url_name in getattr(self.Meta, 'add_fields', {}).items():
             try:
                 url = reverse(url_name)
@@ -142,7 +165,8 @@ class GenericModelForm(FormMixin, ModelForm):
             # self.fields[field_name].label_suffix = ""  # suffix not supported by django-crispy-forms
             url += '?auto_select_field=' + field_name
             self.fields[field_name].label += self.field_label_addon.format(
-                url, static('admin/img/icon-addlink.svg'), 'Add')
+                url, static('admin/img/icon-addlink.svg'), 'Add'
+            )
 
     def render_form_actions(self):
         form = Form()
@@ -170,28 +194,6 @@ class GenericModelForm(FormMixin, ModelForm):
                 'text': str(instance),
             }
         return instance
-
-
-def get_form_helper_kwargs(kwargs):
-    form_kwargs = [
-        'success_url',
-        'form_action',
-        'delete_url',
-        'modal_form',
-        'preview_stage',
-        'model_data',
-        'preview_data',
-        'save_button_name',
-        'init_chosen_widget',
-        'init_date_widget',
-        'delete_confirmation',
-        'form_actions_template',
-    ]
-    form_opts = {}
-    for key in list(kwargs):
-        if key in form_kwargs:
-            form_opts[key] = kwargs.pop(key)
-    return form_opts
 
 
 # helper.form_tag = False
