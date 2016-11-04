@@ -143,6 +143,7 @@ class GenericModelForm(FormMixin, ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.json_cache = kwargs.pop('json_cache', {})
+        print('>>> pop queryset:', kwargs.pop('queryset', None))
         super().__init__(*args, **kwargs)
 
         for key, value in self.form_cfg.get('related_obj_ids', {}).copy().items():
