@@ -2,14 +2,16 @@ import json
 
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.contrib.admin.templatetags.admin_static import static
-from django.forms import Form, ModelForm, CharField, HiddenInput, BooleanField
+from django.template import Template, Context
+from django.utils.encoding import force_text
+from django.template.loader import get_template
+from django.forms.models import BaseModelFormSet
+from django.forms import Form, ModelForm, CharField, HiddenInput
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.bootstrap import FormActions
 from crispy_forms.layout import LayoutObject, Layout, Submit, HTML
 from crispy_forms.utils import render_crispy_form, TEMPLATE_PACK
-from django.template.loader import get_template
-from django.utils.encoding import force_text
 
 from .helpers import init_chosen_widget, init_dateinput
 
@@ -21,12 +23,7 @@ class DefaultFormActions(LayoutObject):
         delete_url = form.opts.get('delete_url', '')
         if delete_url:
             delete_url += '&' if '?' in delete_url else '?'
-            delete_success_url = form.opts.get('delete_success_url', '')
-            if not delete_success_url and hasattr(form, 'Meta') and hasattr(form.Meta, 'success_url'):
-                delete_success_url = force_text(getattr(form.Meta, 'success_url'))
-            if not delete_success_url:
-                delete_success_url = force_text(success_url)
-            delete_url += 'success_url=' + delete_success_url
+            delete_url += 'success_url=' + force_text(form.opts.get('delete_success_url', success_url))
         template = get_template(form.opts.get('form_actions_template', 'ajaxviews/_form_controls.html'))
         btn_group = template.render({
             'delete_url': delete_url,
@@ -63,6 +60,7 @@ class FormMixin:
         'success_url',
         'form_action',
         'delete_url',
+        'delete_success_url',
         'modal_form',
         'preview_stage',
         'model_data',
@@ -143,7 +141,6 @@ class GenericModelForm(FormMixin, ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.json_cache = kwargs.pop('json_cache', {})
-        print('>>> pop queryset:', kwargs.pop('queryset', None))
         super().__init__(*args, **kwargs)
 
         for key, value in self.form_cfg.get('related_obj_ids', {}).copy().items():
@@ -187,7 +184,7 @@ class GenericModelForm(FormMixin, ModelForm):
         return model.objects.get(pk=int(related_obj_id))
 
     def save(self, commit=True):
-        instance = super().save(commit)
+        instance = super().save(commit=commit)
         if commit and 'auto_select_field' in self.cleaned_form_cfg:
             self.json_cache['auto_select_choice'] = {
                 'pk': instance.pk,
@@ -195,6 +192,21 @@ class GenericModelForm(FormMixin, ModelForm):
                 'text': str(instance),
             }
         return instance
+
+
+class ModelFormSet(BaseModelFormSet):
+    form_actions_template = """
+        <input name="save" class="btn btn-primary" type="submit" value="Save">
+        <a role="button" class="btn btn-default cancel-btn" href="{{ success_url }}">Cancel</a>
+    """
+
+    def __init__(self, *args, **kwargs):
+        self._success_url = kwargs.pop('success_url', None)
+        super().__init__(*args, **kwargs)
+
+    def render_form_actions(self, **kwargs):
+        kwargs['success_url'] = self._success_url
+        return Template(self.form_actions_template).render(Context(kwargs))
 
 
 # helper.form_tag = False

@@ -10,15 +10,21 @@
 
 {% block main_content %}
 
-{% if formset %}
-  <form {% if formset.form_action %}action="{{ formset.form_action }}" {% endif %}data-async="" method="POST">
-    {% crispy formset %}
-    {{ formset.render_form_actions }}
-  </form>
-{% else %}
-  {% crispy form %}
-{% endif %}
+{% crispy form %}
 
 {% endblock %}
 
+{# if formset #}
+{#  <form { if formset.form_action }action="{ formset.form_action }" { endif }data-async="" method="POST"> #}
+    {# crispy formset formset.helper #}
+    {# formset.render_form_actions #}
+    {# or #}
+    {# formset.management_form|crispy #}
+    {# for form in formset #}
+        {# crispy form #}
+    {# endfor #}
+{#  </form>#}
+{# else #}
+  {# crispy form #}
+{# endif #}
 {# form|label_class:"col-lg-2",field_class:"col-lg-8" #}

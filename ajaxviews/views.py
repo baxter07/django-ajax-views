@@ -1,4 +1,3 @@
-from django.forms.models import BaseModelFormSet
 from django.http import HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -10,7 +9,7 @@ except ImportError:
     ModelFormSetView = type('', (), {})
 
 from .conf import settings
-from .forms import DefaultFormHelper
+from .forms import ModelFormSet
 from .plugins import PluginAdapter, AjaxPlugin, ListPlugin, DetailPlugin, FormPlugin, PreviewFormPlugin,\
     FormSetPlugin, DeletePlugin, CreateForm, UpdateForm
 
@@ -157,90 +156,40 @@ class BaseFormView(GenericBaseView):
 
 # noinspection PyUnresolvedReferences
 class BaseFormSetView(GenericBaseView):
-    template_name = 'ajaxviews/generic_form.html'
+    # template_name = 'ajaxviews/generic_form.html'
     success_message = ''
     auto_delete_url = False
+    formset_class = ModelFormSet
 
-    @method_decorator(csrf_exempt)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    # @method_decorator(csrf_exempt)
+    # def dispatch(self, request, *args, **kwargs):
+    #     return super().dispatch(request, *args, **kwargs)
 
-    # def post(self, request, *args, **kwargs):
-    #     return self._plugin.post(request, *args, **kwargs)
+    # def get_extra_form_kwargs(self):
+    #     kwargs = super().get_extra_form_kwargs()
+    #     kwargs.update(self.get_formset_kwargs())
+    #     return self._plugin.get_form_kwargs(kwargs)
 
-    # def get_template_names(self):
-    #     return self._plugin.get_template_names()
-
-    # def get(self, request, *args, **kwargs):
-    #     formset = self.construct_formset()
-    #     return self.render_to_response(
-    #         self.get_context_data(formset=formset),
-    #         context=RequestContext(request),
-    #     )
-
-    def get_extra_form_kwargs(self):
-        kwargs = super().get_extra_form_kwargs()
-        kwargs.update(self.get_formset_kwargs())
-        return self._plugin.get_form_kwargs(kwargs)
-
-    def get_formset(self):
-        formset = super().get_formset()
-        print('>>>', formset.form)
-        formset.helper = DefaultFormHelper()
-        formset.helper.form_tag = False
-        return formset
-
-    def formset_valid(self, formset):
-        self._plugin.formset_valid(formset)
-        return super().formset_valid(formset)
-
-    # def formset_invalid(self, formset):
-    #     return self.render_to_response(
-    #         self.get_context_data(formset=formset),
-    #         context=RequestContext(request),
-    #     )
-
-    def get_success_url(self):
-        return self._plugin.get_success_url()
-
-    # def render_to_response(self, context, **kwargs):
-    #     pass
+    def get_formset_kwargs(self):
+        kwargs = super().get_formset_kwargs()
+        kwargs['success_url'] = self.get_success_url()
+        return kwargs
 
 
 class CreateFormView(BaseFormView, CreateView):
     plugin = ViewFactory('form', 'create')
-
-    # def __init__(self, **kwargs):
-    #     form_class = kwargs.get('form_class') or getattr(self, 'form_class', None)
-    #     if form_class and hasattr(form_class.Meta, 'success_url'):
-    #         kwargs['success_url'] = getattr(form_class.Meta, 'success_url')
-    #     super().__init__(**kwargs)
 
 
 class UpdateFormView(BaseFormView, UpdateView):
     plugin = ViewFactory('form', 'update')
 
 
-class ModelFormSet(BaseModelFormSet):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        print(type(self.forms), self.forms)
-        # if len(self.forms) > 0:
-        if len(self) > 0:
-            self.form_action = self.forms[0].helper.form_action
-            self.render_form_actions = self.forms[0].render_form_actions()
-            self.helper.layout = self.forms[0].helper.layout
-            self.form = self.forms[0]
-
-
 class CreateFormSetView(BaseFormSetView, ModelFormSetView):
     plugin = ViewFactory('formset', 'create')
-    formset_class = ModelFormSet
 
 
 class UpdateFormSetView(BaseFormSetView, ModelFormSetView):
     plugin = ViewFactory('formset', 'update')
-    formset_class = ModelFormSet
 
 
 class PreviewCreateView(BaseFormView, CreateView):
@@ -290,11 +239,3 @@ class DeleteFormView(GenericBaseView, DeleteView):
 
 class PreviewDeleteView(BaseFormView, DeleteView):
     plugin = ViewFactory('delete', 'preview')
-
-
-# else:
-#     def get_form_kwargs(self):
-#         return {}
-#     ModelFormSetView.get_form_kwargs = types.MethodType(lambda self: {}, ModelFormSetView)
-#     ModelFormSetView.get_form_kwargs = types.MethodType(get_form_kwargs, ModelFormSetView)
-#     ModelFormSetView.formset_class = ModelFormSet

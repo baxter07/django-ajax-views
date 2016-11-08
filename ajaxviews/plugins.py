@@ -255,7 +255,8 @@ class DetailPlugin(ModalPlugin):
         Display all objects including those that were marked as deleted by django-safedelete.
         :return: Queryset with or without deleted objects depending on class attribute 'deleted_obj_lookup'
         """
-        if getattr(self.view, 'deleted_obj_lookup', False) and self.view.queryset is None and self.view.model:
+        # if getattr(self.view, 'deleted_obj_lookup', False) and self.view.queryset is None and self.view.model:
+        if getattr(self.view, 'deleted_obj_lookup', False) or self.request.GET.get('deleted_obj_lookup', None):
             return self.view.model._default_manager.all_with_deleted()
         return self.super.get_queryset(**kwargs)
 
@@ -278,6 +279,8 @@ class CreateForm:
 
     @property
     def _success_url(self):
+        if self.view.object and hasattr(self.view.object, 'get_absolute_url'):
+            return None
         if self.view.success_url:
             return self.view.success_url
         return getattr(self.plugin.form_meta, 'success_url', '')
@@ -309,8 +312,9 @@ class UpdateForm:
         if not kwargs['delete_url'] and self.view.auto_delete_url:
             url_name = self.view.json_cfg['view_name'].replace('edit_', 'delete_')
             kwargs['delete_url'] = reverse(url_name, args=(self.view.object.pk,))
-            if not isinstance(self.view.object, Group) and not self.view.request.user.has_delete_perm(
-                    self.view.model):
+            if hasattr(self.plugin.form_meta, 'success_url'):
+                kwargs['delete_success_url'] = self.plugin.form_meta.success_url
+            if not isinstance(self.view.object, Group) and not self.view.request.user.has_delete_perm(self.view.model):
                 kwargs.pop('delete_url', None)
         return kwargs
 
@@ -415,22 +419,21 @@ class FormPlugin(ModalPlugin):
         elif 'success_url' in self.form_cfg:
             return self.form_cfg['success_url']
         success_url = self.extra._success_url
-        if success_url:
-            return success_url
-        success_url = self.super.get_success_url()
+        if not success_url:
+            success_url = self.super.get_success_url()
         hashtag = self.request.GET.get('hashtag', None)
         if hashtag:
             success_url += '#' + hashtag
         return success_url
+
+    def get_template_names(self):
+        return self.super.get_template_names()
 
     def render_to_response(self, context, **kwargs):
         # ignore validation errors on GET requests
         if 'form_data' in self.request.GET:
             context['form'].errors.clear()
         return self.view.render_to_response(context, **kwargs)
-
-    def get_template_names(self):
-        return self.super.get_template_names()
 
 
 class FormSetPlugin(FormPlugin):
