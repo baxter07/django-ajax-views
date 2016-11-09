@@ -240,5 +240,5 @@ class DeleteFormView(GenericBaseView, DeleteView):
         return self._plugin.get_success_url()
 
 
-class PreviewDeleteView(BaseFormView, DeleteView):
-    plugin = ViewFactory('delete', 'preview')
+# class PreviewDeleteView(BaseFormView, DeleteView):
+#     plugin = ViewFactory('delete', 'preview')

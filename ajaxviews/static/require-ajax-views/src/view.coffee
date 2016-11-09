@@ -46,13 +46,10 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       console.log('Debug request: ', _urlKwargs, _jsonData) if @_manager.cfg.debug
 
       url = null
-#      if @modalNr
       if @Q('form[data-async]').length
         url = @Q('form[data-async]').attr('action')
       else if @jsonCfg.full_url?
         url = @jsonCfg.full_url
-#        else
-#          throw 'Modal view has no form action and no full_url specified.'
       else
         url = Urls[viewName or @jsonCfg.view_name](_urlKwargs)
         if location.hash
@@ -75,15 +72,15 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
       jsonData ?= {}
       animate ?= true
       @_initRequest viewName, urlKwargs, jsonData, (response) =>
+        if not $(response).find(@_manager.cfg.html.cfgNode).length
+          # this should only happen if user session has expired
+          location.reload()
         @jsonCfg = @_manager.getJsonCfg(response)
         if @jsonCfg.ajax_load
           @_manager.updateView(response, animate)
           @_manager.debugInfo(@jsonCfg)
           @_loadAjaxView()
           @utils.stopProgressBar()
-        else
-          console.log('this should only happen if user session has expired') if @_manager.cfg.debug
-          location.reload()
 
     requestView: ({viewName, urlKwargs, jsonData, pageLoad, animate} = {}) ->
       viewName ?= null
@@ -122,6 +119,9 @@ define ['cs!manager', 'cs!middleware', 'cs!utils'], (ViewManager, appMiddleware,
         'json_cfg': JSON.stringify(jsonData) if jsonData
       }
       $.get href, data, (response) =>
+        if not $(response).find('.modal').length
+          # this should only happen if user session has expired
+          location.reload()
         $('body').append($(response).find('.modal')[0].outerHTML)
         $(data.modal_id).modal('toggle')
         jsonCfg = @_manager.getJsonCfg(response)

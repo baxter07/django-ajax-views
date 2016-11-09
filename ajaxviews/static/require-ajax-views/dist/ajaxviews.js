@@ -580,17 +580,15 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           }
           return this._initRequest(viewName, urlKwargs, jsonData, function (_this) {
             return function (response) {
+              if (!$(response).find(_this._manager.cfg.html.cfgNode).length) {
+                location.reload();
+              }
               _this.jsonCfg = _this._manager.getJsonCfg(response);
               if (_this.jsonCfg.ajax_load) {
                 _this._manager.updateView(response, animate);
                 _this._manager.debugInfo(_this.jsonCfg);
                 _this._loadAjaxView();
                 return _this.utils.stopProgressBar();
-              } else {
-                if (_this._manager.cfg.debug) {
-                  console.log('this should only happen if user session has expired');
-                }
-                return location.reload();
               }
             };
           }(this));
@@ -668,6 +666,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           return $.get(href, data, function (_this) {
             return function (response) {
               var jsonCfg;
+              if (!$(response).find('.modal').length) {
+                location.reload();
+              }
               $('body').append($(response).find('.modal')[0].outerHTML);
               $(data.modal_id).modal('toggle');
               jsonCfg = _this._manager.getJsonCfg(response);
