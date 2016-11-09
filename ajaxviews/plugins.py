@@ -423,6 +423,8 @@ class FormPlugin(ModalPlugin):
         return self.extra.get_context_data(context)
 
     def get_success_url(self):
+        if not settings.AUTO_SUCCESS_URL:
+            return self.super.get_success_url()
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
         if 'success_url' in self.form_cfg:

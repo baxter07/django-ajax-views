@@ -3,22 +3,10 @@
 Server API
 **********
 
-Mixins
-======
-
-.. automodule:: ajaxviews.mixins
-    :members:
-
 Views
 =====
 
 .. automodule:: ajaxviews.views
-    :members:
-
-Middleware
-==========
-
-.. automodule:: ajaxviews.middleware
     :members:
 
 Queries
@@ -37,6 +25,12 @@ Helpers
 =======
 
 .. automodule:: ajaxviews.helpers
+    :members:
+
+Middleware
+==========
+
+.. automodule:: ajaxviews.middleware
     :members:
 
 .. .. autoclass:: ajaxviews.mixins.AjaxMixin

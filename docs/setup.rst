@@ -89,9 +89,45 @@ django-ajax-views
 
 - ``REQUIRE_MAIN_NAME``
 
-    Default: ``main``
+    Default: ``'main'``
 
     Name of the javascript file (without extension) that's loaded by RequireJS on page load.
+
+- ``AUTO_PAGE_SIZE``
+
+    Default: ``False``
+
+- ``AUTO_FORM_HEADLINE``
+
+    Default: ``False``
+
+- ``CREATE_FORM_HEADLINE_PREFIX``
+
+    Default: ``'Add'``
+
+- ``UPDATE_FORM_HEADLINE_PREFIX``
+
+    Default: ``'Edit'``
+
+- ``GENERIC_FORM_BASE_TEMPLATE``
+
+    Default: ``'ajaxviews/generic_form.html'``
+
+- ``AUTO_SUCCESS_URL``
+
+    Default: ``False``
+
+- ``AUTO_DELETE_URL``
+
+    Default: ``False``
+
+- ``FORM_RELATED_OBJECT_IDS``
+
+    Default: ``False``
+
+- ``FORM_DELETE_CONFIRMATION``
+
+    Default: ``False``
 
 django-crispy-forms
 -------------------

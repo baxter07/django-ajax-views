@@ -78,7 +78,7 @@ execute the :class:`View` class whose file name equals the **URL name** from Dja
 Server Side
 ===========
 
-The server side ``ajaxviews`` app provides views and mixins your views can inherit from.
+The server side ``ajaxviews`` app provides view and form classes you can inherit from.
 
 .. container:: flex-grid
 
@@ -99,12 +99,12 @@ The server side ``ajaxviews`` app provides views and mixins your views can inher
        :name: view classes
 
         from django.views.generic import View
-        from ajaxviews.mixins import AjaxMixin
+        from ajaxviews.views import GenericBaseView
 
-        class MyAjaxView(AjaxMixin, View):
+        class MyAjaxView(GenericBaseView, View):
             ajax_view = True
 
-The :class:`ajaxviews.mixins.AjaxMixin` takes care of passing the **URL name** the view class is mapped to, to the
+The :class:`ajaxviews.views.GenericBaseView` takes care of passing the **URL name** the view class is mapped to, to the
 client side :class:`App`. Add ``ajax_view = True`` to the class if you have created a corresponding JS file. If not
 you can omit the ``ajax_view`` property or set it to ``False``.
 
