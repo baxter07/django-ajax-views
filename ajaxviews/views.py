@@ -170,6 +170,9 @@ class BaseFormSetView(GenericBaseView):
     #     kwargs.update(self.get_formset_kwargs())
     #     return self._plugin.get_form_kwargs(kwargs)
 
+    def formset_valid(self, formset):
+        pass
+
     def get_formset_kwargs(self):
         kwargs = super().get_formset_kwargs()
         kwargs['success_url'] = self.get_success_url()

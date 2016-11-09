@@ -22,7 +22,7 @@ from .helpers import get_objects_for_model, construct_autocomplete_searchform, a
 class PluginAdapter:
     def __init__(self, controls):
         self.controls = controls
-        self.extra = None
+        # self.extra = None
 
     def __getattr__(self, name):
         if name.startswith('_'):
@@ -41,6 +41,8 @@ class PluginAdapter:
                     attr = getattr(control, name)
                     if param:
                         param = attr(param)
+                        if not param:
+                            break
                     else:
                         attr(*args, **kwargs)
             if param is not None:
@@ -54,6 +56,7 @@ class AjaxPlugin:
         self.view = view
         self.view_kwargs = {}
         self.super = None
+        self.extra = None
 
     @property
     def json_cfg(self):
@@ -293,6 +296,12 @@ class CreateForm:
             instance = form.save()
             assign_obj_perm(self.view.request.user, instance)
 
+    def formset_valid(self, formset):
+        if getattr(formset.Meta, 'assign_perm', False):
+            # This needs to be done also for updating formsets (remove/assign)
+            for obj in self.view.object_list:
+                assign_obj_perm(self.request.user, obj)
+
 
 # noinspection PyUnresolvedReferences, PyUnusedLocal
 class UpdateForm:
@@ -416,7 +425,7 @@ class FormPlugin(ModalPlugin):
     def get_success_url(self):
         if 'success_url' in self.request.POST:
             return self.request.POST.get('success_url')
-        elif 'success_url' in self.form_cfg:
+        if 'success_url' in self.form_cfg:
             return self.form_cfg['success_url']
         success_url = self.extra._success_url
         if not success_url:
@@ -438,16 +447,10 @@ class FormPlugin(ModalPlugin):
 
 class FormSetPlugin(FormPlugin):
     def formset_valid(self, formset):
-        # if create view
-        if getattr(formset.Meta, 'assign_perm', False):
-            # This needs to be done also for updating formsets (remove/assign)
-            for obj in self.view.object_list:
-                assign_obj_perm(self.request.user, obj)
-        # response = super().formset_valid(formset)
-        # success_message = self.get_success_message(formset.cleaned_data)
-        # if success_message:
-        #     messages.success(self.request, success_message)
-        # return response
+        self.extra.formset_valid(formset)
+        success_message = self.view.success_message.format(**formset.cleaned_data)
+        if success_message:
+            messages.success(self.request, success_message)
 
 
 class PreviewFormPlugin(FormPlugin):
@@ -557,3 +560,34 @@ class DeletePlugin(AjaxPlugin):
         if 'success_url' in self.request.GET:
             return self.request.GET.get('success_url')
         return self.super.get_success_url()
+
+
+# class ObjectPermMixin:
+#     def dispatch(self, request, *args, **kwargs):
+#         permission = None
+#         for perm in get_perms_for_model(self.model):
+#             if 'access_' in perm.codename:
+#                 permission = self.model.__module__.split('.')[0] + '.' + perm.codename
+#                 break
+#
+#         if not permission:
+#             raise Exception('No access permission configured!')
+#
+#         if 'obj_perm_ids_show' in self.json_cfg:
+#             for object_id in self.json_cfg['obj_perm_ids_show']:
+#                 obj = self.model.objects.get(pk=object_id)
+#                 if not request.user.has_perm(permission, obj):
+#                     assign_perm(permission, request.user, obj)
+#
+#         if 'obj_perm_ids_hide' in self.json_cfg:
+#             for object_id in self.json_cfg['obj_perm_ids_hide']:
+#                 obj = self.model.objects.get(pk=object_id)
+#                 if request.user.has_perm(permission, obj):
+#                     remove_perm(permission, request.user, obj)
+#         return super().dispatch(request, *args, **kwargs)
+#
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         if not 'obj_perm_list' in context:
+#             context['obj_perm_list'] = self.model.objects.all()
+#         return context
