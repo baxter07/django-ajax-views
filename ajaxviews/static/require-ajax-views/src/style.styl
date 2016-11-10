@@ -15,10 +15,10 @@ unless $modal-margin is defined
 unless $sidebar-offset-list is defined
   $sidebar-offset-list = ('xs' 150px) ('sm' 200px) ('md' 250px) ('lg' 300px) ('xl' 400px)
 
-unless $view-size-list-margin is defined
+unless $view-size-list is defined
   $view-size-list = ('xs' 300px) ('sm' 400px) ('md' 500px) ('lg' 600px) ('xl' 800px) ('xxl' 1000px) ('xxxl' 1200px)
 
-//########## PAGE SIZE ##########
+//########## VIEW SIZES ##########
 
 .container-full
   @extend .container
@@ -50,8 +50,6 @@ for size in $view-size-list
       +above($media-width-md)
         margin-left sidebar_size[1]
 
-//########## MODAL SIZE ##########
-
 .modal .modal-dialog.modal-size-full
   width auto
   margin-left $modal-margin
@@ -61,7 +59,36 @@ for size in $view-size-list
   .modal .modal-dialog.modal-size-{size}
     width size[1]
 
-//########## FORM STYLE ##########
+//########## VIEW STYLES ##########
+
+.modal-header
+  > .close
+    margin-top 5px
+  > div
+    @extend .pull-right
+    margin-right 0.8em
+
+.filter-header
+  .popover-title button
+    margin-top -5px
+    color #000
+    &:hover
+      color #6E6E6E
+  .popover-content
+    text-align center
+    > .filter-search
+      margin-top 10px
+    > .filter-values
+      text-align left
+      > label.checkbox
+        margin-left 20px
+        cursor pointer
+    .input-daterange
+      width 300px
+      margin-bottom 10px
+      span.input-group-addon
+        padding-top 0
+        padding-bottom 0
 
 .form-add-link
   @extend .pull-right
@@ -70,3 +97,13 @@ for size in $view-size-list
   > img
     width 15px
     height 15px
+
+#ajax-progress-bar
+  position absolute
+  margin 0
+  height 7px
+  width 100%
+  > .progress-bar
+    -webkit-transition none !important
+    transition none !important
+    line-height 7px

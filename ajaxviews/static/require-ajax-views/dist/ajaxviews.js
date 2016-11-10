@@ -148,9 +148,17 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           },
           mixins: {},
           debug: false,
-          defaults: { progressBar: { animationSpeed: 300 } }
+          defaults: {
+            progressBar: { animationSpeed: 300 },
+            dragAndDrop: {
+              sortableLib: null,
+              forwardElement: '.glyphicon-forward',
+              backwardElement: '.glyphicon-backward'
+            }
+          }
         };
         AjaxApp.config = function (userCfg) {
+          var default_;
           if (userCfg == null) {
             userCfg = {};
           }
@@ -160,8 +168,12 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           if (userCfg.modules != null) {
             $.extend(this._cfg.modules, userCfg.modules);
           }
-          if (userCfg.defaults != null) {
-            $.extend(this._cfg.defaults, userCfg.defaults);
+          for (default_ in userCfg.defaults) {
+            if (this._cfg.defaults[default_] != null) {
+              $.extend(this._cfg.defaults[default_], userCfg.defaults[default_]);
+            } else {
+              this._cfg.defaults[default_] = userCfg.defaults[default_];
+            }
           }
           if (userCfg.mixins != null) {
             this._cfg.mixins = userCfg.mixins;
@@ -358,6 +370,9 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
           }
         },
         onLoad: function () {
+          if (this._manager.cfg.debug) {
+            window.view = this;
+          }
           if (location.search && location.search.indexOf('next=') < 0) {
             history.replaceState({}, null, location.href.split('?')[0]);
           }
@@ -419,6 +434,88 @@ var cs, cs_manager, cs_app, cs_middleware, cs_utils, cs_view, cs_plugins_filterv
             results.push($(dateinput).datepicker(_opts));
           }
           return results;
+        },
+        updateMultipleHiddenInput: function () {
+          var fieldName, formNode;
+          fieldName = this.Q('.drag-and-drop').data('field');
+          this.Q('input[type=\'hidden\'][name=\'' + fieldName + '\']').remove();
+          formNode = this.Q('form[data-async]');
+          return this.Q('.selected-list li').each(function (index, value) {
+            return $('<input>').attr({
+              type: 'hidden',
+              id: 'id_' + fieldName + '_' + index,
+              name: fieldName,
+              value: parseInt($(value).data('id')) || $(value).data('id')
+            }).appendTo(formNode);
+          });
+        },
+        initDragAndDrop: function () {
+          var Sortable, backwardElement, forwardElement;
+          Sortable = this._manager.cfg.defaults.dragAndDrop.sortableLib;
+          forwardElement = this._manager.cfg.defaults.dragAndDrop.forwardElement;
+          backwardElement = this._manager.cfg.defaults.dragAndDrop.backwardElement;
+          if (this.Q('.drag-and-drop').length) {
+            Sortable.create(this.Q('.drag-and-drop').find('.available-list').get(0), {
+              group: 'main',
+              animation: 150
+            });
+            Sortable.create(this.Q('.drag-and-drop').find('.selected-list').get(0), {
+              group: 'main',
+              animation: 150,
+              onSort: function (_this) {
+                return function () {
+                  return _this.utils.updateMultipleHiddenInput();
+                };
+              }(this)
+            });
+            this.utils.updateMultipleHiddenInput();
+            this.Q('.drag-and-drop').find(forwardElement).click(function (_this) {
+              return function (e) {
+                var dragRoot;
+                dragRoot = $(e.currentTarget).parent().parent();
+                $(dragRoot).find('.selected-list').append($(dragRoot).find('.available-list li'));
+                return _this.utils.updateMultipleHiddenInput();
+              };
+            }(this));
+            return this.Q('.drag-and-drop').find(backwardElement).click(function (_this) {
+              return function (e) {
+                var dragRoot;
+                dragRoot = $(e.currentTarget).parent().parent();
+                $(dragRoot).find('.available-list').append($(dragRoot).find('.selected-list li'));
+                return _this.utils.updateMultipleHiddenInput();
+              };
+            }(this));
+          }
+        },
+        initDeleteConfirmation: function () {
+          if (this.Q('.delete-btn[data-toggle=confirmation]').length) {
+            return this.Q('.delete-btn[data-toggle=confirmation]').confirmation({
+              popout: true,
+              singleton: true
+            });
+          }
+        },
+        initChosenWidget: function () {
+          if (this.Q('.chosen-widget').length) {
+            if (this.Q('.modal').length) {
+              return this.Q('.modal').on('shown.bs.modal', function (_this) {
+                return function (e) {
+                  return _this.Q('.chosen-widget', $(e.currentTarget)).chosen();
+                };
+              }(this));
+            } else {
+              return this.Q('.chosen-widget').chosen();
+            }
+          }
+        },
+        initPagination: function () {
+          if (this.Q('.pagination').length) {
+            return this.Q('.pagination').find('span').click(function (_this) {
+              return function (e) {
+                return _this.requestView({ jsonData: { 'ajax_page_nr': parseInt($(e.currentTarget).data('page')) } });
+              };
+            }(this));
+          }
         },
         animateProgressBar: function () {
           var animateProgress, animationSpeed;

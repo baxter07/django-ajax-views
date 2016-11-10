@@ -88,6 +88,8 @@ define ->
               @viewCache._initView()
 
     onLoad: ->
+      window.view = @ if @_manager.cfg.debug
+
       if location.search and location.search.indexOf('next=') < 0
         history.replaceState({}, null, location.href.split('?')[0])
 

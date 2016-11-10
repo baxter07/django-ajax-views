@@ -1,3 +1,4 @@
+.. include:: <isonum.txt>
 
 *****
 Setup
@@ -68,6 +69,12 @@ If you don't want to use the middleware you need to include those scripts in the
 django-ajax-views
 -----------------
 
+- ``REQUIRE_MAIN_NAME``
+
+    Default: ``'main'``
+
+    Name of the javascript file (without extension) that's loaded by RequireJS on page load.
+
 - ``DEFAULT_PAGINATE_BY``
 
     Default: ``30``
@@ -87,19 +94,17 @@ django-ajax-views
 
     Set to ``'danger'`` for compatibility with bootstrap error tags.
 
-- ``REQUIRE_MAIN_NAME``
-
-    Default: ``'main'``
-
-    Name of the javascript file (without extension) that's loaded by RequireJS on page load.
-
 - ``AUTO_PAGE_SIZE``
 
-    Default: ``False``
+    Default: ``True``
+
+    Control the view size using a ``page_size`` attribute on a view class.
 
 - ``AUTO_FORM_HEADLINE``
 
-    Default: ``False``
+    Default: ``True``
+
+    If a ``headline`` property is defined on a forms meta class, it will be displayed with a prefix in generic forms.
 
 - ``CREATE_FORM_HEADLINE_PREFIX``
 
@@ -109,25 +114,44 @@ django-ajax-views
 
     Default: ``'Edit'``
 
+- ``FORM_RELATED_OBJECT_IDS``
+
+    Default: ``True``
+
+    To pass on object ids a form depends on to be constructed or saved from a calling view, define url kwargs
+    in your url config with a ``'_id'`` suffix.
+
 - ``GENERIC_FORM_BASE_TEMPLATE``
 
-    Default: ``'ajaxviews/generic_form.html'``
+    Default: ``None``
 
-- ``AUTO_SUCCESS_URL``
-
-    Default: ``False``
+    Define a base template that the built-in generic form extends from.
 
 - ``AUTO_DELETE_URL``
 
-    Default: ``False``
+    Default: ``True``
 
-- ``FORM_RELATED_OBJECT_IDS``
-
-    Default: ``False``
+    Use a naming convention to automatically parse the delete url string.
+    The view name ``edit_<name>`` is replaced with ``delete_<name>``.
 
 - ``FORM_DELETE_CONFIRMATION``
 
-    Default: ``False``
+    Default: ``True``
+
+    Popup a confirmation box when clicking on a delete button of a generic form.
+
+- ``AUTO_SUCCESS_URL``
+
+    Default: ``True``
+
+    Provides multiple options to define a success url for generic forms.
+
+    **Order of precedence:**
+
+    ``request.POST`` |rarr| ``form_cfg`` |rarr| ``form.Meta`` (if create view) |rarr| ``view class``
+    |rarr| ``get_absolute_url``
+
+    Also if a *hashtag* keyword is passed through the post request, it's value will be appended to the success url.
 
 django-crispy-forms
 -------------------
@@ -153,22 +177,22 @@ django-require
 
 - ``REQUIRE_BASE_URL``
 
-        Default: ``'js'``
+    Default: ``'js'``
 
-        The baseUrl to pass to the r.js optimizer, relative to ``STATIC_ROOT``
+    The baseUrl to pass to the r.js optimizer, relative to ``STATIC_ROOT``
 
 - ``REQUIRE_BUILD_PROFILE``
 
-        Default: ``None``
+    Default: ``None``
 
-        The name of a build profile to use for your project, relative to ``REQUIRE_BASE_URL``.
-        Leave blank to use the built-in default build profile if you do not want to build standalone modules.
+    The name of a build profile to use for your project, relative to ``REQUIRE_BASE_URL``.
+    Leave blank to use the built-in default build profile if you do not want to build standalone modules.
 
 - ``REQUIRE_STANDALONE_MODULES``
 
-        Default: ``{}``
+    Default: ``{}``
 
-        A dictionary of standalone modules to build with almond.js used in production.
+    A dictionary of standalone modules to build with almond.js used in production.
 
 Configure RequireJS
 ===================
@@ -291,6 +315,34 @@ with django-require_ which also includes the ``require.js`` and ``almond.js`` li
 Since Almond doesn't support dynamic loading it's much more lightweight and faster than RequireJS. For development
 you can use the built-in default profile or create your own if desired.
 
+Stylus (CSS)
+============
+
+If you want to use the built-in support for page, modal, form sizes and additional view styles, you need
+to import_ the stylus_ file located in *require-ajax-views* source directory.
+
+Add a ``page_size`` attribute to your view class or pass it on as a keyword argument to your template context to set
+the size for the view (all sizes and view styles can be overridden).
+
+**Default view sizes:**
+
+- ``xs``: *300px*
+- ``sm``: *400px*
+- ``md``: *500px*
+- ``lg``: *600px*
+- ``xl``: *800px*
+- ``xxl``: *1000px*
+- ``xxxl``: *1200px*
+
+**Default sidebar offsets:**
+
+- ``xs``: *150px*
+- ``sm``: *200px*
+- ``md``: *250px*
+- ``lg``: *300px*
+- ``xl``: *400px*
+
+
 .. _top define: #client-application
 
 .. _Django: https://github.com/django/django
@@ -336,3 +388,7 @@ you can use the built-in default profile or create your own if desired.
 .. _autocomplete: https://github.com/yourlabs/django-autocomplete-light
 
 .. _jquery-form: https://github.com/malsup/form
+
+.. _stylus: http://stylus-lang.com/
+
+.. _import: http://stylus-lang.com/docs/import.html

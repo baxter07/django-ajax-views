@@ -15,11 +15,19 @@ define ['cs!manager'], (ViewManager) ->
       defaults:
         progressBar:
           animationSpeed: 300
+        dragAndDrop:
+          sortableLib: null
+          forwardElement: '.glyphicon-forward'
+          backwardElement: '.glyphicon-backward'
 
     @config: (userCfg = {}) ->
       $.extend(@_cfg.html, userCfg.html) if userCfg.html?
       $.extend(@_cfg.modules, userCfg.modules) if userCfg.modules?
-      $.extend(@_cfg.defaults, userCfg.defaults) if userCfg.defaults?
+      for default_ of userCfg.defaults
+        if @_cfg.defaults[default_]?
+          $.extend(@_cfg.defaults[default_], userCfg.defaults[default_])
+        else
+          @_cfg.defaults[default_] = userCfg.defaults[default_]
       @_cfg.mixins = userCfg.mixins if userCfg.mixins?
       if userCfg.debug?
         @_cfg.debug = userCfg.debug

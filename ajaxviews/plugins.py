@@ -282,10 +282,10 @@ class CreateForm:
 
     @property
     def _success_url(self):
-        if self.view.object and hasattr(self.view.object, 'get_absolute_url'):
+        if (self.view.object and hasattr(self.view.object, 'get_absolute_url')) or self.view.success_url:
             return None
-        if self.view.success_url:
-            return self.view.success_url
+        # if self.view.success_url:
+        #     return self.view.success_url
         return getattr(self.plugin.form_meta, 'success_url', '')
 
     def post(self, request, *args, **kwargs):
