@@ -6,6 +6,12 @@ unless $media-width-lg is defined
 unless $media-width-md is defined
   $media-width-md = 992px
 
+unless $sidebar-top-margin is defined
+  $sidebar-top-margin = 0px
+
+unless $progress-bar-height is defined
+  $progress-bar-height = 7px
+
 unless $container-margin is defined
   $container-margin = 2em
 
@@ -38,7 +44,6 @@ for sidebar_size in $sidebar-offset-list
 for size in $view-size-list
   .container-{size}
     @extend .container
-    // +above($media-width-md)
     +above(size[1])
       width size[1]
   for sidebar_size in $sidebar-offset-list
@@ -101,9 +106,16 @@ for size in $view-size-list
 #ajax-progress-bar
   position absolute
   margin 0
-  height 7px
+  height $progress-bar-height
   width 100%
   > .progress-bar
     -webkit-transition none !important
     transition none !important
-    line-height 7px
+    line-height $progress-bar-height
+
+#static-sidebar
+  margin-top $sidebar-top-margin
+  +above($media-width-md)
+    position fixed
+  +below($media-width-md)
+    display none

@@ -88,12 +88,6 @@ django-ajax-views
 
     Number of results by which a search input field should be displayed for the :class:`FilterView`.
 
-- ``MESSAGE_TAGS``
-
-    Default: ``{messages.ERROR: 'error'}``
-
-    Set to ``'danger'`` for compatibility with bootstrap error tags.
-
 - ``AUTO_PAGE_SIZE``
 
     Default: ``True``
@@ -152,6 +146,11 @@ django-ajax-views
     |rarr| ``get_absolute_url``
 
     Also if a *hashtag* keyword is passed through the post request, it's value will be appended to the success url.
+
+..
+    - ``MESSAGE_TAGS``
+        Default: ``{messages.ERROR: 'error'}``
+        Set to ``'danger'`` for compatibility with bootstrap error tags.
 
 django-crispy-forms
 -------------------
@@ -318,32 +317,88 @@ you can use the built-in default profile or create your own if desired.
 Stylus (CSS)
 ============
 
-If you want to use the built-in support for page, modal, form sizes and additional view styles, you need
-to import_ the stylus_ file located in *require-ajax-views* source directory.
+If you want to use support for page, modal, form sizes and additional view styles, you need
+to import_ the `stylus file`_ located in *require-ajax-views* source directory.
 
 Add a ``page_size`` attribute to your view class or pass it on as a keyword argument to your template context to set
 the size for the view (all sizes and view styles can be overridden).
 
-**Default view sizes:**
+Default view sizes:
+    - ``xs``: *300px*
+    - ``sm``: *400px*
+    - ``md``: *500px*
+    - ``lg``: *600px*
+    - ``xl``: *800px*
+    - ``xxl``: *1000px*
+    - ``xxxl``: *1200px*
 
-- ``xs``: *300px*
-- ``sm``: *400px*
-- ``md``: *500px*
-- ``lg``: *600px*
-- ``xl``: *800px*
-- ``xxl``: *1000px*
-- ``xxxl``: *1200px*
+Default sidebar offsets:
+    - ``xs``: *150px*
+    - ``sm``: *200px*
+    - ``md``: *250px*
+    - ``lg``: *300px*
+    - ``xl``: *400px*
 
-**Default sidebar offsets:**
+Template Layouts
+================
 
-- ``xs``: *150px*
-- ``sm``: *200px*
-- ``md``: *250px*
-- ``lg``: *300px*
-- ``xl``: *400px*
+These are examples of how you could design your layouts to make your templates which derive from them ajaxable
+and set the view size.
+
+To render the class strings load the ``viewsize`` template tag which provides a ``container_size`` and
+``sidebar_offset`` tag.
+
+.. code-block:: html
+    :caption: __single_page.html
+    :name: Simple layout
+
+    {% extends '__base.html' %}
+    {% load viewsize %}
+
+    {% block page %}
+
+    <div class="{% container_size %}">
+      {% block header %}{% endblock %}
+      <div id="ajax-content">
+        {% block main_content %}{% endblock %}
+      </div>
+    </div>
+
+    {% endblock %}
+
+container_size:
+    *page_size*: ``lg`` |rarr| ``container-lg``
+
+.. code-block:: html
+    :caption: __left_sidebar.html
+    :name: Layout with sidebar
+
+    {% extends '__base.html' %}
+    {% load viewsize %}
+
+    {% block page %}
+
+    <div class="{% container_size %}">
+      <div id="static-sidebar">
+        {% block side_content %}{% endblock %}
+      </div>
+      <div id="main-content" class="{% sidebar_offset %}">
+        {% block header %}{% endblock %}
+        <div id="ajax-content">
+          {% block main_content %}{% endblock %}
+        </div>
+      </div>
+    </div>
+
+    {% endblock %}
+
+container_size:
+    *page_size*: ``md`` & *sidebar_offset*: ``sm`` |rarr| ``container-md-sidebar-offset-sm``
 
 
 .. _top define: #client-application
+
+.. _source directory: https://github.com/Pyco7/django-ajax-views/tree/master/ajaxviews/static/require-ajax-views/src
 
 .. _Django: https://github.com/django/django
 
@@ -389,6 +444,6 @@ the size for the view (all sizes and view styles can be overridden).
 
 .. _jquery-form: https://github.com/malsup/form
 
-.. _stylus: http://stylus-lang.com/
+.. _stylus file: https://github.com/Pyco7/django-ajax-views/blob/master/ajaxviews/static/require-ajax-views/src/style.styl
 
 .. _import: http://stylus-lang.com/docs/import.html

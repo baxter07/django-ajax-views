@@ -7,8 +7,7 @@ Client API
 
 .. class:: App
 
-    ..
-        :source: /_modules/ajaxviews/static/require-ajax-views/src/app.coffee
+    .. .. :source: /_modules/ajaxviews/static/require-ajax-views/src/app.coffee
 
     This is the client side application that's initialized once the DOM is ready.
 
