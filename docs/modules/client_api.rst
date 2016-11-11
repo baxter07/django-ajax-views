@@ -26,13 +26,16 @@ Client API
     :ivar str modules.viewPath: Default: ``'views/'`` - Path to view modules relative to JS root.
     :ivar str modules.mixinPath: Default: ``'mixins/'`` - Path to mixin modules relative to JS root.
     :ivar str modules.middleware: Default: ``''`` - Name and path of the middleware module relative to JS root.
-    :ivar str html.cfgNode: Default: ``'#config'`` - ID of JSON config script.
-    :ivar str html.ajaxNode: Default: ``'#ajax-content'`` - ID of element that's replaced on :func:`View.requestView`.
-    :ivar str html.modalNode: Default: ``'.modal-dialog'`` - Class of element that's replaced when modal is updated.
     :ivar dict defaults.dateWidget: Default: ``{}`` - Global default datepicker options.
     :ivar int defaults.progressBar.animationSpeed: Default: ``300`` - Speed in milliseconds.
+    :ivar object defaults.dragAndDrop.sortableLib: Default: ``null`` - Set the library_ for drag and drop support.
+    :ivar str defaults.dragAndDrop.forwardElement: Default: ``'.glyphicon-forward'`` - HTML symbol to select all.
+    :ivar str defaults.dragAndDrop.backwardElement: Default: ``'.glyphicon-backward'`` - HTML symbol to deselect all.
 
     ..
+        :ivar str html.cfgNode: Default: ``'#config'`` - ID of JSON config script.
+        :ivar str html.ajaxNode: Default: ``'#ajax-content'`` - ID of element that's replaced on :func:`View.requestView`.
+        :ivar str html.modalNode: Default: ``'.modal-dialog'`` - Class of element that's replaced when modal is updated.
         Options to initialize date input elements.
 
         Args:
@@ -47,8 +50,9 @@ Client API
     :func:`requestView` or :func:`requestModal` is called the :func:`View.onAjaxLoad` function is executed.
     The :func:`View.onLoad` function is always executed but any of those functions can also be omitted.
 
-    .. None of them are required to be added to the view class.
-
+    :ivar object Q: Scope of the current view. Use instead of jquery object to avoid conflicts in the DOM. On page
+        load the **Q** object works the same as the jquery object itself.
+    :ivar str scopeName: Name of the element defining the current scope.
     :ivar dict jsonCfg: Data returned by response.
     :ivar bool initMiddleware: Whether the middleware should be executed or not.
     :ivar dict utils: Helper functions loaded from :class:`Utils` module.
@@ -70,8 +74,8 @@ Client API
         .. image:: /_static/request_view.svg
             :alt: request view from server
 
-        The server side :class:`ajaxviews.mixins.AjaxMixin` handles the incoming request and assigns all parameters
-        to the ``json_cfg`` variable of the view class.
+        The server side :class:`ajaxviews.views.GenericBaseView` handles the incoming request and assigns all
+        parameters to the ``json_cfg`` variable of the view class.
 
         On request complete will update the client side ``jsonCfg`` variable and update the ``#ajax-content`` element
         that's returned by the response. The :func:`View.onAjaxLoad` and :func:`View.onLoad` functions are executed
@@ -225,3 +229,5 @@ Client API
     """
 
 .. _RequireJS: http://requirejs.org
+
+.. _library: http://rubaxa.github.io/Sortable/

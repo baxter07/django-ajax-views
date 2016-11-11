@@ -60,14 +60,15 @@ class ViewFactory:
 
 class GenericBaseView:
     """
-    This is the core mixin that's used for all views to establish communication with the client side :class:`App`.
+    This is the base view which establishes communication with the client side :class:`App`.
 
     It merges the optional URL parameters from the GET request with the keyword arguments retrieved from
     Django's URL conf into ``json_cfg``.
 
     :ivar bool ajax_view: Set to True if you have created a client side module associated with the view
-        class that's inheriting from this mixin.
+        class that's inheriting from this view.
     :ivar dict json_cfg: Data parsed from incoming requests and returned in each response.
+    :ivar str page_size: Define the width of the view.
     """
     ajax_view = False
 

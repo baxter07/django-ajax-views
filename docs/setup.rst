@@ -284,7 +284,8 @@ Build profile
 
 For better performance in production use Almond_ as replacement AMD loader for RequireJS. The following build
 profile bundles all your modules and dependencies into a single file using the ``r.js`` optimizer. It's shipped
-with django-require_ which also includes the ``require.js`` and ``almond.js`` libraries.
+with django-require_ which also includes the ``require.js`` and ``almond.js`` libraries. Since Almond doesn't
+support dynamic loading it's much more lightweight and faster than RequireJS.
 
 .. code-block:: javascript
     :caption: app.build.js
@@ -297,6 +298,7 @@ with django-require_ which also includes the ``require.js`` and ``almond.js`` li
             'cs!middleware',
             'cs!mixins/mixin_name',
             'cs!views/view_name',
+            // ...
         ],
         exclude: ['coffee-script'],
         insertRequire: ['main'],
@@ -311,17 +313,16 @@ with django-require_ which also includes the ``require.js`` and ``almond.js`` li
              Since those modules are loaded dynamically they can't be traced automatically on build if they are not
              required elsewhere in a modules `top define`_ call.
 
-Since Almond doesn't support dynamic loading it's much more lightweight and faster than RequireJS. For development
-you can use the built-in default profile or create your own if desired.
+For development you can use the built-in default profile or create your own if desired.
 
 Stylus (CSS)
 ============
 
-If you want to use support for page, modal, form sizes and additional view styles, you need
+If you want to use support for page, modal and form sizes and additional view styles, you need
 to import_ the `stylus file`_ located in *require-ajax-views* source directory.
 
 Add a ``page_size`` attribute to your view class or pass it on as a keyword argument to your template context to set
-the size for the view (all sizes and view styles can be overridden).
+the size for the view (all sizes, offsets and view styles can be overridden).
 
 Default view sizes:
     - ``xs``: *300px*
@@ -338,6 +339,8 @@ Default sidebar offsets:
     - ``md``: *250px*
     - ``lg``: *300px*
     - ``xl``: *400px*
+
+.. There is also a compiled ``style.css`` file in the ``dist`` folder from which you can copy paste into your css file.
 
 Template Layouts
 ================
