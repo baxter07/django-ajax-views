@@ -15,6 +15,22 @@ from .plugins import PluginAdapter, AjaxPlugin, ListPlugin, DetailPlugin, FormPl
 
 
 class ViewFactory:
+    """
+    To reduce the use of multiple inheritance this class creates a plugin instance which controls the behavior
+    of the view. Using composition instead, each method of Django's class based views is called only once and
+    the plugin takes care of processing the request.
+
+    Supported plugins:
+        - list
+        - detail
+        - form (create, update)
+        - formset (create, update)
+        - formpreview (create, update)
+        - delete
+
+    :var str first arg: Name of one of the supported plugins. If not specified the base plugin will be used.
+    :var str second arg: Optionally specify the type of the plugin if available.
+    """
     _plugins = {
         'base': AjaxPlugin,
         'list': ListPlugin,
@@ -27,7 +43,6 @@ class ViewFactory:
     _extras = {
         'create': CreateForm,
         'update': UpdateForm,
-        'preview': None,
     }
 
     def __init__(self, *args):
@@ -65,6 +80,9 @@ class GenericBaseView:
     It merges the optional URL parameters from the GET request with the keyword arguments retrieved from
     Django's URL conf into ``json_cfg``.
 
+    You can control the behaviour of your views by extending from this view and by setting the :attr:`plugin`
+    attribute using the :class:`ViewFactory`.
+
     :ivar bool ajax_view: Set to True if you have created a client side module associated with the view
         class that's inheriting from this view.
     :ivar dict json_cfg: Data parsed from incoming requests and returned in each response.
@@ -75,10 +93,7 @@ class GenericBaseView:
     def __init__(self, *args, **kwargs):
         self.json_cfg = {}
         self.ajax_view = kwargs.pop('ajax_view', self.ajax_view)
-        if hasattr(self, 'plugin'):
-            self._plugin = self.plugin.create(self, super(), **kwargs)
-        else:
-            self._plugin = ViewFactory().create(self, super(), **kwargs)
+        self._plugin = getattr(self, 'plugin', ViewFactory()).create(self, super(), **kwargs)
         if self._plugin.view_kwargs:
             kwargs.update(self._plugin.view_kwargs)
         super().__init__(*args, **kwargs)
@@ -95,10 +110,28 @@ class GenericBaseView:
 # noinspection PyUnresolvedReferences
 class AjaxListView(GenericBaseView, ListView):
     """
-    The ListView can be updated by calling :func:`View.requestView` from client side view class.
+    The ListView can be updated by calling :func:`View.requestView` from the client side view class.
 
-    :ivar int paginate_by: number of results in list by which to paginate.
-    :ivar int filter_search_input_by: number of results in list view filters by which to display a search input.
+    If you have assigned the :class:`ajaxviews.queries.AjaxQuerySet` as manager to the model class, you can
+    use the ``filter_fields`` to define filter parameters for the given view. It contains a list of field paths
+    that are automatically applied as filters for all requests where ``get_queryset`` is called.
+
+    Field options:
+        - string only will filter it's path by the ``selected_filter_values`` passed in the ``json_cfg``.
+          It's usually a list of pk's.
+        - using a tuple refines the query
+            - ``('<field_path>', 'date')`` Filter date range
+            - ``('<field_path>', 'set', <set_of_tuples>)`` Filter first element of tuple
+            - ``('<field_path>', 'exclude')`` Do not apply filter. Use ``exclude_filter`` or ``exclude_sort`` to
+              only ignore one of these filters.
+
+    The ``filter_index`` and ``sort_index`` parameters can be applied independently on different fields.
+
+    :ivar list filter_fields: List of fields to be filtered when a ``filter_index`` is passed in the request.
+        The index matches the order of the list.
+    :ivar bool filter_user: Whether to filter objects the authenticated user has access to. Default is False.
+    :ivar int paginate_by: Number of results in list by which to paginate.
+    :ivar int filter_search_input_by: Number of results in list view filters by which to display a search input.
     """
     plugin = ViewFactory('list')
 
@@ -106,9 +139,9 @@ class AjaxListView(GenericBaseView, ListView):
         """
         Called for all GET requests
 
-        :param request: request object
-        :param args: positional url arguments
-        :param kwargs: keyword url arguments
+        :param request: Request object
+        :param args: Positional url arguments
+        :param kwargs: Keyword url arguments
         """
         response = self._plugin.get(request, *args, **kwargs)
         return response or super().get(request, *args, **kwargs)

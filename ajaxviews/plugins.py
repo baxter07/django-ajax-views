@@ -98,15 +98,6 @@ class AjaxPlugin:
 
 
 class ListPlugin(AjaxPlugin):
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     if not getattr(self.view, 'paginate_by', None):
-    #         self.view.paginate_by = settings.DEFAULT_PAGINATE_BY
-
-    @property
-    def model(self):
-        return self.view.model
-
     @property
     def paginate_by(self):
         return self.view.paginate_by if self.view.paginate_by else settings.DEFAULT_PAGINATE_BY
@@ -154,7 +145,7 @@ class ListPlugin(AjaxPlugin):
 
     def get_queryset(self, **kwargs):
         if getattr(self.view, 'filter_user', False):
-            queryset = get_objects_for_model(self.request.user, self.model)
+            queryset = get_objects_for_model(self.request.user, self.view.model)
         else:
             queryset = self.super.get_queryset()
         if hasattr(queryset, 'default_filter'):
@@ -180,8 +171,8 @@ class ListPlugin(AjaxPlugin):
 
     def _get_queryset_all(self):
         if getattr(self.view, 'filter_user', False):
-            return get_objects_for_model(self.request.user, self.model)
-        return self.model.objects.all()
+            return get_objects_for_model(self.request.user, self.view.model)
+        return self.view.model.objects.all()
 
     def _multiple_filter_response(self, values_list):
         selected_values = []

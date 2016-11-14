@@ -345,17 +345,16 @@ Default sidebar offsets:
 Template Layouts
 ================
 
-These are examples of how you could design your layouts to make your templates which derive from them ajaxable
-and set the view size.
+These are examples of how you could design your layouts to make your templates ajaxable and set the view size.
 
 To render the class strings load the ``viewsize`` template tag which provides a ``container_size`` and
 ``sidebar_offset`` tag.
 
 .. code-block:: html
-    :caption: __single_page.html
+    :caption: single_page.html
     :name: Simple layout
 
-    {% extends '__base.html' %}
+    {% extends 'base.html' %}
     {% load viewsize %}
 
     {% block page %}
@@ -370,20 +369,20 @@ To render the class strings load the ``viewsize`` template tag which provides a 
     {% endblock %}
 
 container_size:
-    *page_size*: ``lg`` |rarr| ``container-lg``
+    *page_size*: ``lg`` |rarr| ``.container-lg``
 
 .. code-block:: html
-    :caption: __left_sidebar.html
+    :caption: left_sidebar.html
     :name: Layout with sidebar
 
-    {% extends '__base.html' %}
+    {% extends 'base.html' %}
     {% load viewsize %}
 
     {% block page %}
 
     <div class="{% container_size %}">
       <div id="static-sidebar">
-        {% block side_content %}{% endblock %}
+        {% block sidebar_content %}{% endblock %}
       </div>
       <div id="main-content" class="{% sidebar_offset %}">
         {% block header %}{% endblock %}
@@ -396,7 +395,13 @@ container_size:
     {% endblock %}
 
 container_size:
-    *page_size*: ``md`` & *sidebar_offset*: ``sm`` |rarr| ``container-md-sidebar-offset-sm``
+    *page_size*: ``md`` & *sidebar_offset*: ``sm`` |rarr| ``.container-md-sidebar-offset-sm``
+
+Ideally you'd have a base template from which your layout templates extend from. The templates containing the
+content of the view derive from your layout templates.
+
+.. image:: _static/template_layout.svg
+    :alt: Template layout
 
 
 .. _top define: #client-application

@@ -15,7 +15,7 @@ class AjaxQuerySet(QuerySet):
         # args = set()
         # args.update((Q(field__isnull=True) | Q(field__name='none'),))
         filter_field = opts.get('filter_field', None)
-        if isinstance(filter_field, tuple) and len(filter_field) == 2 and\
+        if isinstance(filter_field, tuple) and len(filter_field) == 2 and \
            (filter_field[1] == 'exclude' or filter_field[1] == 'exclude_filter'):
             return self.filter(*args, **kwargs)
 
