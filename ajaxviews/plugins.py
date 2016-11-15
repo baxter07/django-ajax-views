@@ -246,12 +246,14 @@ class DetailPlugin(ModalPlugin):
 
     def get_queryset(self, **kwargs):
         """
-        Display all objects including those that were marked as deleted by django-safedelete.
-        :return: Queryset with or without deleted objects depending on class attribute 'deleted_obj_lookup'
+        If using django-safedelete, objects that were marked as deleted will not be displayed.
+        Set class attribute ``deleted_obj_lookup = True`` or pass it in the request to display deleted
+        objects as well.
+        :return: Queryset with or without deleted objects.
         """
         # if getattr(self.view, 'deleted_obj_lookup', False) and self.view.queryset is None and self.view.model:
         if getattr(self.view, 'deleted_obj_lookup', False) or self.request.GET.get('deleted_obj_lookup', None):
-            return self.view.model._default_manager.all_with_deleted()
+            return self.view.model._default_manager.all_with_deleted().filter(**kwargs)
         return self.super.get_queryset(**kwargs)
 
     def get_context_data(self, context):

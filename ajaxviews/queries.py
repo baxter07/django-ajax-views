@@ -3,8 +3,15 @@ from django.db.models import QuerySet
 
 
 class AjaxQuerySet(QuerySet):
-    """ define field type in views e.g. fk, m2m, set
-        specify field name and it's path
+    """
+    This QuerySet enhances generic filter options that work together with server side
+    :class:`ajaxviews.views.AjaxListView` and client side :class:`FilterView`.
+
+    The ``selected_filter_index`` specifies the field to apply the ``selected_filter_values``.
+
+    The ``sort_index`` and ``sort_order`` work independently from filter index and values.
+
+    :var bool distinct_qs: Apply distinct filter option. Default is True.
     """
     distinct_qs = True
 

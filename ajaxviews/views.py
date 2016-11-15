@@ -110,19 +110,21 @@ class GenericBaseView:
 # noinspection PyUnresolvedReferences
 class AjaxListView(GenericBaseView, ListView):
     """
-    The ListView can be updated by calling :func:`View.requestView` from the client side view class.
+    The list view can be updated by calling :func:`View.requestView` from the client side view class.
 
     If you have assigned the :class:`ajaxviews.queries.AjaxQuerySet` as manager to the model class, you can
     use the ``filter_fields`` to define filter parameters for the given view. It contains a list of field paths
     that are automatically applied as filters for all requests where ``get_queryset`` is called.
 
+    The ``selected_filter_index`` is the index to access the ``filter_fields`` list.
+
     Field options:
-        - string only will filter it's path by the ``selected_filter_values`` passed in the ``json_cfg``.
-          It's usually a list of pk's.
+        - A string only will filter it's path by the ``selected_filter_values`` passed in the ``json_cfg``.
+          This is usually a list of pk's.
         - using a tuple refines the query
             - ``('<field_path>', 'date')`` Filter date range
             - ``('<field_path>', 'set', <set_of_tuples>)`` Filter first element of tuple
-            - ``('<field_path>', 'exclude')`` Do not apply filter. Use ``exclude_filter`` or ``exclude_sort`` to
+            - ``('<field_path>', 'exclude')`` Ignore filter. Use ``exclude_filter`` or ``exclude_sort`` to
               only ignore one of these filters.
 
     The ``filter_index`` and ``sort_index`` parameters can be applied independently on different fields.
@@ -130,19 +132,16 @@ class AjaxListView(GenericBaseView, ListView):
     :ivar list filter_fields: List of fields to be filtered when a ``filter_index`` is passed in the request.
         The index matches the order of the list.
     :ivar bool filter_user: Whether to filter objects the authenticated user has access to. Default is False.
-    :ivar int paginate_by: Number of results in list by which to paginate.
+    :ivar int paginate_by: Number of results by which to paginate.
     :ivar int filter_search_input_by: Number of results in list view filters by which to display a search input.
     """
     plugin = ViewFactory('list')
 
     def get(self, request, *args, **kwargs):
-        """
-        Called for all GET requests
-
-        :param request: Request object
-        :param args: Positional url arguments
-        :param kwargs: Keyword url arguments
-        """
+        # Called for all GET requests
+        # :param request: Request object
+        # :param args: Positional url arguments
+        # :param kwargs: Keyword url arguments
         response = self._plugin.get(request, *args, **kwargs)
         return response or super().get(request, *args, **kwargs)
 
@@ -152,6 +151,14 @@ class AjaxListView(GenericBaseView, ListView):
 
 # noinspection PyUnresolvedReferences
 class AjaxDetailView(GenericBaseView, DetailView):
+    """
+    The detail view can be displayed in bootstrap modals without extra implementation.
+    Simply add ``.modal-link`` to an html link tag with a href that points to a view that inherits from this view.
+    Or you can call :class:`View.requestModal` passing in the url of the detail view.
+
+    If a generic form view is opened in a modal and saved, the underlying detail view is reloaded automatically
+    to display the changes.
+    """
     plugin = ViewFactory('detail')
 
     def get_queryset(self, **kwargs):
@@ -160,6 +167,26 @@ class AjaxDetailView(GenericBaseView, DetailView):
 
 # noinspection PyUnresolvedReferences
 class BaseFormView(GenericBaseView):
+    """
+    ..include:: < isonum.txt >
+    The base view for normal and preview forms.
+
+    The ``model`` and ``success_message`` attributes from the form meta are automatically added to the view class.
+
+    ``related_obj_ids`` are used to pass on object pk's from the calling view to the requested view
+    through url kwargs.
+
+    If ``form_cfg`` is passed through the post request, it's passed on when initializing the form.
+
+    ``auto_select_field`` is used to update a select field when an element has been added by using ``add_fields``
+    in the forms meta class.
+
+    Order of precedence for ``success_url``:
+
+    ``request.POST`` > ``form_cfg`` > ``form.Meta`` (if create view) > ``view class`` > ``get_absolute_url``
+
+    :var str template_name: The template to render the form. Default: ``ajaxviews/generic_form.html``
+    """
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''
     auto_delete_url = settings.AUTO_DELETE_URL
