@@ -241,7 +241,8 @@ class BaseFormSetView(GenericBaseView):
     #     return self._plugin.get_form_kwargs(kwargs)
 
     def formset_valid(self, formset):
-        return self._plugin.formset_valid(formset)
+        self._plugin.formset_valid(formset)
+        return super().formset_valid(formset)
 
     def get_formset_kwargs(self):
         kwargs = super().get_formset_kwargs()

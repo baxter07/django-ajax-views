@@ -443,7 +443,7 @@ class FormPlugin(ModalPlugin):
 class FormSetPlugin(FormPlugin):
     def formset_valid(self, formset):
         self.extra.formset_valid(formset)
-        success_message = self.view.success_message.format(**formset.cleaned_data)
+        success_message = self.view.success_message  # .format(**formset.cleaned_data)
         if success_message:
             messages.success(self.request, success_message)
 
