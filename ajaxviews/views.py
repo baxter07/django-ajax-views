@@ -168,7 +168,7 @@ class AjaxDetailView(GenericBaseView, DetailView):
 # noinspection PyUnresolvedReferences
 class BaseFormView(GenericBaseView):
     """
-    ..include:: < isonum.txt >
+    .. include:: <isonum.txt>
     The base view for normal and preview forms.
 
     The ``model`` and ``success_message`` attributes from the form meta are automatically added to the view class.
@@ -176,16 +176,19 @@ class BaseFormView(GenericBaseView):
     ``related_obj_ids`` are used to pass on object pk's from the calling view to the requested view
     through url kwargs.
 
-    If ``form_cfg`` is passed through the post request, it's passed on when initializing the form.
+    If ``form_cfg`` is passed through the post request, it's passed on to the form when it's initialized.
 
     ``auto_select_field`` is used to update a select field when an element has been added by using ``add_fields``
     in the forms meta class.
 
-    Order of precedence for ``success_url``:
+    There are multiple ways to set a success url for the form view.
+    This is the order of precedence for ``success_url``:
 
-    ``request.POST`` > ``form_cfg`` > ``form.Meta`` (if create view) > ``view class`` > ``get_absolute_url``
+    ``request.POST`` |rarr| ``form_cfg`` |rarr| ``form.Meta`` (if create view) |rarr| ``view class`` |rarr|
+    ``get_absolute_url``
 
-    :var str template_name: The template to render the form. Default: ``ajaxviews/generic_form.html``
+    :var str template_name: The template to render the form. Default: ``'ajaxviews/generic_form.html'``
+    :var str success_message: Message to display on successful form save. Default: ``''``
     """
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''
@@ -217,6 +220,12 @@ class BaseFormView(GenericBaseView):
 
 # noinspection PyUnresolvedReferences
 class BaseFormSetView(GenericBaseView):
+    """
+    This view renders a formset using the ``ModelFormSetView`` class from ``django-extra-views``.
+
+    The ``success_url`` is passed on to the formset and a message is displayed on successful form save if
+    ``success_message`` has been added to the view class.
+    """
     # template_name = 'ajaxviews/generic_form.html'
     success_message = ''
     auto_delete_url = False
@@ -232,7 +241,7 @@ class BaseFormSetView(GenericBaseView):
     #     return self._plugin.get_form_kwargs(kwargs)
 
     def formset_valid(self, formset):
-        pass
+        return self._plugin.formset_valid(formset)
 
     def get_formset_kwargs(self):
         kwargs = super().get_formset_kwargs()
@@ -241,22 +250,64 @@ class BaseFormSetView(GenericBaseView):
 
 
 class CreateFormView(BaseFormView, CreateView):
+    """
+    .. Use the form meta's ``success_url`` to redirect the view to.
+    Form view used to create model objects. Inherits functionality from :class:`BaseFormView`.
+
+    Assign django-guardian's object permissions if ``assign_perm`` attribute has been added to the class.
+
+    :var str headline_prefix: The prefix to prepend to the headline which is specified in the form meta.
+        Default: ``Add``
+    :var bool assign_perm: Save object permissions for new model instance of authenticated user.
+        Default: ``False``
+    """
     plugin = ViewFactory('form', 'create')
 
 
 class UpdateFormView(BaseFormView, UpdateView):
+    """
+    Form view used to update model objects. Inherits functionality from :class:`BaseFormView`.
+
+    :var str headline_prefix: The prefix to prepend to the headline which is specified in the form meta.
+        Default: ``Update``
+    :var bool auto_delete_url: Wheter or not to use ``AUTO_DELETE_URL``. Default: ``True``
+    :var str delete_url: Parse delete url for the current view using a naming convention.
+        View name: ``edit_<name>`` |rarr| ``delete_<name>`` Default: ``True``
+    """
     plugin = ViewFactory('form', 'update')
 
 
 class CreateFormSetView(BaseFormSetView, ModelFormSetView):
+    """
+    FormSet view used to create multiple model objects. Inherits functionality from :class:`BaseFormSetView`.
+
+    :var str headline_prefix: The prefix to prepend to the headline. Default: ``Add``
+    """
     plugin = ViewFactory('formset', 'create')
 
 
 class UpdateFormSetView(BaseFormSetView, ModelFormSetView):
+    """
+    FormSet view used to update multiple model objects. Inherits functionality from :class:`BaseFormSetView`.
+
+    :var str headline_prefix: The prefix to prepend to the headline. Default: ``Update``
+    """
     plugin = ViewFactory('formset', 'update')
 
 
 class PreviewCreateView(BaseFormView, CreateView):
+    """
+    Preview for model forms to confirm actions.
+
+    Stages:
+        - 0 - GET: display model form
+        - 1 - POST: submitted model form and render preview form (process_preview)
+        - 2 - POST: submitted preview form and save model form (done)
+
+    :param str preview_template_name: Template to use to render the preview.
+        Default: ``'ajaxviews/generic_form.html'``
+    :param object preview_form_class: Form class to use for preview stage e.g. :class:`SimpleForm`.
+    """
     plugin = ViewFactory('formpreview', 'create')
 
     def get_form_class(self):
@@ -271,6 +322,9 @@ class PreviewCreateView(BaseFormView, CreateView):
 
 
 class PreviewUpdateView(BaseFormView, UpdateView):
+    """
+    Works the same as :class:`PreviewCreateView` except for updating model objects.
+    """
     plugin = ViewFactory('formpreview', 'update')
 
     def get_form_class(self):

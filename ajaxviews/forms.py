@@ -122,6 +122,9 @@ class FormMixin:
 
 
 class SimpleForm(FormMixin, Form):
+    """
+    Enhanced use of django ``Form`` class.
+    """
     def __init__(self, *args, **kwargs):
         self.object = kwargs.pop('instance', None)
         self.model_data = kwargs.pop('model_data', None)
@@ -137,6 +140,9 @@ class SimpleForm(FormMixin, Form):
 
 
 class GenericModelForm(FormMixin, ModelForm):
+    """
+    Use of django ``ModelForm`` and ``django-crispy-forms`` to simplify construction of model forms.
+    """
     field_label_addon = """<a class="modal-link form-add-link" href="{0}"><img src="{1}" alt="{2}"/></a>"""
 
     def __init__(self, *args, **kwargs):
@@ -195,6 +201,12 @@ class GenericModelForm(FormMixin, ModelForm):
 
 
 class ModelFormSet(BaseModelFormSet):
+    """
+    Use this form to render form actions at the bottom of the formset.
+
+    :var str form_actions_template: Template to render save and cancel buttons. Be sure to use
+        the ``{{ success_url }}`` tag for your cancel button if you want to override this template.
+    """
     form_actions_template = """
         <input name="save" class="btn btn-primary" type="submit" value="Save">
         <a role="button" class="btn btn-default cancel-btn" href="{{ success_url }}">Cancel</a>

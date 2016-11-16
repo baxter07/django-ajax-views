@@ -32,5 +32,3 @@ Middleware
 
 .. automodule:: ajaxviews.middleware
     :members:
-
-.. .. autoclass:: ajaxviews.mixins.AjaxMixin

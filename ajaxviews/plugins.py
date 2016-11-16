@@ -291,7 +291,7 @@ class CreateForm:
 
     def formset_valid(self, formset):
         if getattr(formset.Meta, 'assign_perm', False):
-            # This needs to be done also for updating formsets (remove/assign)
+            # TODO this needs to be done also for updating formsets (remove/assign)
             for obj in self.view.object_list:
                 assign_obj_perm(self.request.user, obj)
 
@@ -449,16 +449,6 @@ class FormSetPlugin(FormPlugin):
 
 
 class PreviewFormPlugin(FormPlugin):
-    """
-    Preview for model forms to confirm actions.
-
-    Stages:
-        0 - GET: display model form
-        1 - POST: submitted model form and render preview form (process_preview)
-        2 - POST: submitted preview form and save model form (done)
-
-    :param int stage: the form construction varies depending on the stage
-    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.stage = 0
