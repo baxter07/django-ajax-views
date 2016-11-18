@@ -21,12 +21,12 @@ class ViewFactory:
     the plugin takes care of processing the request.
 
     Supported plugins:
-        - list
-        - detail
-        - form (create, update)
-        - formset (create, update)
-        - formpreview (create, update)
-        - delete
+      - list
+      - detail
+      - form (create, update)
+      - formset (create, update)
+      - formpreview (create, update)
+      - delete
 
     :var str first arg: Name of one of the supported plugins. If not specified the base plugin will be used.
     :var str second arg: Optionally specify the type of the plugin if available.
@@ -169,6 +169,7 @@ class AjaxDetailView(GenericBaseView, DetailView):
 class BaseFormView(GenericBaseView):
     """
     .. include:: <isonum.txt>
+
     The base view for normal and preview forms.
 
     The ``model`` and ``success_message`` attributes from the form meta are automatically added to the view class.
@@ -253,6 +254,7 @@ class BaseFormSetView(GenericBaseView):
 class CreateFormView(BaseFormView, CreateView):
     """
     .. Use the form meta's ``success_url`` to redirect the view to.
+
     Form view used to create model objects. Inherits functionality from :class:`BaseFormView`.
 
     Assign django-guardian's object permissions if ``assign_perm`` attribute has been added to the class.

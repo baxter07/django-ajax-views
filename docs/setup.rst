@@ -104,9 +104,13 @@ django-ajax-views
 
     Default: ``'Add'``
 
+    Text prepended to headline for create views.
+
 - ``UPDATE_FORM_HEADLINE_PREFIX``
 
     Default: ``'Edit'``
+
+    Text prepended to headline for update views.
 
 - ``FORM_RELATED_OBJECT_IDS``
 
@@ -324,21 +328,24 @@ to import_ the `stylus file`_ located in *require-ajax-views* source directory.
 Add a ``page_size`` attribute to your view class or pass it on as a keyword argument to your template context to set
 the size for the view (all sizes, offsets and view styles can be overridden).
 
-Default view sizes:
-    - ``xs``: *300px*
-    - ``sm``: *400px*
-    - ``md``: *500px*
-    - ``lg``: *600px*
-    - ``xl``: *800px*
-    - ``xxl``: *1000px*
-    - ``xxxl``: *1200px*
+.. hlist::
+   :columns: 2
 
-Default sidebar offsets:
-    - ``xs``: *150px*
-    - ``sm``: *200px*
-    - ``md``: *250px*
-    - ``lg``: *300px*
-    - ``xl``: *400px*
+   * Default view sizes:
+       - ``xs``: *300px*
+       - ``sm``: *400px*
+       - ``md``: *500px*
+       - ``lg``: *600px*
+       - ``xl``: *800px*
+       - ``xxl``: *1000px*
+       - ``xxxl``: *1200px*
+
+   * Default sidebar offsets:
+       - ``xs``: *150px*
+       - ``sm``: *200px*
+       - ``md``: *250px*
+       - ``lg``: *300px*
+       - ``xl``: *400px*
 
 .. There is also a compiled ``style.css`` file in the ``dist`` folder from which you can copy paste into your css file.
 
