@@ -33,7 +33,7 @@ class AjaxMiddleware:
             if hasattr(response, 'context_data'):
                 json_cfg = response.context_data.get('json_cfg', {})
 
-            template = get_template('ajaxviews/__middleware.html')
+            template = get_template('ajaxviews/_middleware.html')
             html = template.render({
                 'json_cfg': json_cfg,
                 'main_name': settings.REQUIRE_MAIN_NAME,
