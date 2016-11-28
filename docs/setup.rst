@@ -347,6 +347,14 @@ the size for the view (all sizes, offsets and view styles can be overridden).
        - ``lg``: *300px*
        - ``xl``: *400px*
 
+Check out the source file for the following view styles:
+
+    * ``.modal-header``
+    * ``.filter-header``
+    * ``.form-add-link``
+    * ``#ajax-progress-bar``
+    * ``#static-sidebar``
+
 .. There is also a compiled ``style.css`` file in the ``dist`` folder from which you can copy paste into your css file.
 
 Template Layouts
@@ -410,6 +418,21 @@ content of the view derive from your layout templates.
 .. image:: _static/template_layout.svg
     :alt: Template layout
 
+Following templates are available to enhance view control:
+
+    * ``__ajax_base.html``
+    * ``__modal_base.html``
+    * ``_drag_drop.html``
+    * ``_form_controls.html``
+    * ``_middleware.html``
+    * ``_paginate.html``
+    * ``_select_date_filter.html``
+    * ``_select_multiple_filter.html``
+    * ``_table_sort.html``
+    * ``generic_form.html``
+
+The leading *double underscore* are templates to extend from and a *single underscore* to include them.
+The generic form should be used directly.
 
 .. _top define: #client-application
 

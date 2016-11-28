@@ -7,9 +7,12 @@ class AjaxQuerySet(QuerySet):
     This QuerySet enhances generic filter options that work together with server side
     :class:`ajaxviews.views.AjaxListView` and client side :class:`FilterView`.
 
-    The ``selected_filter_index`` specifies the field to apply the ``selected_filter_values``.
-
-    The ``sort_index`` and ``sort_order`` work independently from filter index and values.
+    Filter and sorting options passed through ``json_cfg``:
+        - ``sort_index``
+        - ``sort_order`` work independently from filter index and values.
+        - ``filter_index``
+        - ``selected_filter_index`` specifies the field to apply the .
+        - ``selected_filter_values``
 
     :var bool distinct_qs: Apply distinct filter option. Default is True.
     """

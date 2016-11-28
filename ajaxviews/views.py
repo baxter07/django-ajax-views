@@ -113,24 +113,44 @@ class AjaxListView(GenericBaseView, ListView):
     The list view can be updated by calling :func:`View.requestView` from the client side view class.
 
     If you have assigned the :class:`ajaxviews.queries.AjaxQuerySet` as manager to the model class, you can
-    use the ``filter_fields`` to define filter parameters for the given view. It contains a list of field paths
-    that are automatically applied as filters for all requests where ``get_queryset`` is called.
+    set a ``filter_fields`` attribute to the view class to specify filter parameters. It contains a list of
+    field paths that are automatically applied as filters for all requests where ``get_queryset`` is called.
 
-    The ``selected_filter_index`` is the index to access the ``filter_fields`` list.
+    The index of the ``filter_fields`` list is passed between requests to control the filter and sorting mechanism.
+    Add a table in your templates with the following markup to activate generic filters from :class:`FilterView`.
 
-    Field options:
-        - A string only will filter it's path by the ``selected_filter_values`` passed in the ``json_cfg``.
-          This is usually a list of pk's.
-        - using a tuple refines the query
+    .. code-block:: html
+
+        <tr class="filter-header">
+          <th data-filter-index="0">
+            <span>Column Header Name</span> {% include 'ajaxviews/_table_sort.html' with index=0 %}
+          </th>
+          <th data-filter-index="1">
+            <span>Column Header Name</span> {% include 'ajaxviews/_table_sort.html' with index=1 %}
+          </th>
+        </tr>
+
+    The ``.filter-header`` is only necessary if you want to use the built-in
+    `view styles <../setup.html#stylus-css>`_ to style the popover which displays the filter values of the selected
+    filter index.
+
+    .. The ``selected_filter_index`` is the index to access the ``filter_fields`` list.
+
+    Field options for ``filter_fields``:
+
+        - A **string** only ``'<field_path>'`` will filter it's path by the ``selected_filter_values`` passed in
+          the ``json_cfg``. This is usually a list of pk's.
+        - using a **tuple** refines the query
+
             - ``('<field_path>', 'date')`` Filter date range
             - ``('<field_path>', 'set', <set_of_tuples>)`` Filter first element of tuple
-            - ``('<field_path>', 'exclude')`` Ignore filter. Use ``exclude_filter`` or ``exclude_sort`` to
-              only ignore one of these filters.
+            - ``('<field_path>', 'exclude')`` Ignore filter, use ``exclude_filter`` or ``exclude_sort`` to
+              only ignore one of these.
 
     The ``filter_index`` and ``sort_index`` parameters can be applied independently on different fields.
 
-    :ivar list filter_fields: List of fields to be filtered when a ``filter_index`` is passed in the request.
-        The index matches the order of the list.
+    :ivar list filter_fields: List of fields to be filtered when a ``selected_filter_index`` and
+        ``selected_filter_values`` are passed in the request. The index matches the order of the list.
     :ivar bool filter_user: Whether to filter objects the authenticated user has access to. Default is False.
     :ivar int paginate_by: Number of results by which to paginate.
     :ivar int filter_search_input_by: Number of results in list view filters by which to display a search input.
@@ -152,12 +172,12 @@ class AjaxListView(GenericBaseView, ListView):
 # noinspection PyUnresolvedReferences
 class AjaxDetailView(GenericBaseView, DetailView):
     """
-    The detail view can be displayed in bootstrap modals without extra implementation.
-    Simply add ``.modal-link`` to an html link tag with a href that points to a view that inherits from this view.
-    Or you can call :class:`View.requestModal` passing in the url of the detail view.
+    The detail view can be displayed in bootstrap modals. Simply add ``.modal-link`` to an html link tag with
+    a href that points to a view that inherits from this view. Or you can call :class:`View.requestModal` passing
+    in the url of the detail view.
 
-    If a generic form view is opened in a modal and saved, the underlying detail view is reloaded automatically
-    to display the changes.
+    If a :class:`ajaxviews.forms.GenericModelForm` is opened in a modal and saved, the underlying detail view is
+    reloaded automatically to display the changes.
     """
     plugin = ViewFactory('detail')
 
