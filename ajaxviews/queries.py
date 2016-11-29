@@ -5,20 +5,32 @@ from django.db.models import QuerySet
 class AjaxQuerySet(QuerySet):
     """
     This QuerySet enhances generic filter options that work together with server side
-    :class:`ajaxviews.views.AjaxListView` and client side :class:`FilterView`.
+    :class:`ajaxviews.views.AjaxListView` and client side :class:`FilterView`. You can instantiate the QuerySet
+    as manager to your models to enable default filtering.
 
-    Filter and sorting options passed through ``json_cfg``:
-        - ``sort_index``
-        - ``sort_order`` work independently from filter index and values.
-        - ``filter_index``
-        - ``selected_filter_index`` specifies the field to apply the .
-        - ``selected_filter_values``
+    Filter and sorting options passed through ``json_cfg`` and applied to ``filter_fields``:
+        - ``sort_index`` List index of field to sort by.
+        - ``sort_order`` Order fields by asc, desc or none.
+        - ``filter_index`` List index of field to filter results. This displays all possible filter options.
+        - ``selected_filter_index`` Field of filter to apply on queryset.
+        - ``selected_filter_values`` Values to filter by on selected field.
 
     :var bool distinct_qs: Apply distinct filter option. Default is True.
     """
     distinct_qs = True
 
     def default_filter(self, opts, *args, **kwargs):
+        """
+        This is called by the view's ``get_queryset`` method.
+
+        It calls the :func:`ajax_filter` first to apply the filter and then :func:`ajax_sort` to sort the filtered
+        QuerySet. Each of these methods can be overridden to manipulate the QuerySet.
+
+        :param opts: Filter options passed through request.
+        :param args: Positional filter options in addition to opts.
+        :param kwargs: Keword filter options in addition to opts.
+        :return: Filtered QuerySet
+        """
         return self.ajax_filter(opts, *args, **kwargs).ajax_sorter(opts)
 
     def ajax_filter(self, opts, *args, **kwargs):
@@ -60,4 +72,10 @@ class AjaxQuerySet(QuerySet):
         return self.order_by('-' + field)
 
     def get_unique_values(self, field):
+        """
+        Used to get unique values of a given field.
+
+        :param field: Name of the field
+        :return: List of field values
+        """
         return self.order_by(field).distinct(field).values_list(field, flat=True)

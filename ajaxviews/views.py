@@ -142,8 +142,8 @@ class AjaxListView(GenericBaseView, ListView):
           the ``json_cfg``. This is usually a list of pk's.
         - using a **tuple** refines the query
 
-            - ``('<field_path>', 'date')`` Filter date range
-            - ``('<field_path>', 'set', <set_of_tuples>)`` Filter first element of tuple
+            - ``('<field_path>', 'date')`` Filter by date range
+            - ``('<field_path>', 'set', <set_of_tuples>)`` Filter by first element of tuple
             - ``('<field_path>', 'exclude')`` Ignore filter, use ``exclude_filter`` or ``exclude_sort`` to
               only ignore one of these.
 

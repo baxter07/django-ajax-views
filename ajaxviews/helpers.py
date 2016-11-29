@@ -30,8 +30,8 @@ def get_objects_for_model(user, model, perm_prefix='access_'):
 
     :param user: Authenticated user
     :param model: Django model instance
-    :param perm_prefix: Default 'access\_'
-    :return: None if no permission else queryset
+    :param perm_prefix: Default: ``access_``
+    :return: None if no permission else QuerySet
     """
     package, module = model.__module__.split('.')
 
