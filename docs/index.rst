@@ -22,29 +22,28 @@ Features
 ========
 
 - Ajax List Views
-   - Ajaxable templates to update views automatically
-   - Built-in generic filter support
+    - Ajaxable templates to update views automatically
+    - Built-in generic filter support
 - Generic Forms
-   - Enhanced form action controls
-   - Display preview to confirm actions
+    - Enhanced form action controls
+    - Display preview to confirm actions
 - Bootstrap Modals
-   - Support to display form and detail views in modals
+    - Support to display form and detail views in modals
 
 Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
-   concept
-   setup
-   modules/server_api
-   modules/client_api
+    concept
+    setup
+    modules/server_api
+    modules/client_api
 
 ..
-   contents: Generic Forms, Filter Views
-
-   .. :source:ajaxviews/static/require-ajax-views/src/*
+    contents: Generic Forms, Filter Views
+    .. source:ajaxviews/static/require-ajax-views/src/*
 
 Indices
 =======

@@ -1,5 +1,6 @@
 from dateutil.parser import parse
 from django.db.models import QuerySet
+from django.core.exceptions import ImproperlyConfigured
 
 
 class AjaxQuerySet(QuerySet):
@@ -53,7 +54,7 @@ class AjaxQuerySet(QuerySet):
                 if opts['selected_filter_values'].get('max_date', None):
                     kwargs[filter_field[0] + '__lte'] = parse(opts['selected_filter_values']['max_date']).date()
             else:
-                raise Exception('Misconfigured filter fields!')
+                raise ImproperlyConfigured('filter field attribute needs to be a string or tuple.')
 
         if self.distinct_qs:
             return self.filter(*args, **kwargs).distinct()

@@ -162,8 +162,8 @@ class ListPlugin(AjaxPlugin):
         context = super().get_context_data(context)
         if self.request.is_ajax() and not self.request.GET.get('modal_id', False):
             context['generic_template'] = self.ajax_base_template
-        if not self.request.is_ajax() and hasattr(self, 'search_field'):
-            context['search_form'] = construct_autocomplete_searchform(self.search_field)
+        if not self.request.is_ajax() and hasattr(self.view, 'search_field'):
+            context['search_form'] = construct_autocomplete_searchform(self.view.search_field)
         if self.json_cfg.get('sort_index', -1) >= 0:
             context['sort_index'] = self.json_cfg['sort_index']
             context['sort_order'] = self.json_cfg.get('sort_order', None)

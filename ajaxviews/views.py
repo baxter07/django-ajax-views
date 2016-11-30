@@ -77,7 +77,7 @@ class GenericBaseView:
     """
     This is the base view which establishes communication with the client side :class:`App`.
 
-    It merges the optional URL parameters from the GET request with the keyword arguments retrieved from
+    It merges the query string from the GET request with the keyword arguments retrieved from
     Django's URL conf into ``json_cfg``.
 
     You can control the behaviour of your views by extending from this view and by setting the :attr:`plugin`
@@ -131,7 +131,7 @@ class AjaxListView(GenericBaseView, ListView):
         </tr>
 
     The ``.filter-header`` is only necessary if you want to use the built-in
-    `view styles <../setup.html#stylus-css>`_ to style the popover which displays the filter values of the selected
+    `view styles <../setup.html#stylus-css>`_ to style the popover which displays the filter values of the current
     filter index.
 
     .. The ``selected_filter_index`` is the index to access the ``filter_fields`` list.
@@ -139,7 +139,7 @@ class AjaxListView(GenericBaseView, ListView):
     Field options for ``filter_fields``:
 
         - A **string** only ``'<field_path>'`` will filter it's path by the ``selected_filter_values`` passed in
-          the ``json_cfg``. This is usually a list of pk's.
+          the ``json_cfg``. This is usually a list of pk's or the fields values.
         - using a **tuple** refines the query
 
             - ``('<field_path>', 'date')`` Filter by date range
@@ -190,17 +190,18 @@ class BaseFormView(GenericBaseView):
     """
     .. include:: <isonum.txt>
 
-    The base view for normal and preview forms.
+    This is the base view for normal and preview forms.
 
     The ``model`` and ``success_message`` attributes from the form meta are automatically added to the view class.
 
     ``related_obj_ids`` are used to pass on object pk's from the calling view to the requested view
     through url kwargs.
 
-    If ``form_cfg`` is passed through the post request, it's passed on to the form when it's initialized.
+    If ``form_cfg`` is passed in the post request (by default as hidden input field), it's accessible through
+    the forms ``cleaned_form_cfg`` property.
 
-    ``auto_select_field`` is used to update a select field when an element has been added by using ``add_fields``
-    in the forms meta class.
+    The ``auto_select_field`` coming from a GET request is used to update a select field when an element has been
+    added by using ``add_fields`` in the forms meta class.
 
     There are multiple ways to set a success url for the form view.
     This is the order of precedence for ``success_url``:
@@ -210,6 +211,8 @@ class BaseFormView(GenericBaseView):
 
     :var str template_name: The template to render the form. Default: ``'ajaxviews/generic_form.html'``
     :var str success_message: Message to display on successful form save. Default: ``''``
+    :var str form_actions_template: Action buttons rendered at the bottom of the form.
+        Default: ``'ajaxviews/_form_controls.html'``
     """
     template_name = 'ajaxviews/generic_form.html'
     success_message = ''

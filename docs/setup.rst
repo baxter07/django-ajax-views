@@ -418,7 +418,7 @@ content of the view derive from your layout templates.
 .. image:: _static/template_layout.svg
     :alt: Template layout
 
-Following templates are available to enhance view control:
+Following templates_ are available to enhance view control:
 
     * ``__ajax_base.html``
     * ``__modal_base.html``
@@ -431,10 +431,12 @@ Following templates are available to enhance view control:
     * ``_table_sort.html``
     * ``generic_form.html``
 
-The leading *double underscore* are templates to extend from and a *single underscore* to include them.
+Extend from templates with a leading *double underscore* and include those with a *single underscore*.
 The generic form should be used directly.
 
 .. _top define: #client-application
+
+.. _templates: https://github.com/Pyco7/django-ajax-views/tree/master/ajaxviews/templates/ajaxviews
 
 .. _source directory: https://github.com/Pyco7/django-ajax-views/tree/master/ajaxviews/static/require-ajax-views/src
 
