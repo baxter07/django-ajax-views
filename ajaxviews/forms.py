@@ -17,6 +17,22 @@ from .helpers import init_chosen_widget, init_dateinput
 
 
 class DefaultFormActions(LayoutObject):
+    """
+    Crispy layout object that renders form actions depending on options defined in ``form.opts`` property.
+
+    Keyword arguments available in ``opts``:
+
+    :ivar str success_url: Url to redirect to on successful form save.
+    :ivar str delete_url: Delete view that's requested on form delete.
+    :ivar str delete_success_url: Url to redirect view on successful form deletion.
+    :ivar str form_actions_template: Template to render form actions in. Default: ``'ajaxviews/_form_controls.html'``
+    :ivar int preview_stage: If form preview is displayed render a back button.
+    :ivar bool modal_form: True if form is displayed in a bootrap modal. Default: ``False``
+    :ivar bool delete_confirmation: Display a `bootstrap confirmation <http://bootstrap-confirmation.js.org/>`_
+        popover if delete button is clicked.
+    :ivar dict form_cfg: Additional data needed to process form save passed through a hidden input field. Dictionary
+        is stringified and automatically parsed again when calling :func:`FormMixin.cleaned_form_cfg`.
+    """
     # noinspection PyUnusedLocal, PyMethodMayBeStatic
     def render(self, form, form_style, context, template_pack=TEMPLATE_PACK):
         success_url = form.opts.get('success_url', '')
@@ -42,20 +58,34 @@ class DefaultFormActions(LayoutObject):
 
 
 class DefaultFormHelper(FormHelper):
+    """
+    Crispy form helper used to define default form action control.
+
+    A ``data-async`` html property is added to the form tag.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.attrs = {'data-async': ''}
 
     def append_form_actions(self):
+        """
+        Append form actions to the current layout.
+        """
         self.layout.append(DefaultFormActions())
 
     def add_form_actions_only(self):
+        """
+        Disable the form tag and add form actions only to the current layout.
+        """
         self.form_tag = False
         self.add_layout(Layout(DefaultFormActions()))
 
 
 # noinspection PyUnresolvedReferences
 class FormMixin:
+    """
+    Mixin that handels instantiation of crispy form helper and options passed in the form's init kwargs.
+    """
     form_kwargs = [
         'success_url',
         'form_action',
@@ -84,6 +114,15 @@ class FormMixin:
 
     @property
     def helper(self):
+        """
+        The :class:`DefaultFormHelper` is instantiated only once when this helper property is accessed first.
+
+        Assign your own form helper if you want to override the default behavior.
+
+        This renders hidden fields and appends form actions by default.
+
+        :return: Form helper instance
+        """
         if self._helper_instance is not None:
             return self._helper_instance
         if self.form_cfg:
@@ -107,12 +146,21 @@ class FormMixin:
 
     @property
     def cleaned_form_cfg(self):
+        """
+        Loads the stringified ``form_cfg`` in ``cleaned_data`` to return a python dictionary object.
+
+        :return: form cfg dictionary
+        """
         if 'form_cfg' in self.cleaned_data:
             return json.loads(self.cleaned_data['form_cfg'])
         return {}
 
     @property
     def layout(self):
+        """
+        Get or set the crispy form helper layout object. If you set a new layout the form actions are
+        appended automatically.
+        """
         return self.helper.layout
 
     @layout.setter
@@ -123,7 +171,10 @@ class FormMixin:
 
 class SimpleForm(FormMixin, Form):
     """
-    Enhanced use of django ``Form`` class.
+    Generic form for use without a corresponding model. Also used to display a preview before saving a form.
+
+    :ivar object object: Model instance of the preview forms first stage.
+    :ivar dict model_data: Cleaned data of the preview forms second stage.
     """
     def __init__(self, *args, **kwargs):
         self.object = kwargs.pop('instance', None)
@@ -141,7 +192,7 @@ class SimpleForm(FormMixin, Form):
 
 class GenericModelForm(FormMixin, ModelForm):
     """
-    Use of django ``ModelForm`` and ``django-crispy-forms`` to simplify construction of model forms.
+    Generic form for use with a corresponding model.
     """
     field_label_addon = """<a class="modal-link form-add-link" href="{0}"><img src="{1}" alt="{2}"/></a>"""
 
@@ -180,6 +231,14 @@ class GenericModelForm(FormMixin, ModelForm):
         return render_crispy_form(form)
 
     def get_related_obj(self, model, key=None):
+        """
+        Get model instance with pk of related model from the calling view.
+
+        :param model: Django model class.
+        :param key: Keyword argument to get the value used to retrieve the model instance. If not specified it
+            expects a single key in ``related_obj_ids`` that's used.
+        :return: Model instance.
+        """
         related_obj_dict = self.cleaned_form_cfg.get('related_obj_ids', None)
         if not related_obj_dict:
             return None

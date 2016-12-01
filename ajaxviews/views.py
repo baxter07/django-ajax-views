@@ -16,9 +16,9 @@ from .plugins import PluginAdapter, AjaxPlugin, ListPlugin, DetailPlugin, FormPl
 
 class ViewFactory:
     """
-    To reduce the use of multiple inheritance this class creates a plugin instance which controls the behavior
-    of the view. Using composition instead, each method of Django's class based views is called only once and
-    the plugin takes care of processing the request.
+    To reduce the use of multiple inheritance in django views, this class creates a plugin instance which controls
+    the behavior of the view. Using composition instead, each method of Django's class based views is called only
+    once and the plugin takes care of processing the request.
 
     Supported plugins:
       - list
@@ -80,9 +80,10 @@ class GenericBaseView:
     It merges the query string from the GET request with the keyword arguments retrieved from
     Django's URL conf into ``json_cfg``.
 
-    You can control the behaviour of your views by extending from this view and by setting the :attr:`plugin`
-    attribute using the :class:`ViewFactory`.
+    You can control the behaviour of your views by extending from this view and setting the :attr:`plugin`
+    class attribute.
 
+    :ivar object plugin: Process the request using the :class:`ViewFactory`.
     :ivar bool ajax_view: Set to True if you have created a client side module associated with the view
         class that's inheriting from this view.
     :ivar dict json_cfg: Data parsed from incoming requests and returned in each response.
@@ -195,7 +196,7 @@ class BaseFormView(GenericBaseView):
     The ``model`` and ``success_message`` attributes from the form meta are automatically added to the view class.
 
     ``related_obj_ids`` are used to pass on object pk's from the calling view to the requested view
-    through url kwargs.
+    through url kwargs. This is useful if a model has relations (e.g. fk, m2m) it is depending on to be saved.
 
     If ``form_cfg`` is passed in the post request (by default as hidden input field), it's accessible through
     the forms ``cleaned_form_cfg`` property.

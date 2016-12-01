@@ -23,6 +23,8 @@ def get_objects_for_model(user, model, perm_prefix='access_'):
     >>> get_objects_for_model(request.user, ModelClass)
     <queryset>
 
+    This expects the django model module to be at the root of it's app directory.
+
     :param user: Authenticated user
     :param model: Django model instance
     :param perm_prefix: Default: ``access_``
@@ -68,8 +70,8 @@ def remove_obj_perm(user, obj):
 
 class DateWidget(DateInput):
     """
-    Django DateInput widget which renders a bootstrap input group addon with a calendar glyphicon around
-    the input field.
+    Django date widget which renders a `bootstrap <http://getbootstrap.com/components/#input-groups>`_ input
+    group addon with a calendar glyphicon around the input field.
     """
     def render(self, *args, **kwargs):
         html_input = super().render(*args, **kwargs)
@@ -112,10 +114,11 @@ def init_chosen_widget(field_items, disable_help_text=True):
 
 def construct_autocomplete_searchform(autocomplete_classname):
     """
-    Construct a crispy form to display a search input field for list views.
+    Construct a crispy form to display a search input field for list views using
+    `django autocomplete <http://django-autocomplete-light.readthedocs.io/en/2.3.1/api.html>`_.
 
-    :param str autocomplete_classname: Name of the autocompletion registered with autocomplete_light
-    :return: Crispy from instance
+    :param str autocomplete_classname: Name of the autocompletion registered with *autocomplete_light*
+    :return: Crispy form instance
     """
     class SearchForm(Form):
         value = al.ChoiceField(
