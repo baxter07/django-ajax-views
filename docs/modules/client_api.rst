@@ -5,6 +5,9 @@
 Client API
 **********
 
+Application
+===========
+
 .. class:: App
 
     .. .. :source: /_modules/ajaxviews/static/require-ajax-views/src/app.coffee
@@ -40,6 +43,9 @@ Client API
 
         Args:
             my_arg (dict): argument comment.
+
+Base View
+=========
 
 .. class:: View
 
@@ -119,13 +125,18 @@ Client API
 
     .. function:: getUrlKwargs
 
-        Keyword arguments used for URL reverse to parse the URL string.
+        Keyword arguments used for URL reverse to parse the **URL string**.
+
+        This function is executed whenever :func:`requestView` or :func:`requestSnippet` is called.
 
         :returns: dict
 
     .. function:: getJsonData
 
-        Keyword arguments passed as additional data in request.
+        Keyword arguments passed in **query string** variable ``json_cfg``. It's data is stringified so that nested
+        data structures can be sent through the request as well.
+
+        This function is executed whenever :func:`requestView` or :func:`requestSnippet` is called.
 
         :returns: dict
 
@@ -150,16 +161,52 @@ Client API
 
         For form views this function will be executed before the form is submitted.
 
+Filter View
+===========
+
 .. class:: FilterView(View)
 
     This class derives from the base :class:`View` and offers filter widgets for use with
     :class:`ajaxviews.views.AjaxListView`.
 
+Utils
+=====
+
+.. data:: Utils
+
+    Built-in functions available for use in the :class:`View` class through the ``utils`` attribute.
+
+    :returns: dictionary containing the functions listed below.
+
+    .. function:: initModalLinks(scope)
+
+        Initialize all elements with a ``.modal-link`` class to be opened in a modal.
+
+        Those elements require a ``href`` attribute that points to a detail or form view extending from
+        server side ``ajaxviews.views`` module.
+
+        :param str scope: Element in which all modal links are initialized.
+
+    .. function:: initDateInput(element, opts={})
+
+        Initialize the input element using the default date widget options from the :class:`App` config.
+        ``opts`` overrides the defaults.
+
+        :param object element: Date input field.
+        :param dict opts: Options to pass to the widget.
+
+    .. function:: updateMultipleHiddenInput()
+
+        Update hidden input elements in form views using drag and drop support for multiple select fields.
+
+Middleware
+==========
+
 .. data:: Middleware
 
     The middleware module provides functions that are hooked into the view class on every request.
 
-    If you have not created a class for the requested view it will be hooked into the base view which
+    If you have not created a class for the requested view, the middleware will be hooked into the base view which
     will be executed for all requests.
 
     :returns: dictionary containing the functions listed below.
@@ -188,29 +235,6 @@ Client API
     .. function:: onFormLoad
 
         Only executed for form views.
-
-.. data:: Utils
-
-    Built-in functions available for use in the :class:`View` class through the ``utils`` attribute.
-
-    :returns: dictionary containing the functions listed below.
-
-    .. function:: initModalLinks(scope)
-
-        Initialize all elements with a ``.modal-link`` class to be opened in a modal.
-
-        The elements require a ``href`` attribute that points to a view that extends from
-        :class:`ajaxviews.mixins.ModalMixin`.
-
-        :param str scope: Element in which all modal links are initialized.
-
-    .. function:: initDateInput(element, opts={})
-
-        Initialize the input element using the default date widget options from the :class:`App` config.
-        ``opts`` overrides the defaults.
-
-        :param object element: Date input field.
-        :param dict opts: Options to pass to the widget.
 
 ..
     If the user doesn't specify a class for a given view the middleware will always be executed.

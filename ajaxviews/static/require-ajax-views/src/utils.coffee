@@ -16,14 +16,13 @@ define ->
     updateMultipleHiddenInput: ->
       fieldName = @Q('.drag-and-drop').data('field')
       @Q("input[type='hidden'][name='#{fieldName}']").remove()
-      formNode = @Q('form[data-async]')
       @Q('.selected-list li').each (index, value) ->
         $('<input>').attr({
           type: 'hidden'
           id: "id_#{fieldName}_#{index}"
           name: fieldName
           value: parseInt($(value).data('id')) || $(value).data('id')
-        }).appendTo(formNode)
+        }).appendTo(@Q('form[data-async]'))
 
     initDragAndDrop: ->
       Sortable = @_manager.cfg.defaults.dragAndDrop.sortableLib

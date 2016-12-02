@@ -85,6 +85,8 @@ class DefaultFormHelper(FormHelper):
 class FormMixin:
     """
     Mixin that handels instantiation of crispy form helper and options passed in the form's init kwargs.
+
+    :ivar dict opts: 
     """
     form_kwargs = [
         'success_url',
