@@ -1,16 +1,13 @@
 
-.. sphinx.addnodes.desc_addname
-
 **********
 Client API
 **********
+
 
 Application
 ===========
 
 .. class:: App
-
-    .. .. :source: /_modules/ajaxviews/static/require-ajax-views/src/app.coffee
 
     This is the client side application that's initialized once the DOM is ready.
 
@@ -30,7 +27,7 @@ Application
     :ivar str modules.mixinPath: Default: ``'mixins/'`` - Path to mixin modules relative to JS root.
     :ivar str modules.middleware: Default: ``''`` - Name and path of the middleware module relative to JS root.
     :ivar dict defaults.dateWidget: Default: ``{}`` - Global default datepicker options.
-    :ivar int defaults.progressBar.animationSpeed: Default: ``300`` - Speed in milliseconds.
+    :ivar int defaults.progressBar.animationSpeed: Default: ``300`` - Time in milliseconds.
     :ivar object defaults.dragAndDrop.sortableLib: Default: ``null`` - Set the library_ for drag and drop support.
     :ivar str defaults.dragAndDrop.forwardElement: Default: ``'.glyphicon-forward'`` - HTML symbol to select all.
     :ivar str defaults.dragAndDrop.backwardElement: Default: ``'.glyphicon-backward'`` - HTML symbol to deselect all.
@@ -44,6 +41,7 @@ Application
         Args:
             my_arg (dict): argument comment.
 
+
 Base View
 =========
 
@@ -54,7 +52,7 @@ Base View
 
     Whenever a view is requested via URL the :func:`View.onPageLoad` function is executed. When
     :func:`requestView` or :func:`requestModal` is called the :func:`View.onAjaxLoad` function is executed.
-    The :func:`View.onLoad` function is always executed but any of those functions can also be omitted.
+    :func:`View.onLoad` is always executed but any of those functions can also be omitted.
 
     :ivar object Q: Scope of the current view. Use instead of jquery object to avoid conflicts in the DOM. On page
         load the **Q** object works the same as the jquery object itself.
@@ -70,8 +68,9 @@ Base View
 
     .. function:: requestView(viewName='', urlKwargs={}, jsonData={}, pageLoad=False, animate=True)
 
-        AJAX request to update the current view. ``urlKwargs`` are the parameters sent to the server through
-        the URL string. ``jsonData`` are the keyword arguments sent to the server as hidden parameters.
+        AJAX request to update the current view. ``urlKwargs`` are the parameters used to parse the URL string using
+        `django-js-reverse`_. The ``jsonData`` dictionary is the value assigned to ``json_cfg`` keyword argument in the
+        query string. It's value is stringifed so you can pass nested data structures in the request.
 
         If the view class has :func:`getUrlKwargs` and/or :func:`getJsonData` functions, the parameters they return
         (as dictionaries) will also be sent to the server. The function arguments will override keyword arguments
@@ -161,16 +160,6 @@ Base View
 
         For form views this function will be executed before the form is submitted.
 
-Filter View
-===========
-
-.. class:: FilterView(View)
-
-    This class derives from the base :class:`View` and offers filter widgets for use with
-    :class:`ajaxviews.views.AjaxListView`.
-
-Utils
-=====
 
 .. data:: Utils
 
@@ -198,6 +187,16 @@ Utils
     .. function:: updateMultipleHiddenInput()
 
         Update hidden input elements in form views using drag and drop support for multiple select fields.
+
+
+Filter View
+===========
+
+.. class:: FilterView(View)
+
+    This class derives from the base :class:`View` and offers filter widgets for use with
+    :class:`ajaxviews.views.AjaxListView`.
+
 
 Middleware
 ==========
@@ -255,3 +254,5 @@ Middleware
 .. _RequireJS: http://requirejs.org
 
 .. _library: http://rubaxa.github.io/Sortable/
+
+.. _django-js-reverse: https://github.com/ierror/django-js-reverse

@@ -5,18 +5,18 @@ django-ajax-views
 
 .. image:: https://img.shields.io/pypi/v/django-ajax-views.svg
     :target: https://pypi.python.org/pypi/django-ajax-views
+.. image:: https://img.shields.io/pypi/status/django-ajax-views.svg
+    :target: https://pypi.python.org/pypi/django-ajax-views
 .. image:: https://img.shields.io/pypi/pyversions/django-ajax-views.svg
     :target: https://pypi.python.org/pypi/django-ajax-views
 .. image:: https://img.shields.io/pypi/wheel/django-ajax-views.svg?maxAge=2592000
-    :target: https://pypi.python.org/pypi/django-ajax-views
-.. image:: https://img.shields.io/pypi/status/django-ajax-views.svg
     :target: https://pypi.python.org/pypi/django-ajax-views
 .. image:: https://img.shields.io/badge/license-MIT-blue.svg
     :target: https://raw.githubusercontent.com/collab-project/django-ajax-views/master/LICENSE
 
 This app is an extension of Django's
 `class-based views <https://docs.djangoproject.com/en/dev/topics/class-based-views/>`_
-and works together with javascript library **require-ajax-views**.
+and works together with javascript library `require-ajax-views <ajaxviews/static/require-ajax-views/>`_.
 
 Features
 ========

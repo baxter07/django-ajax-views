@@ -7,12 +7,12 @@ django-ajax-views
 
 This app is an extension of Django's
 `class-based views <https://docs.djangoproject.com/en/dev/topics/class-based-views/>`_
-and works together with javascript library **require-ajax-views**.
+and works together with javascript library `require-ajax-views`_.
 
 It's main purpose is to encapsulate server/client communication to enable updating of views with a simple
-function call in javascript. `URL kwargs`_ and optional parameters for incoming requests are handled as one
-data set and returned as such in each response. This simplifies building complex views where filter
-parameters are partially passed through URL using Django's `clean URL design`_ and as hidden parameters.
+function call in javascript. Arguments parsed from `URL kwargs`_ and the query string are handled as one data set
+for each request and returned as such in each response. This simplifies building of complex views where filter
+parameters are partially passed through URL using Django's `clean URL design`_ and as query string parameters.
 
 Some basic knowledge of Django's
 `class-based generic views <https://docs.djangoproject.com/en/dev/ref/class-based-views/flattened-index/>`_
@@ -79,3 +79,5 @@ Indices
 .. _URL kwargs: https://docs.djangoproject.com/en/dev/topics/http/urls/#named-groups
 
 .. _clean URL design: https://docs.djangoproject.com/en/dev/topics/http/urls/
+
+.. _require-ajax-views: https://github.com/Pyco7/django-ajax-views/tree/master/ajaxviews/static/require-ajax-views/
