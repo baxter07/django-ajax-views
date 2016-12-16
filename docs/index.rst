@@ -5,18 +5,15 @@
 django-ajax-views
 #################
 
-This app is an extension of Django's
-`class-based views <https://docs.djangoproject.com/en/dev/topics/class-based-views/>`_
-and works together with javascript library `require-ajax-views`_.
+This app is an extension of Django's `class-based views`_ and works together with javascript
+library `require-ajax-views`_.
 
 It's main purpose is to encapsulate server/client communication to enable updating of views with a simple
 function call in javascript. Arguments parsed from `URL kwargs`_ and the query string are handled as one data set
 for each request and returned as such in each response. This simplifies building of complex views where filter
 parameters are partially passed through URL using Django's `clean URL design`_ and as query string parameters.
 
-Some basic knowledge of Django's
-`class-based generic views <https://docs.djangoproject.com/en/dev/ref/class-based-views/flattened-index/>`_
-and `RequireJS`_ would be desirable to use this app.
+Some basic knowledge of Django's `class-based generic views`_ and `RequireJS`_ would be desirable to use this app.
 
 Features
 ========
@@ -73,6 +70,10 @@ Indices
     http://rest-sphinx-memo.readthedocs.io/en/latest/ReST.html
     http://build-me-the-docs-please.readthedocs.io/en/latest/index.html
     http://gisellezeno.com/tutorials/sphinx-for-python-documentation.html
+
+.. _class-based views: https://docs.djangoproject.com/en/dev/topics/class-based-views/
+
+.. _class-based generic views: https://docs.djangoproject.com/en/dev/ref/class-based-views/flattened-index/
 
 .. _RequireJS: http://requirejs.org
 

@@ -13,17 +13,6 @@ define ->
         dateinput = $(dateinput).parent() if $(dateinput).parent().is('.input-group, .date')
         $(dateinput).datepicker(_opts)
 
-    updateMultipleHiddenInput: ->
-      fieldName = @Q('.drag-and-drop').data('field')
-      @Q("input[type='hidden'][name='#{fieldName}']").remove()
-      @Q('.selected-list li').each (index, value) ->
-        $('<input>').attr({
-          type: 'hidden'
-          id: "id_#{fieldName}_#{index}"
-          name: fieldName
-          value: parseInt($(value).data('id')) || $(value).data('id')
-        }).appendTo(@Q('form[data-async]'))
-
     initDragAndDrop: ->
       Sortable = @_manager.cfg.defaults.dragAndDrop.sortableLib
       forwardElement = @_manager.cfg.defaults.dragAndDrop.forwardElement
@@ -47,6 +36,17 @@ define ->
           dragRoot = $(e.currentTarget).parent().parent()
           $(dragRoot).find('.available-list').append($(dragRoot).find('.selected-list li'))
           @utils.updateMultipleHiddenInput()
+
+    updateMultipleHiddenInput: ->
+      fieldName = @Q('.drag-and-drop').data('field')
+      @Q("input[type='hidden'][name='#{fieldName}']").remove()
+      @Q('.selected-list li').each (index, value) ->
+        $('<input>').attr({
+          type: 'hidden'
+          id: "id_#{fieldName}_#{index}"
+          name: fieldName
+          value: parseInt($(value).data('id')) || $(value).data('id')
+        }).appendTo(@Q('form[data-async]'))
 
     initDeleteConfirmation: ->
       if @Q('.delete-btn[data-toggle=confirmation]').length

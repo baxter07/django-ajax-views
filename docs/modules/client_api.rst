@@ -3,7 +3,6 @@
 Client API
 **********
 
-
 Application
 ===========
 
@@ -42,8 +41,8 @@ Application
             my_arg (dict): argument comment.
 
 
-Base View
-=========
+Views
+=====
 
 .. class:: View
 
@@ -161,6 +160,41 @@ Base View
         For form views this function will be executed before the form is submitted.
 
 
+.. class:: FilterView(View)
+
+    This view offers filter widgets for use with :class:`ajaxviews.views.AjaxListView`. It expects certain markup
+    in your template to be able to initialize elements automatically.
+
+    If a ``search_field`` attribute is defined on the server side view class and the input field added in your template
+    using this templatetag ``{% crispy search_form %}``, it will be initialized on page load. This enables the
+    autocomplete function to search for list view entries as it's registered with ``autocomplete_ligth``.
+
+    Table columns with a ``th[data-filter-index]`` attribute are clickable to open a bootstrap popover which displays
+    the filter options for the selected field.
+
+    Popover filter options
+        - *Multi select:* Displayed for field values, foreign keys and m2m fields.
+
+            - `_select_multiple_filter.html <https://github.com/Pyco7/django-ajax-views/blob/master/ajaxviews/templates/ajaxviews/_select_multiple_filter.html>`_
+
+        - *Date picker:* Displayed to select a date range.
+
+            - `_select_date_filter.html <https://github.com/Pyco7/django-ajax-views/blob/master/ajaxviews/templates/ajaxviews/_select_date_filter.html>`_
+
+    To customize the filter options for a specific field, you can catch the ``json_cfg['filter_index']`` in the server
+    side GET request method and return a html snippet which will be inserted in the ``.popover-content`` node.
+
+    The ``filter_index`` is used to retrieve filter options for a specific field and
+    ``selected_filter_index`` and ``selected_filter_values`` are used to apply the filter options on the queryset when
+    using :class:`ajaxviews.queries.AjaxQuerySet`.
+
+    When including ``{% include 'ajaxviews/_table_sort.html' with index=<int> %}`` in your table headers, set the index
+    to specify the field where either ``asc`` or ``desc`` ordering is applied.
+
+
+Utils
+=====
+
 .. data:: Utils
 
     Built-in functions available for use in the :class:`View` class through the ``utils`` attribute.
@@ -184,18 +218,36 @@ Base View
         :param object element: Date input field.
         :param dict opts: Options to pass to the widget.
 
+    .. function:: initDragAndDrop()
+
+        Initialize drag and drop fields using the `Sortable <http://rubaxa.github.io/Sortable/>`_ JS library.
+
+        Include the ``_drag_drop.html`` template with following context parameters to enable drag and drop support
+        for multiple choice fields.
+
+        - **field_id**: Name used for the hidden input elements.
+        - **available_name**: Header name of available choices.
+        - **available_list**: List of available model instances.
+        - **selected_name**: Header name of selected choices.
+        - **selected_list**: List of selected model instances.
+
     .. function:: updateMultipleHiddenInput()
 
-        Update hidden input elements in form views using drag and drop support for multiple select fields.
+        Update hidden input elements which are used to submit selected values for multiple select fields.
+        This works for form views which are using drag and drop support to select multiple values.
 
+        A ``.drag-and-drop`` element with a data attribute ``field`` is expected. The field name is used to set the
+        name attribute of the hidden input elements.
 
-Filter View
-===========
+    .. function:: initDeleteConfirmation()
 
-.. class:: FilterView(View)
+        Initialize a confirmation popover on ``.delete-btn[data-toggle=confirmation]`` buttons using
+        `bootstrap-confirmation2 <http://bootstrap-confirmation.js.org>`_ JS library.
 
-    This class derives from the base :class:`View` and offers filter widgets for use with
-    :class:`ajaxviews.views.AjaxListView`.
+    .. function:: initChosenWidget()
+
+        Initialize select fields with a ``.chosen-widget`` class using the
+        `chosen <https://github.com/harvesthq/chosen>`_ JS library.
 
 
 Middleware

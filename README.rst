@@ -22,13 +22,13 @@ Features
 ========
 
 - Ajax List Views
-   - Ajaxable templates to update views automatically
-   - Built-in generic filter support
+    - Ajaxable templates to update views automatically
+    - Built-in generic filter support
 - Generic Forms
-   - Enhanced form action controls
-   - Display preview to confirm actions
+    - Enhanced form action controls
+    - Display preview to confirm actions
 - Bootstrap Modals
-   - Support to display form and detail views in modals
+    - Support to display form and detail views in modals
 
 Documentation at https://django-ajax-views.readthedocs.io
 

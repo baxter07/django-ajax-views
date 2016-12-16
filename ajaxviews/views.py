@@ -155,6 +155,7 @@ class AjaxListView(GenericBaseView, ListView):
     :ivar bool filter_user: Whether to filter objects the authenticated user has access to. Default is False.
     :ivar int paginate_by: Number of results by which to paginate.
     :ivar int filter_search_input_by: Number of results in list view filters by which to display a search input.
+    :ivar int search_field: Name of the autocomplete class that's registered with ``django-autocomplete-ligth``.
     """
     plugin = ViewFactory('list')
 

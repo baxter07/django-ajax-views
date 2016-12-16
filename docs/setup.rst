@@ -282,6 +282,7 @@ Javascript Dependencies
    * `bootstrap-datepicker`_
    * `bootstrap-confirmation2`_
    * `autocomplete`_
+   * `Sortable`_
 
 Build profile
 -------------
@@ -478,11 +479,13 @@ The generic form should be used directly.
 
 .. _bootstrap-datepicker: https://github.com/eternicode/bootstrap-datepicker
 
-.. _bootstrap-confirmation2: http://bootstrap-confirmation.js.org/
+.. _bootstrap-confirmation2: http://bootstrap-confirmation.js.org
 
 .. _autocomplete: https://github.com/yourlabs/django-autocomplete-light
 
 .. _jquery-form: https://github.com/malsup/form
+
+.. _Sortable: http://rubaxa.github.io/Sortable
 
 .. _stylus file: https://github.com/Pyco7/django-ajax-views/blob/master/ajaxviews/static/require-ajax-views/src/style.styl
 
