@@ -10,6 +10,7 @@ from django.shortcuts import render_to_response
 from django.forms import CharField, HiddenInput
 from django.db.models import Min, Max
 from django.utils.safestring import mark_safe
+from django.utils.encoding import force_text
 from django.contrib import messages
 
 from dateutil.parser import parse
@@ -275,10 +276,10 @@ class CreateForm:
 
     @property
     def _success_url(self):
-        if (self.view.object and hasattr(self.view.object, 'get_absolute_url')) or self.view.success_url:
+        if not self.view.object and self.view.success_url:
+            return force_text(self.view.success_url)
+        if self.view.object and hasattr(self.view.object, 'get_absolute_url'):
             return None
-        # if self.view.success_url:
-        #     return self.view.success_url
         return getattr(self.plugin.form_meta, 'success_url', '')
 
     def post(self, request, *args, **kwargs):
@@ -370,7 +371,7 @@ class FormPlugin(ModalPlugin):
             })
         if hasattr(self.view, 'form_actions_template'):
             kwargs['form_actions_template'] = self.view.form_actions_template
-        kwargs['success_url'] = self.get_success_url()
+        kwargs['success_url'] = self.view.get_success_url()
         return self.extra.get_form_kwargs(kwargs)
 
     def post(self, request, *args, **kwargs):
